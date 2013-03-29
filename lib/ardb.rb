@@ -13,6 +13,12 @@ module Ardb
     if !self.config.required_set?
       raise RuntimeError, "Missing required configuration values"
     end
+
+    # setup AR
+
+    if defined?(ActiveRecord::Migration::CommandRecorder)
+      ActiveRecord::Migration::CommandRecorder.send(:include, Ardb::MigrationHelpers::RecorderMixin)
+    end
     ActiveRecord::Base.establish_connection(self.config.db.to_hash)
   end
 
