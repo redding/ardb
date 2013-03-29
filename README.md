@@ -1,6 +1,6 @@
 # Ardb
 
-TODO: Write a gem description
+Activerecord database tools.
 
 ## Usage
 
