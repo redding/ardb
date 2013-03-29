@@ -2,7 +2,13 @@
 # put any test helpers here
 
 # add the root dir to the load path
-$LOAD_PATH.unshift(File.expand_path("../..", __FILE__))
+ROOT_PATH = File.expand_path("../..", __FILE__)
+$LOAD_PATH.unshift(ROOT_PATH)
 
 # require pry for debugging (`binding.pry`)
 require 'pry'
+
+require 'ardb'
+Ardb.configure do |c|
+  c.root_path = ROOT_PATH
+end
