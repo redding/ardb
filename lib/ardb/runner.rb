@@ -4,24 +4,26 @@ module Ardb; end
 class Ardb::Runner
   UnknownCmdError = Class.new(ArgumentError)
 
-  attr_reader :cmd, :cmd_args, :opts
+  attr_reader :cmd_name, :cmd_args, :opts, :root_path
 
   def initialize(args, opts)
     @opts = opts
-    @cmd = args.shift || ""
+    @cmd_name = args.shift || ""
     @cmd_args = args
-
-    @opts['root_path'] ||= Dir.pwd
+    @root_path = @opts.delete('root_path') || Dir.pwd
   end
 
   def run
-    Ardb.config.root_path = opts.delete('root_path')
-
-    case @cmd
+    Ardb.config.root_path = @root_path
+    # TODO: require in a standard file, like config/db.rb??? (for initialization purposes)
+    case @cmd_name
+    when 'migrate'
+      require 'ardb/runner/migrate_command'
+      MigrateCommand.new.run
     when 'null'
       NullCommand.new.run
     else
-      raise UnknownCmdError, "Unknown command `#{@cmd}`"
+      raise UnknownCmdError, "Unknown command `#{@cmd_name}`"
     end
   end
 

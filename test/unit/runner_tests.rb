@@ -11,16 +11,16 @@ class Ardb::Runner
     end
     subject{ @runner }
 
-    should have_readers :cmd, :cmd_args, :opts
+    should have_readers :cmd_name, :cmd_args, :opts, :root_path
 
     should "know its cmd, cmd_args, and opts" do
-      assert_equal 'null', subject.cmd
+      assert_equal 'null', subject.cmd_name
       assert_equal [1,2],  subject.cmd_args
       assert_equal 'opts', subject.opts['some']
     end
 
     should "default the 'root_path' opt to `Dir.pwd`" do
-      assert_equal Dir.pwd, subject.opts['root_path']
+      assert_equal Dir.pwd, subject.root_path
     end
 
   end
