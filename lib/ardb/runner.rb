@@ -20,6 +20,9 @@ class Ardb::Runner
     when 'migrate'
       require 'ardb/runner/migrate_command'
       MigrateCommand.new.run
+    when 'create'
+      require 'ardb/runner/create_command'
+      CreateCommand.new.run
     when 'null'
       NullCommand.new.run
     else

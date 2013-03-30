@@ -14,12 +14,12 @@ class Ardb::Config
     should have_options :migrations_path, :schema_path
 
     should "should use `db/migrations` as the default migrations path" do
-      exp_path = Pathname.new(ROOT_PATH).join("db/migrations").to_s
+      exp_path = Pathname.new(TESTDB_PATH).join("db/migrations").to_s
       assert_equal exp_path, subject.migrations_path
     end
 
     should "should use `db/schema.rb` as the default schema path" do
-      exp_path = Pathname.new(ROOT_PATH).join("db/schema.rb").to_s
+      exp_path = Pathname.new(TESTDB_PATH).join("db/schema.rb").to_s
       assert_equal exp_path, subject.schema_path
     end
 
