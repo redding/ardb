@@ -7,16 +7,18 @@ class Ardb::Runner::CreateCommand
 
   def run
     begin
-      self.send("#{Ardb.config.db.adapter}_cmd").run
+      self.send("#{Ardb.config.db.adapter}_cmd")
       $stdout.puts "Created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+    rescue Ardb::Runner::CmdError => e
+      raise e
     rescue Exception => e
       $stderr.puts e, *(e.backtrace)
-      $stderr.puts "Couldn't create database for #{Ardb.config.db.to_hash.inspect}"
+      $stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
     end
   end
 
   def postgresql_cmd
-    PostgresqlCommand.new
+    PostgresqlCommand.new.run
   end
 
   class PostgresqlCommand
