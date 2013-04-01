@@ -16,8 +16,8 @@ require 'ardb'
 Ardb.configure do |c|
   c.root_path = TESTDB_PATH
 
-  c.db.adapter  'postgresql' #'sqlite3'
-  c.db.database 'ardbtest'   #'db/development.sqlite3'
+  c.db.adapter  'sqlite3'
+  c.db.database 'db/test.sqlite3'
   c.db.pool     5
   c.db.timeout  5000
 
