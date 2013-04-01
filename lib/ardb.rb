@@ -12,7 +12,7 @@ module Ardb
 
   def self.validate!
     if !self.config.required_set?
-      raise NotConfiguredError, "Missing required configs"
+      raise NotConfiguredError, "missing required configs"
     end
   end
 

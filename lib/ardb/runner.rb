@@ -3,6 +3,7 @@ require 'ardb'
 module Ardb; end
 class Ardb::Runner
   UnknownCmdError = Class.new(ArgumentError)
+  CmdError = Class.new(RuntimeError)
 
   attr_reader :cmd_name, :cmd_args, :opts, :root_path
 
@@ -31,7 +32,7 @@ class Ardb::Runner
     when 'null'
       NullCommand.new.run
     else
-      raise UnknownCmdError, "Unknown command `#{@cmd_name}`"
+      raise UnknownCmdError, "unknown command `#{@cmd_name}`"
     end
   end
 
