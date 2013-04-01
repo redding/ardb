@@ -1,5 +1,6 @@
 require 'active_record'
 require 'ardb/runner'
+require 'ardb/migration_helpers'
 
 class Ardb::Runner::MigrateCommand
 
@@ -13,6 +14,10 @@ class Ardb::Runner::MigrateCommand
   end
 
   def run
+    if defined?(ActiveRecord::Migration::CommandRecorder)
+      ActiveRecord::Migration::CommandRecorder.send(:include, Ardb::MigrationHelpers::RecorderMixin)
+    end
+
     ActiveRecord::Migrator.migrations_path = @migrations_path
     ActiveRecord::Migration.verbose = @verbose
     ActiveRecord::Migrator.migrate(@migrations_path, @version) do |migration|
