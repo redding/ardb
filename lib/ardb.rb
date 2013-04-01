@@ -5,20 +5,21 @@ require 'pathname'
 require "ardb/version"
 
 module Ardb
+  NotConfiguredError = Class.new(RuntimeError)
 
   def self.config; Config; end
   def self.configure(&block); Config.define(&block); end
 
-  def self.init
+  def self.validate!
     if !self.config.required_set?
-      raise RuntimeError, "Missing required configuration values"
+      raise NotConfiguredError, "Missing required configs"
     end
+  end
+
+  def self.init
+    validate!
 
     # setup AR
-
-    if defined?(ActiveRecord::Migration::CommandRecorder)
-      ActiveRecord::Migration::CommandRecorder.send(:include, Ardb::MigrationHelpers::RecorderMixin)
-    end
     ActiveRecord::Base.establish_connection(self.config.db.to_hash)
   end
 
@@ -27,10 +28,10 @@ module Ardb
 
     namespace :db do
       option :adapter,  String, :required => true
-      option :encoding, String, :required => false
-      option :url,      String, :required => true
       option :database, String, :required => true
-      option :username, String, :required => true
+      option :encoding, String, :required => false
+      option :url,      String, :required => false
+      option :username, String, :required => false
       option :password, String, :required => false
     end
 

@@ -14,8 +14,7 @@ class Ardb::Runner
   end
 
   def run
-    Ardb.config.root_path = @root_path
-    # TODO: require in a standard file, like config/db.rb??? (for initialization purposes)
+    setup_run
     case @cmd_name
     when 'migrate'
       require 'ardb/runner/migrate_command'
@@ -34,6 +33,14 @@ class Ardb::Runner
     else
       raise UnknownCmdError, "Unknown command `#{@cmd_name}`"
     end
+  end
+
+  private
+
+  def setup_run
+    Ardb.config.root_path = @root_path
+    # TODO: require in a standard file, like config/db.rb??? (for initialization purposes)
+    Ardb.validate!
   end
 
   class NullCommand
