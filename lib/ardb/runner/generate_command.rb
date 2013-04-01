@@ -20,7 +20,7 @@ class Ardb::Runner::GenerateCommand
   end
 
   def migration_cmd
-    MigrationCommand.new(@args.first).run
+    MigrationCommand.new(@args.first)
   end
 
   class MigrationCommand
