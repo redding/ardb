@@ -1,8 +1,6 @@
 require 'active_record'
 require 'ardb/runner'
 
-# Note: currently only postgresql adapter supported
-
 class Ardb::Runner::DropCommand
 
   def run

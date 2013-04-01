@@ -1,8 +1,6 @@
 require 'fileutils'
-require 'active_support/core_ext/string/inflections'
+require 'active_support/core_ext/string'
 require 'ardb/runner'
-
-# Note: currently only postgresql adapter supported
 
 class Ardb::Runner::GenerateCommand
 
