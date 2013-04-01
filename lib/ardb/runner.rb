@@ -23,6 +23,9 @@ class Ardb::Runner
     when 'create'
       require 'ardb/runner/create_command'
       CreateCommand.new.run
+    when 'drop'
+      require 'ardb/runner/drop_command'
+      DropCommand.new.run
     when 'null'
       NullCommand.new.run
     else
