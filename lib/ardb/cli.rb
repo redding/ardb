@@ -21,20 +21,24 @@ module Ardb
       begin
         @cli.parse!(args)
         Ardb::Runner.new(@cli.args, @cli.opts).run
-      rescue Ardb::Runner::UnknownCmdError => err
-        puts "#{err.message}\n\n"
-        puts help
       rescue CLIRB::HelpExit
         puts help
       rescue CLIRB::VersionExit
         puts Ardb::VERSION
+      rescue Ardb::Runner::UnknownCmdError => err
+        $stderr.puts "#{err.message}\n\n"
+        $stderr.puts help
+        exit(1)
+      rescue Ardb::NotConfiguredError, Ardb::Runner::CmdError => err
+        $stderr.puts "#{err.message}"
+        exit(1)
       rescue CLIRB::Error => exception
-        puts "#{exception.message}\n\n"
-        puts help
+        $stderr.puts "#{exception.message}\n\n"
+        $stderr.puts help
         exit(1)
       rescue Exception => exception
-        puts "#{exception.class}: #{exception.message}"
-        puts exception.backtrace.join("\n")
+        $stderr.puts "#{exception.class}: #{exception.message}"
+        $stderr.puts exception.backtrace.join("\n")
         exit(1)
       end
       exit(0)

@@ -7,10 +7,13 @@ class Ardb::Runner::DropCommand
 
   def run
     begin
-      self.send("#{Ardb.config.db.adapter}_cmd").run
+      self.send("#{Ardb.config.db.adapter}_cmd")
+      $stdout.puts "Dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+    rescue Ardb::Runner::CmdError => e
+      raise e
     rescue Exception => e
       $stderr.puts e, *(e.backtrace)
-      $stderr.puts "Couldn't drop database for #{Ardb.config.db.inspect}"
+      $stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
     end
   end
 

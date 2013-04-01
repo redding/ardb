@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+gem 'ardb', :path => "/Users/kelly/projects/redding/ardb"
+gem 'pg'
