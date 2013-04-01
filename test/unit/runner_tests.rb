@@ -30,14 +30,26 @@ class Ardb::Runner
     setup do
       @orig_root_path = Ardb.config.root_path
       @runner = Ardb::Runner.new(['null', 1, 2], 'root_path' => '/some/path')
-      @runner.run
     end
     teardown do
       Ardb.config.root_path = @orig_root_path
     end
 
     should "set the Ardb config root_path" do
+      subject.run
       assert_equal Pathname.new('/some/path'), Ardb.config.root_path
+    end
+
+    should "validate the configs" do
+      orig_adapter = Ardb.config.db.adapter
+      Ardb.config.db.adapter = nil
+      assert_raises(Ardb::NotConfiguredError) { subject.run }
+      Ardb.config.db.adapter = orig_adapter
+    end
+
+    should "complain about unknown cmds" do
+      runner = Ardb::Runner.new(['unknown'], {})
+      assert_raises(UnknownCmdError) { runner.run }
     end
 
   end
