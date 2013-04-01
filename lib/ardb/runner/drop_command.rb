@@ -21,11 +21,15 @@ class Ardb::Runner::DropCommand
     PostgresqlCommand.new.run
   end
 
+  def sqlite3_cmd
+    SqliteCommand.new.run
+  end
+
   class PostgresqlCommand
     attr_reader :config_settings, :database
 
     def initialize
-      @config_settings  = Ardb.config.db.to_hash
+      @config_settings = Ardb.config.db.to_hash
       @database = Ardb.config.db.database
     end
 
@@ -35,6 +39,24 @@ class Ardb::Runner::DropCommand
         :schema_search_path => 'public'
       }))
       ActiveRecord::Base.connection.drop_database(@database)
+    end
+  end
+
+  class SqliteCommand
+    attr_reader :config_settings, :database, :db_path
+
+    def initialize
+      @config_settings = Ardb.config.db.to_hash
+      @database = Ardb.config.db.database
+      @db_path = if (path = Pathname.new(@database)).absolute?
+        path.to_s
+      else
+        Ardb.config.root_path.join(path).to_s
+      end
+    end
+
+    def run
+      FileUtils.rm(@db_path) if File.exist?(@db_path)
     end
   end
 
