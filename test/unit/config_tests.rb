@@ -30,10 +30,10 @@ class Ardb::Config
     subject{ Ardb::Config.db }
 
     should have_option :adapter,  String, :required => true
-    should have_option :encoding, String, :required => false
-    should have_option :url,      String, :required => true
     should have_option :database, String, :required => true
-    should have_option :username, String, :required => true
+    should have_option :encoding, String, :required => false
+    should have_option :url,      String, :required => false
+    should have_option :username, String, :required => false
     should have_option :password, String, :required => false
 
   end
