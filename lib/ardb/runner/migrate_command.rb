@@ -1,3 +1,4 @@
+require 'fileutils'
 require 'active_record'
 require 'ardb/runner'
 require 'ardb/migration_helpers'
@@ -37,6 +38,7 @@ class Ardb::Runner::MigrateCommand
     end
 
     require 'active_record/schema_dumper'
+    FileUtils.mkdir_p File.dirname(@schema_file_path)
     File.open(@schema_file_path, "w:utf-8") do |file|
       ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
     end
