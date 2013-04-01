@@ -18,7 +18,5 @@ Ardb.configure do |c|
 
   c.db.adapter  'sqlite3'
   c.db.database 'db/test.sqlite3'
-  c.db.pool     5
-  c.db.timeout  5000
 
 end

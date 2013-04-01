@@ -6,7 +6,7 @@ class Ardb::Runner::DropCommand
   def run
     begin
       self.send("#{Ardb.config.db.adapter}_cmd")
-      $stdout.puts "Dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      $stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e

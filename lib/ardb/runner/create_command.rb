@@ -6,7 +6,7 @@ class Ardb::Runner::CreateCommand
   def run
     begin
       self.send("#{Ardb.config.db.adapter}_cmd")
-      $stdout.puts "Created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      $stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e
