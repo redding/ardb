@@ -32,6 +32,8 @@ module Ardb
       rescue Ardb::NotConfiguredError, Ardb::Runner::CmdError => err
         $stderr.puts "#{err.message}"
         exit(1)
+      rescue Ardb::Runner::CmdFail => err
+        exit(1)
       rescue CLIRB::Error => exception
         $stderr.puts "#{exception.message}\n\n"
         $stderr.puts help

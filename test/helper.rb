@@ -12,9 +12,11 @@ require 'fileutils'
 TESTDB_PATH = File.join(ROOT_PATH, 'tmp', 'testdb')
 FileUtils.mkdir_p TESTDB_PATH
 
+require 'logger'
 require 'ardb'
 Ardb.configure do |c|
   c.root_path = TESTDB_PATH
+  c.logger = Logger.new($stdout)
 
   c.db.adapter  'postgresql'
   c.db.database 'ardbtest'
