@@ -55,6 +55,4 @@ class Ardb::Runner::DropCommand
 
   end
 
-  # TODO: would be nice to have a system test that actually created a db
-
 end
