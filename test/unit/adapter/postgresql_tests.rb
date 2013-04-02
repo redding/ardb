@@ -10,8 +10,18 @@ class Ardb::Adapter::Postgresql
     end
     subject { @adapter }
 
-    should "test stuff" do
-      skip 'TODO tests'
+    should "know its foreign key add sql" do
+      exp_add_sql = "ALTER TABLE :from_table"\
+                    " ADD CONSTRAINT :name"\
+                    " FOREIGN KEY (:from_column)"\
+                    " REFERENCES :to_table (:to_column)"
+      assert_equal exp_add_sql, subject.foreign_key_add_sql
+    end
+
+    should "know its foreign key drop sql" do
+      exp_drop_sql = "ALTER TABLE :from_table"\
+                     " DROP CONSTRAINT :name"
+      assert_equal exp_drop_sql, subject.foreign_key_drop_sql
     end
 
   end

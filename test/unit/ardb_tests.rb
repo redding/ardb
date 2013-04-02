@@ -31,6 +31,8 @@ module Ardb
       end
 
       assert_not_nil Adapter.current
+      exp_adapter = Adapter.send(subject.config.db.adapter)
+      assert_equal exp_adapter, Adapter.current
       assert_same Adapter.current, subject.adapter
     end
 
