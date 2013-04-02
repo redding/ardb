@@ -24,6 +24,7 @@ module Ardb
     Adapter.init
 
     # setup AR
+    ActiveRecord::Base.logger = self.config.logger
     ActiveRecord::Base.establish_connection(self.config.db.to_hash)
   end
 
@@ -40,6 +41,7 @@ module Ardb
     end
 
     option :root_path,       Pathname, :required => true
+    option :logger,                    :required => true
     option :migrations_path, String,   :default => proc{ default_migrations_path }
     option :schema_path,     String,   :default => proc{ default_schema_path }
 

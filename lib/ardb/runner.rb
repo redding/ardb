@@ -4,6 +4,7 @@ module Ardb; end
 class Ardb::Runner
   UnknownCmdError = Class.new(ArgumentError)
   CmdError = Class.new(RuntimeError)
+  CmdFail = Class.new(RuntimeError)
 
   attr_reader :cmd_name, :cmd_args, :opts, :root_path
 
@@ -43,6 +44,7 @@ class Ardb::Runner
     DbConfigFile.new.require_if_exists
     Ardb.validate!
     Ardb::Adapter.init
+    ActiveRecord::Base.logger = Ardb.config.logger
   end
 
   class DbConfigFile

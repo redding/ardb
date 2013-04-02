@@ -11,6 +11,7 @@ class Ardb::Config
 
     should have_namespace :db
     should have_option  :root_path, Pathname, :required => true
+    should have_option  :logger, :required => true
     should have_options :migrations_path, :schema_path
 
     should "should use `db/migrations` as the default migrations path" do
