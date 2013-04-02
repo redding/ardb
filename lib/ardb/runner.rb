@@ -40,9 +40,9 @@ class Ardb::Runner
 
   def setup_run
     Ardb.config.root_path = @root_path
-    # TODO: require in a standard file, like config/db.rb??? (for initialization purposes)
     DbConfigFile.new.require_if_exists
     Ardb.validate!
+    Ardb::Adapter.init
   end
 
   class DbConfigFile

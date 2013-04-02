@@ -41,6 +41,4 @@ class Ardb::Runner::GenerateCommand
 
   end
 
-  # TODO: would be nice to have a system test
-
 end

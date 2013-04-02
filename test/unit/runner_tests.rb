@@ -33,6 +33,7 @@ class Ardb::Runner
     end
     teardown do
       Ardb.config.root_path = @orig_root_path
+      Ardb::Adapter.reset
     end
 
     should "set the Ardb config root_path" do
@@ -45,6 +46,12 @@ class Ardb::Runner
       Ardb.config.db.adapter = nil
       assert_raises(Ardb::NotConfiguredError) { subject.run }
       Ardb.config.db.adapter = orig_adapter
+    end
+
+    should "init the adapter" do
+      assert_nil Ardb.adapter
+      subject.run
+      assert_not_nil Ardb.adapter
     end
 
     should "complain about unknown cmds" do
