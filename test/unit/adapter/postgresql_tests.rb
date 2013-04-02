@@ -10,6 +10,16 @@ class Ardb::Adapter::Postgresql
     end
     subject { @adapter }
 
+    should have_instance_method :public_schema_settings
+
+    should "know it's public schema connection settings" do
+      exp_settings = subject.config_settings.merge({
+        :database => 'postgres',
+        :schema_search_path => 'public'
+      })
+      assert_equal exp_settings, subject.public_schema_settings
+    end
+
     should "know its foreign key add sql" do
       exp_add_sql = "ALTER TABLE :from_table"\
                     " ADD CONSTRAINT :name"\

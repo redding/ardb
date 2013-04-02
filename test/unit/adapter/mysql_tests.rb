@@ -24,6 +24,12 @@ class Ardb::Adapter::Mysql
       assert_equal exp_drop_sql, subject.foreign_key_drop_sql
     end
 
+    # not currently implemented, see: https://github.com/redding/ardb/issues/13
+    should "not implement the create and drop db methods" do
+      assert_raises(NotImplementedError) { subject.create_db }
+      assert_raises(NotImplementedError) { subject.drop_db }
+    end
+
   end
 
 end
