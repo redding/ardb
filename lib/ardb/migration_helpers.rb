@@ -21,8 +21,7 @@ module Ardb::MigrationHelpers
   end
 
   class ForeignKey
-    attr_reader :from_table, :from_column, :to_table, :to_column, :name,
-                :adapter
+    attr_reader :from_table, :from_column, :to_table, :to_column, :name, :adapter
 
     def initialize(from_table, from_column, to_table, options=nil)
       options ||= {}
@@ -31,45 +30,27 @@ module Ardb::MigrationHelpers
       @to_table    = to_table
       @to_column   = (options[:to_column] || 'id')
       @name        = (options[:name] || "fk_#{@from_table}_#{@from_column}")
-      @adapter     = Ardb.config.db.adapter
+      @adapter     = Ardb::Adapter.send(Ardb.config.db.adapter)
     end
 
     def add_sql
-      self.send("#{self.adapter}_add_sql")
+      apply_data(@adapter.foreign_key_add_sql)
     end
 
     def drop_sql
-      self.send("#{self.adapter}_drop_sql")
+      apply_data(@adapter.foreign_key_drop_sql)
     end
 
-    protected
+    private
 
-    def postgresql_add_sql
-      "ALTER TABLE #{self.from_table}"\
-      " ADD CONSTRAINT #{self.name}"\
-      " FOREIGN KEY (#{self.from_column})"\
-      " REFERENCES #{self.to_table} (#{self.to_column})"
+    def apply_data(template_sql)
+      template_sql.
+        gsub(':from_table',  @from_table).
+        gsub(':from_column', @from_column).
+        gsub(':to_table',    @to_table).
+        gsub(':to_column',   @to_column).
+        gsub(':name',        @name)
     end
-
-    def postgresql_drop_sql
-      "ALTER TABLE #{self.from_table}"\
-      " DROP CONSTRAINT #{self.name}"
-    end
-
-    def mysql_add_sql
-      "ALTER TABLE #{self.from_table}"\
-      " ADD CONSTRAINT #{self.name}"\
-      " FOREIGN KEY (#{self.from_column})"\
-      " REFERENCES #{self.to_table} (#{self.to_column})"
-    end
-    alias :mysql2_add_sql :mysql_add_sql
-
-    def mysql_drop_sql
-      "ALTER TABLE #{self.from_table}"\
-      " DROP FOREIGN KEY #{self.name}"
-    end
-    alias :mysql2_drop_sql :mysql_drop_sql
-
   end
 
   # This file will setup the AR migration command recorder for being able to change our
