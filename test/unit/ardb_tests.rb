@@ -6,8 +6,12 @@ module Ardb
   class BaseTests < Assert::Context
     desc "Ardb"
     subject{ Ardb }
+    setup do
+      @orig_ar_logger = ActiveRecord::Base.logger
+    end
     teardown do
       Adapter.reset
+      ActiveRecord::Base.logger = @orig_ar_logger
     end
 
     should have_imeths :config, :configure, :adapter, :validate!, :init

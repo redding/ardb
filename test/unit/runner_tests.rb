@@ -1,5 +1,6 @@
 require 'assert'
 require 'pathname'
+require 'active_record'
 require 'ardb/runner'
 
 class Ardb::Runner
@@ -52,6 +53,13 @@ class Ardb::Runner
       assert_nil Ardb.adapter
       subject.run
       assert_not_nil Ardb.adapter
+    end
+
+    should "set the AR logger" do
+      default_ar_logger = ActiveRecord::Base.logger
+      subject.run
+      assert_equal Ardb.config.logger, ActiveRecord::Base.logger
+      ActiveRecord::Base.logger = default_ar_logger
     end
 
     should "complain about unknown cmds" do

@@ -14,8 +14,7 @@ class Ardb::Runner::CreateCommand
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e
-      $stderr.puts e, *(e.backtrace)
-      $stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
+      raise Ardb::Runner::CmdFail
     end
   end
 
