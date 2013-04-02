@@ -59,7 +59,4 @@ class Ardb::Runner::MigrateCommand
 
   end
 
-  # TODO: would be nice to have a system test that actually took some migrations
-  # and ran them.
-
 end

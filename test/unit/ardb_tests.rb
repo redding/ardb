@@ -6,8 +6,11 @@ module Ardb
   class BaseTests < Assert::Context
     desc "Ardb"
     subject{ Ardb }
+    teardown do
+      Adapter.reset
+    end
 
-    should have_instance_methods :config, :configure, :validate!, :init
+    should have_imeths :config, :configure, :adapter, :validate!, :init
 
     should "return its `Config` class with the `config` method" do
       assert_same Config, subject.config
@@ -20,12 +23,25 @@ module Ardb
       Ardb.config.db.adapter = orig_adapter
     end
 
-    should "establish and AR connection if all configs are set" do
-      assert true
-      # not going to test this b/c I don't want to bring in all the crap it
-      # takes to actually establish a connection with AR (adapters, etc)
-      # plus, most of this should be handled by AR, ns-options, and the above
-      # tests anyway
+    should "init the adapter on init" do
+      assert_nil Adapter.current
+      begin
+        subject.init
+      rescue LoadError
+      end
+
+      assert_not_nil Adapter.current
+      assert_same Adapter.current, subject.adapter
+    end
+
+    should "establish an AR connection on init" do
+      assert_raises(LoadError) do
+        # not going to test this b/c I don't want to bring in all the crap it
+        # takes to actually establish a connection with AR (adapters, etc)
+        # plus, most of this should be handled by AR, ns-options, and the above
+        # tests anyway
+        subject.init
+      end
     end
 
   end
