@@ -10,48 +10,7 @@ class Ardb::Runner::DropCommand
     end
     subject{ @cmd }
 
-    should have_instance_methods :run, :postgresql_cmd
-
-  end
-
-  class PostgresqlTests < BaseTests
-    desc "Ardb::Runner::DropCommand::PostgresqlCommand"
-    setup do
-      @cmd = Ardb::Runner::DropCommand::PostgresqlCommand.new
-    end
-
-    should have_readers :config_settings, :database
-
-    should "use the config's db settings " do
-      assert_equal Ardb.config.db.to_hash, subject.config_settings
-    end
-
-    should "use the config's database" do
-      assert_equal Ardb.config.db.database, subject.database
-    end
-
-  end
-
-  class SqliteTests < BaseTests
-    desc "Ardb::Runner::DropCommand::SqliteCommand"
-    setup do
-      @cmd = Ardb::Runner::DropCommand::SqliteCommand.new
-    end
-
-    should have_readers :config_settings, :database, :db_path
-
-    should "use the config's db settings " do
-      assert_equal Ardb.config.db.to_hash, subject.config_settings
-    end
-
-    should "use the config's database" do
-      assert_equal Ardb.config.db.database, subject.database
-    end
-
-    should "know the full path to the db file" do
-      exp_path = Ardb.config.root_path.join(Ardb.config.db.database).to_s
-      assert_equal exp_path, subject.db_path
-    end
+    should have_instance_methods :run
 
   end
 
