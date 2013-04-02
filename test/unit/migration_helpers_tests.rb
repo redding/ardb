@@ -42,33 +42,20 @@ module Ardb::MigrationHelpers
     end
 
     should "use Ardb's config db adapter" do
-      assert_equal Ardb.config.db.adapter, subject.adapter
+      exp_adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      assert_equal exp_adapter, subject.adapter
     end
 
-    should "support the `postgresql` adapter" do
+    should "generate appropriate foreign key sql" do
       exp_add_sql = "ALTER TABLE fromtbl"\
                     " ADD CONSTRAINT fk_fromtbl_fromcol"\
                     " FOREIGN KEY (fromcol)"\
                     " REFERENCES totbl (id)"
-      assert_equal exp_add_sql, subject.send('postgresql_add_sql')
+      assert_equal exp_add_sql, subject.add_sql
 
       exp_drop_sql = "ALTER TABLE fromtbl"\
                      " DROP CONSTRAINT fk_fromtbl_fromcol"
-      assert_equal exp_drop_sql, subject.send('postgresql_drop_sql')
-    end
-
-    should "support the `mysql` and `mysql2` adapters" do
-      exp_add_sql = "ALTER TABLE fromtbl"\
-                    " ADD CONSTRAINT fk_fromtbl_fromcol"\
-                    " FOREIGN KEY (fromcol)"\
-                    " REFERENCES totbl (id)"
-      assert_equal exp_add_sql, subject.send('mysql_add_sql')
-      assert_equal exp_add_sql, subject.send('mysql2_add_sql')
-
-      exp_drop_sql = "ALTER TABLE fromtbl"\
-                     " DROP FOREIGN KEY fk_fromtbl_fromcol"
-      assert_equal exp_drop_sql, subject.send('mysql_drop_sql')
-      assert_equal exp_drop_sql, subject.send('mysql2_drop_sql')
+      assert_equal exp_drop_sql, subject.drop_sql
     end
 
   end

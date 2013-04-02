@@ -10,8 +10,9 @@ class Ardb::Adapter::Sqlite
     end
     subject { @adapter }
 
-    should "test stuff" do
-      skip 'TODO tests'
+    should "not implement the foreign key sql meths" do
+      assert_raises(NotImplementedError) { subject.foreign_key_add_sql }
+      assert_raises(NotImplementedError) { subject.foreign_key_drop_sql }
     end
 
   end

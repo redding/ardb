@@ -10,8 +10,11 @@ class Ardb::Adapter::Base
     end
     subject { @adapter }
 
-    should "test stuff" do
-      skip 'TODO tests'
+    should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
+
+    should "not implement the foreign key sql meths" do
+      assert_raises(NotImplementedError) { subject.foreign_key_add_sql }
+      assert_raises(NotImplementedError) { subject.foreign_key_drop_sql }
     end
 
   end

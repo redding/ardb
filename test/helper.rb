@@ -16,7 +16,7 @@ require 'ardb'
 Ardb.configure do |c|
   c.root_path = TESTDB_PATH
 
-  c.db.adapter  'sqlite3'
-  c.db.database 'db/test.sqlite3'
+  c.db.adapter  'postgresql'
+  c.db.database 'ardbtest'
 
 end
