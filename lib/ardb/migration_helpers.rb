@@ -2,6 +2,7 @@ require 'ardb'
 
 module Ardb; end
 module Ardb::MigrationHelpers
+  module_function
 
   def foreign_key(from_table, from_column, to_table, options={})
     fk = ForeignKey.new(from_table, from_column, to_table, options)

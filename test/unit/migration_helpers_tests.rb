@@ -1,15 +1,11 @@
 require 'assert'
-require 'test/support/with_migration_helpers'
 require 'ardb/migration_helpers'
 
 module Ardb::MigrationHelpers
 
   class BaseTests < Assert::Context
     desc "Ardb migration helpers"
-    setup do
-      @with = Ardb::WithMigrationHelpers.new
-    end
-    subject{ @with }
+    subject{ Ardb::MigrationHelpers }
 
     should have_instance_methods :foreign_key, :drop_foreign_key, :remove_column_with_fk
 
