@@ -9,12 +9,7 @@ module Ardb::TestHelpers
   module_function
 
   def drop_tables
-    ActiveRecord::Base.connection.tap do |conn|
-      tables = conn.execute "SELECT table_name"\
-                            " FROM information_schema.tables"\
-                            " WHERE table_schema = 'public';"
-      tables.each{ |row| conn.execute "DROP TABLE #{row['table_name']} CASCADE" }
-    end
+    Ardb.adapter.drop_tables
   end
 
   def load_schema

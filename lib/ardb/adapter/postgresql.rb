@@ -23,6 +23,15 @@ class Ardb::Adapter
       ActiveRecord::Base.connection.drop_database(self.database)
     end
 
+    def drop_tables
+      ActiveRecord::Base.connection.tap do |conn|
+        tables = conn.execute "SELECT table_name"\
+                              " FROM information_schema.tables"\
+                              " WHERE table_schema = 'public';"
+        tables.each{ |row| conn.execute "DROP TABLE #{row['table_name']} CASCADE" }
+      end
+    end
+
     def foreign_key_add_sql
       "ALTER TABLE :from_table"\
       " ADD CONSTRAINT :name"\
