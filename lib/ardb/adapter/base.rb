@@ -15,6 +15,8 @@ class Ardb::Adapter::Base
   def create_db(*args); raise NotImplementedError; end
   def drop_db(*args);   raise NotImplementedError; end
 
+  def drop_tables(*args); raise NotImplementedError; end
+
   def ==(other_adapter)
     self.class == other_adapter.class
   end

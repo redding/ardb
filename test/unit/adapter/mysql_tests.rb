@@ -30,6 +30,11 @@ class Ardb::Adapter::Mysql
       assert_raises(NotImplementedError) { subject.drop_db }
     end
 
+    # not currently implemented, see: https://github.com/redding/ardb/issues/28
+    should "not implement the drop tables method" do
+      assert_raises(NotImplementedError) { subject.drop_tables }
+    end
+
   end
 
 end

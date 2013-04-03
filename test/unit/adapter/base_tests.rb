@@ -32,6 +32,10 @@ class Ardb::Adapter::Base
       assert_raises(NotImplementedError) { subject.drop_db }
     end
 
+    should "not implement the drop table methods" do
+      assert_raises(NotImplementedError) { subject.drop_tables }
+    end
+
   end
 
 end
