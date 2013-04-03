@@ -25,11 +25,11 @@ module Ardb::MigrationHelpers
 
     def initialize(from_table, from_column, to_table, options=nil)
       options ||= {}
-      @from_table  = from_table
-      @from_column = from_column
-      @to_table    = to_table
-      @to_column   = (options[:to_column] || 'id')
-      @name        = (options[:name] || "fk_#{@from_table}_#{@from_column}")
+      @from_table  = from_table.to_s
+      @from_column = from_column.to_s
+      @to_table    = to_table.to_s
+      @to_column   = (options[:to_column] || 'id').to_s
+      @name        = (options[:name] || "fk_#{@from_table}_#{@from_column}").to_s
       @adapter     = Ardb::Adapter.send(Ardb.config.db.adapter)
     end
 
