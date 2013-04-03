@@ -19,13 +19,13 @@ module Ardb
     end
   end
 
-  def self.init
+  def self.init(connection=true)
     validate!
     Adapter.init
 
     # setup AR
     ActiveRecord::Base.logger = self.config.logger
-    ActiveRecord::Base.establish_connection(self.config.db.to_hash)
+    ActiveRecord::Base.establish_connection(self.config.db.to_hash) if connection
   end
 
   class Config
