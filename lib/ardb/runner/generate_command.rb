@@ -24,6 +24,7 @@ class Ardb::Runner::GenerateCommand
     rescue Exception => e
       $stderr.puts e, *(e.backtrace)
       $stderr.puts "error generating #{@item}."
+      raise Ardb::Runner::CmdFail
     end
   end
 
@@ -44,9 +45,11 @@ class Ardb::Runner::GenerateCommand
       @file_name  = begin
         "#{Time.now.strftime("%Y%m%d%H%M%S")}_#{@identifier.underscore}"
       end
-      @template = "class #{@class_name} < ActiveRecord::Migration\n"\
+      @template = "require 'ardb/migration_helpers'\n\n"\
+                  "class #{@class_name} < ActiveRecord::Migration\n"\
+                  "  include Ardb::MigrationHelpers\n\n"\
                   "  def change\n"\
-                  "  end\n"\
+                  "  end\n\n"\
                   "end\n"
     end
 

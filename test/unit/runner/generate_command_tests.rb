@@ -35,7 +35,9 @@ class Ardb::Runner::GenerateCommand
     end
 
     should "know its template" do
+      assert_includes "require 'ardb/migration_helpers'", subject.template
       assert_includes "class #{subject.class_name} < ActiveRecord::Migration", subject.template
+      assert_includes "include Ardb::MigrationHelpers", subject.template
       assert_includes "def change", subject.template
     end
 
