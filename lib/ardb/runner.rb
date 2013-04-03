@@ -42,9 +42,7 @@ class Ardb::Runner
   def setup_run
     Ardb.config.root_path = @root_path
     DbConfigFile.new.require_if_exists
-    Ardb.validate!
-    Ardb::Adapter.init
-    ActiveRecord::Base.logger = Ardb.config.logger
+    Ardb.init(false) # don't establish a connection
   end
 
   class DbConfigFile
