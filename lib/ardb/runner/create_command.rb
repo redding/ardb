@@ -14,6 +14,8 @@ class Ardb::Runner::CreateCommand
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e
+      $stderr.puts e
+      $stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
       raise Ardb::Runner::CmdFail
     end
   end

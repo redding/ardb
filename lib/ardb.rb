@@ -1,9 +1,10 @@
-require 'active_record'
-require 'ns-options'
 require 'pathname'
 require 'singleton'
+require 'active_record'
+require 'ns-options'
 
-require "ardb/version"
+require 'ardb/version'
+require 'ardb/root_path'
 
 module Ardb
   NotConfiguredError = Class.new(RuntimeError)
@@ -42,11 +43,8 @@ module Ardb
 
     option :root_path,       Pathname, :required => true
     option :logger,                    :required => true
-    option :migrations_path, String,   :default => proc{ default_migrations_path }
-    option :schema_path,     String,   :default => proc{ default_schema_path }
-
-    def self.default_migrations_path; root_path.join("db/migrations"); end
-    def self.default_schema_path;     root_path.join("db/schema.rb");  end
+    option :migrations_path, RootPath, :default => proc{ "db/migrations" }
+    option :schema_path,     RootPath, :default => proc{ "db/schema.rb" }
 
   end
 
