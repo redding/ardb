@@ -5,6 +5,7 @@ class Ardb::Runner::ConnectCommand
   def run
     begin
       Ardb.init
+      ActiveRecord::Base.connection
       $stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
     rescue Ardb::Runner::CmdError => e
       raise e
