@@ -1,12 +1,12 @@
 require 'assert'
-require 'ardb/runner/create_command'
+require 'ardb/runner/connect_command'
 
 class Ardb::Runner::CreateCommand
 
   class BaseTests < Assert::Context
-    desc "Ardb::Runner::CreateCommand"
+    desc "Ardb::Runner::ConnectCommand"
     setup do
-      @cmd = Ardb::Runner::CreateCommand.new
+      @cmd = Ardb::Runner::ConnectCommand.new
     end
     subject{ @cmd }
 
