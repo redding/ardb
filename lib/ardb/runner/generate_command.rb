@@ -22,7 +22,7 @@ class Ardb::Runner::GenerateCommand
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e
-      $stderr.puts e, *(e.backtrace)
+      $stderr.puts e
       $stderr.puts "error generating #{@item}."
       raise Ardb::Runner::CmdFail
     end
