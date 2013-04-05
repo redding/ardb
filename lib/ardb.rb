@@ -33,12 +33,13 @@ module Ardb
     include NsOptions::Proxy
 
     namespace :db do
-      option :adapter,  String, :required => true
-      option :database, String, :required => true
-      option :encoding, String, :required => false
-      option :url,      String, :required => false
-      option :username, String, :required => false
-      option :password, String, :required => false
+      option :adapter,  String,  :required => true
+      option :database, String,  :required => true
+      option :encoding, String,  :required => false
+      option :host,     String,  :required => false
+      option :port,     Integer, :required => false
+      option :username, String,  :required => false
+      option :password, String,  :required => false
     end
 
     option :root_path,       Pathname, :required => true
