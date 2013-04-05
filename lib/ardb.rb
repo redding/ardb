@@ -20,31 +20,41 @@ module Ardb
     end
   end
 
-  def self.init(connection=true)
+  def self.init(establish_connection=true)
     validate!
     Adapter.init
 
     # setup AR
     ActiveRecord::Base.logger = self.config.logger
-    ActiveRecord::Base.establish_connection(self.config.db.to_hash) if connection
+    if establish_connection
+      ActiveRecord::Base.establish_connection(self.config.db_settings)
+    end
   end
 
   class Config
     include NsOptions::Proxy
 
     namespace :db do
-      option :adapter,  String, :required => true
-      option :database, String, :required => true
-      option :encoding, String, :required => false
-      option :url,      String, :required => false
-      option :username, String, :required => false
-      option :password, String, :required => false
+      option :adapter,  String,  :required => true
+      option :database, String,  :required => true
+      option :encoding, String,  :required => false
+      option :host,     String,  :required => false
+      option :port,     Integer, :required => false
+      option :username, String,  :required => false
+      option :password, String,  :required => false
     end
 
     option :root_path,       Pathname, :required => true
     option :logger,                    :required => true
     option :migrations_path, RootPath, :default => proc{ "db/migrations" }
     option :schema_path,     RootPath, :default => proc{ "db/schema.rb" }
+
+    def self.db_settings
+      db.to_hash.inject({}) do |settings, (k, v)|
+        settings[k.to_s] = v if !v.nil?
+        settings
+      end
+    end
 
   end
 
