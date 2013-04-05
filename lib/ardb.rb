@@ -26,7 +26,7 @@ module Ardb
 
     # setup AR
     ActiveRecord::Base.logger = self.config.logger
-    ActiveRecord::Base.establish_connection(self.config.db.to_hash) if connection
+    ActiveRecord::Base.establish_connection(self.config.db_settings) if connection
   end
 
   class Config
@@ -46,6 +46,13 @@ module Ardb
     option :logger,                    :required => true
     option :migrations_path, RootPath, :default => proc{ "db/migrations" }
     option :schema_path,     RootPath, :default => proc{ "db/schema.rb" }
+
+    def self.db_settings
+      db.to_hash.inject({}) do |settings, (k, v)|
+        settings[k.to_s] = v if !v.nil?
+        settings
+      end
+    end
 
   end
 

@@ -15,7 +15,7 @@ class Ardb::Adapter::Base
     should have_imeths :create_db, :drop_db
 
     should "use the config's db settings " do
-      assert_equal Ardb.config.db.to_hash, subject.config_settings
+      assert_equal Ardb.config.db_settings, subject.config_settings
     end
 
     should "use the config's database" do

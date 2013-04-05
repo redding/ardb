@@ -11,7 +11,7 @@ class Ardb::Runner::ConnectCommand
     rescue Exception => e
       $stderr.puts e, *e.backtrace
       $stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database"\
-                   " with #{Ardb.config.db.to_hash.inspect}"
+                   " with #{Ardb.config.db_settings.inspect}"
       raise Ardb::Runner::CmdFail
     end
   end
