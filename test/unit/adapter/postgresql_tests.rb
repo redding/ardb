@@ -14,8 +14,8 @@ class Ardb::Adapter::Postgresql
 
     should "know it's public schema connection settings" do
       exp_settings = subject.config_settings.merge({
-        :database => 'postgres',
-        :schema_search_path => 'public'
+        'database' => 'postgres',
+        'schema_search_path' => 'public'
       })
       assert_equal exp_settings, subject.public_schema_settings
     end
