@@ -13,6 +13,7 @@ class Ardb::Config
     should have_option  :root_path, Pathname, :required => true
     should have_option  :logger, :required => true
     should have_options :migrations_path, :schema_path
+    should have_imeth   :db_settings
 
     should "should use `db/migrations` as the default migrations path" do
       exp_path = Pathname.new(TESTDB_PATH).join("db/migrations").to_s
@@ -24,18 +25,28 @@ class Ardb::Config
       assert_equal exp_path, subject.schema_path
     end
 
+    should "build the db connection settings from the db configs" do
+      # returns only non-nil values with string keys
+      exp = {
+        'adapter'  => "postgresql",
+        'database' => "ardbtest"
+      }
+      assert_equal exp, subject.db_settings
+    end
+
   end
 
   class DbTests < BaseTests
     desc "db namespace"
     subject{ Ardb::Config.db }
 
-    should have_option :adapter,  String, :required => true
-    should have_option :database, String, :required => true
-    should have_option :encoding, String, :required => false
-    should have_option :url,      String, :required => false
-    should have_option :username, String, :required => false
-    should have_option :password, String, :required => false
+    should have_option :adapter,  String,  :required => true
+    should have_option :database, String,  :required => true
+    should have_option :encoding, String,  :required => false
+    should have_option :host,     String,  :required => false
+    should have_option :port,     Integer, :required => false
+    should have_option :username, String,  :required => false
+    should have_option :password, String,  :required => false
 
   end
 

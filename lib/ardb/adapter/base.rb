@@ -5,7 +5,7 @@ class Ardb::Adapter::Base
   attr_reader :config_settings, :database
 
   def initialize
-    @config_settings = Ardb.config.db.to_hash
+    @config_settings = Ardb.config.db_settings
     @database = Ardb.config.db.database
   end
 
