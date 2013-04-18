@@ -1,18 +1,19 @@
 require 'ardb'
 
+ENV['ARDB_CONFIG_FILE'] ||= 'config/db'
+
 module Ardb; end
 class Ardb::Runner
   UnknownCmdError = Class.new(ArgumentError)
   CmdError = Class.new(RuntimeError)
   CmdFail = Class.new(RuntimeError)
 
-  attr_reader :cmd_name, :cmd_args, :opts, :root_path
+  attr_reader :cmd_name, :cmd_args, :opts
 
   def initialize(args, opts)
     @opts = opts
     @cmd_name = args.shift || ""
     @cmd_args = args
-    @root_path = @opts.delete('root_path') || Dir.pwd
   end
 
   def run
@@ -43,20 +44,8 @@ class Ardb::Runner
   private
 
   def setup_run
-    Ardb.config.root_path = @root_path
-    DbConfigFile.new.require_if_exists
+    require ENV['ARDB_CONFIG_FILE']
     Ardb.init(false) # don't establish a connection
-  end
-
-  class DbConfigFile
-    PATH = 'config/db.rb'
-    def initialize
-      @path = Ardb.config.root_path.join(PATH)
-    end
-
-    def require_if_exists
-      require @path.to_s if File.exists?(@path.to_s)
-    end
   end
 
   class NullCommand

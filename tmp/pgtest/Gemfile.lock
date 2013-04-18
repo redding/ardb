@@ -1,7 +1,7 @@
 PATH
   remote: /Users/kelly/projects/redding/ardb
   specs:
-    ardb (0.0.1)
+    ardb (0.4.1)
       activerecord (~> 3.2)
       activesupport (~> 3.2)
       ns-options (~> 1.1)
