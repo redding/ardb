@@ -6,6 +6,8 @@ require 'ns-options'
 require 'ardb/version'
 require 'ardb/root_path'
 
+ENV['ARDB_DB_FILE'] ||= 'config/db'
+
 module Ardb
   NotConfiguredError = Class.new(RuntimeError)
 
@@ -21,6 +23,7 @@ module Ardb
   end
 
   def self.init(establish_connection=true)
+    require self.config.db_file
     validate!
     Adapter.init
 
@@ -44,6 +47,7 @@ module Ardb
       option :password, String,  :required => false
     end
 
+    option :db_file,         Pathname, :default => ENV['ARDB_DB_FILE']
     option :root_path,       Pathname, :required => true
     option :logger,                    :required => true
     option :migrations_path, RootPath, :default => proc{ "db/migrations" }
