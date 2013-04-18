@@ -10,11 +10,7 @@ module Ardb
     end
 
     def initialize
-      @cli = CLIRB.new do
-        option 'root_path', 'root path Ardb should use (`Dir.pwd`)', {
-          :abbrev => 'p', :value => String
-        }
-      end
+      @cli = CLIRB.new
     end
 
     def run(*args)
