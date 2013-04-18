@@ -25,6 +25,7 @@ class Ardb::Runner
   class RunTests < BaseTests
     desc "when running a command"
     setup do
+      Ardb::Adapter.reset
       @runner = Ardb::Runner.new(['null', 1, 2], {})
     end
     teardown do

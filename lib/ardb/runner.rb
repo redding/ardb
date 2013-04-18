@@ -1,7 +1,5 @@
 require 'ardb'
 
-ENV['ARDB_CONFIG_FILE'] ||= 'config/db'
-
 module Ardb; end
 class Ardb::Runner
   UnknownCmdError = Class.new(ArgumentError)
@@ -17,7 +15,8 @@ class Ardb::Runner
   end
 
   def run
-    setup_run
+    Ardb.init(false) # don't establish a connection
+
     case @cmd_name
     when 'migrate'
       require 'ardb/runner/migrate_command'
@@ -39,13 +38,6 @@ class Ardb::Runner
     else
       raise UnknownCmdError, "unknown command `#{@cmd_name}`"
     end
-  end
-
-  private
-
-  def setup_run
-    require ENV['ARDB_CONFIG_FILE']
-    Ardb.init(false) # don't establish a connection
   end
 
   class NullCommand
