@@ -28,6 +28,7 @@ module Ardb
     end
 
     should "init the adapter on init" do
+      Adapter.reset
       assert_nil Adapter.current
       begin
         subject.init
