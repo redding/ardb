@@ -15,12 +15,37 @@ module Ardb::RecordSpy
     end
     subject{ MyRecord }
 
-    should have_readers :validations, :callbacks
+    should have_readers :associations, :callbacks, :validations
+    should have_imeths :belongs_to, :has_many, :has_one
     should have_imeths :validates_presence_of, :validates_uniqueness_of
     should have_imeths :validates_inclusion_of, :before_validation, :after_save
 
     should "included the record spy instance methods" do
       assert_includes Ardb::RecordSpy::InstanceMethods, subject.included_modules
+    end
+
+    should "add an association config with #belongs_to" do
+      subject.belongs_to :area, :foreign_key => :area_id
+      association = subject.associations.last
+      assert_equal :belongs_to, association.type
+      assert_equal :area,       association.name
+      assert_equal :area_id,    association.options[:foreign_key]
+    end
+
+    should "add an association config with #has_many" do
+      subject.has_many :comments, :as => :parent
+      association = subject.associations.last
+      assert_equal :has_many, association.type
+      assert_equal :comments, association.name
+      assert_equal :parent,   association.options[:as]
+    end
+
+    should "add an association config with #has_one" do
+      subject.has_one :linking, :class_name => 'Linking'
+      association = subject.associations.last
+      assert_equal :has_one,  association.type
+      assert_equal :linking,  association.name
+      assert_equal 'Linking', association.options[:class_name]
     end
 
     should "add a validation config with #validates_presence_of" do
