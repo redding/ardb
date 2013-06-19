@@ -41,7 +41,12 @@ module Ardb
 
       end
 
-      [ :before_validation, :after_save ].each do |method_name|
+      def validate(method_name = nil, &block)
+        @validations ||= []
+        @validations << Validation.new(:custom, method_name, &block)
+      end
+
+      [ :after_initialize, :before_validation, :after_save ].each do |method_name|
 
         define_method(method_name) do |*args, &block|
           @callbacks ||= []
@@ -78,12 +83,17 @@ module Ardb
     end
 
     class Validation
-      attr_reader :type, :columns, :options
+      attr_reader :type, :columns, :options, :method_name, :block
 
       def initialize(type, *args, &block)
         @type  = type.to_sym
-        @options = args.last.kind_of?(::Hash) ? args.pop : {}
-        @columns = args
+        @block = block
+        if type != :custom
+          @options = args.last.kind_of?(::Hash) ? args.pop : {}
+          @columns = args
+        else
+          @method_name = args.first
+        end
       end
     end
 

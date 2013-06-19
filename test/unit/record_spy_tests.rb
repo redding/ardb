@@ -18,7 +18,8 @@ module Ardb::RecordSpy
     should have_readers :associations, :callbacks, :validations
     should have_imeths :belongs_to, :has_many, :has_one
     should have_imeths :validates_presence_of, :validates_uniqueness_of
-    should have_imeths :validates_inclusion_of, :before_validation, :after_save
+    should have_imeths :validates_inclusion_of, :validate
+    should have_imeths :after_initialize, :before_validation, :after_save
 
     should "included the record spy instance methods" do
       assert_includes Ardb::RecordSpy::InstanceMethods, subject.included_modules
@@ -71,6 +72,26 @@ module Ardb::RecordSpy
       assert_equal :inclusion, validation.type
       assert_includes :active, validation.columns
       assert_equal [ true, false], validation.options[:in]
+    end
+
+    should "add a validation config with #validate" do
+      subject.validate :some_method
+      validation = subject.validations.last
+      assert_equal :custom,      validation.type
+      assert_equal :some_method, validation.method_name
+
+      proc = proc{ }
+      subject.validate(&proc)
+      validation = subject.validations.last
+      assert_equal :custom, validation.type
+      assert_equal proc,    validation.block
+    end
+
+    should "add a callback config with #after_initialize" do
+      subject.after_initialize :a_callback_method
+      callback = subject.callbacks.last
+      assert_equal :after_initialize, callback.type
+      assert_includes :a_callback_method, callback.args
     end
 
     should "add a callback config with #before_validation" do
