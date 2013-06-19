@@ -18,7 +18,16 @@ module Ardb
 
     module ClassMethods
 
-      attr_reader :validations, :callbacks
+      attr_reader :associations, :callbacks, :validations
+
+      [ :belongs_to, :has_many, :has_one ].each do |method_name|
+
+        define_method(method_name) do |*args|
+          @associations ||= []
+          @associations << Association.new(method_name, *args)
+        end
+
+      end
 
       [ :validates_presence_of, :validates_uniqueness_of,
         :validates_inclusion_of
@@ -32,7 +41,12 @@ module Ardb
 
       end
 
-      [ :before_validation, :after_save ].each do |method_name|
+      def validate(method_name = nil, &block)
+        @validations ||= []
+        @validations << Validation.new(:custom, method_name, &block)
+      end
+
+      [ :after_initialize, :before_validation, :after_save ].each do |method_name|
 
         define_method(method_name) do |*args, &block|
           @callbacks ||= []
@@ -47,13 +61,13 @@ module Ardb
 
     end
 
-    class Validation
-      attr_reader :type, :columns, :options
+    class Association
+      attr_reader :type, :name, :options
 
-      def initialize(type, *args)
-        @type    = type.to_sym
-        @options = args.last.kind_of?(::Hash) ? args.pop : {}
-        @columns = args
+      def initialize(type, name, options)
+        @type = type.to_sym
+        @name = name
+        @options = options
       end
     end
 
@@ -65,6 +79,21 @@ module Ardb
         @options = args.last.kind_of?(::Hash) ? args.pop : {}
         @args  = args
         @block = block
+      end
+    end
+
+    class Validation
+      attr_reader :type, :columns, :options, :method_name, :block
+
+      def initialize(type, *args, &block)
+        @type  = type.to_sym
+        @block = block
+        if type != :custom
+          @options = args.last.kind_of?(::Hash) ? args.pop : {}
+          @columns = args
+        else
+          @method_name = args.first
+        end
       end
     end
 
