@@ -29,8 +29,10 @@ module Ardb
 
       end
 
-      [ :validates_presence_of, :validates_uniqueness_of,
-        :validates_inclusion_of
+      [ :validates_acceptance_of, :validates_confirmation_of,
+        :validates_exclusion_of,  :validates_format_of, :validates_inclusion_of,
+        :validates_length_of, :validates_numericality_of,
+        :validates_presence_of, :validates_size_of, :validates_uniqueness_of
       ].each do |method_name|
         type = method_name.to_s.match(/\Avalidates_(.+)_of\Z/)[1]
 
@@ -41,12 +43,33 @@ module Ardb
 
       end
 
+      def validates_associated(*args)
+        @validations ||= []
+        @validations << Validation.new(:associated, *args)
+      end
+
+      def validates_with(*args)
+        @validations ||= []
+        @validations << Validation.new(:with, *args)
+      end
+
+      def validates_each(*args, &block)
+        @validations ||= []
+        @validations << Validation.new(:each, *args, &block)
+      end
+
       def validate(method_name = nil, &block)
         @validations ||= []
         @validations << Validation.new(:custom, method_name, &block)
       end
 
-      [ :after_initialize, :before_validation, :after_save ].each do |method_name|
+      [ :before_validation, :after_validation,
+        :before_create,  :around_create,  :after_create,
+        :before_update,  :around_update,  :after_update,
+        :before_save,    :around_save,    :after_save,
+        :before_destroy, :around_destroy, :after_destroy,
+        :after_initialize, :after_find
+      ].each do |method_name|
 
         define_method(method_name) do |*args, &block|
           @callbacks ||= []
@@ -83,16 +106,18 @@ module Ardb
     end
 
     class Validation
-      attr_reader :type, :columns, :options, :method_name, :block
+      attr_reader :type, :args, :options, :method_name, :block
+      alias :columns :args
+      alias :associations :args
+      alias :classes :args
 
       def initialize(type, *args, &block)
         @type  = type.to_sym
+        @options = args.last.kind_of?(::Hash) ? args.pop : {}
+        @args = args
         @block = block
-        if type != :custom
-          @options = args.last.kind_of?(::Hash) ? args.pop : {}
-          @columns = args
-        else
-          @method_name = args.first
+        if @type == :custom
+          @method_name = @args.first
         end
       end
     end
