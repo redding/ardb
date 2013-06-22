@@ -19,15 +19,19 @@ class Ardb::Adapter
     end
 
     def drop_db
-      ActiveRecord::Base.establish_connection(self.public_schema_settings)
-      ActiveRecord::Base.connection.tap do |conn|
-        conn.execute "UPDATE pg_catalog.pg_database"\
-                     " SET datallowconn=false WHERE datname='#{self.database}'"
-        # this SELECT actually runs a command: it terminates all the connections
-        # http://www.postgresql.org/docs/9.2/static/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL-TABLE
-        conn.execute "SELECT pg_terminate_backend(pid)"\
-                     " FROM pg_stat_activity WHERE datname='#{self.database}'"
-        conn.execute "DROP DATABASE IF EXISTS #{self.database}"
+      begin
+        ActiveRecord::Base.establish_connection(self.public_schema_settings)
+        ActiveRecord::Base.connection.tap do |conn|
+          conn.execute "UPDATE pg_catalog.pg_database"\
+                       " SET datallowconn=false WHERE datname='#{self.database}'"
+          # this SELECT actually runs a command: it terminates all the connections
+          # http://www.postgresql.org/docs/9.2/static/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL-TABLE
+          conn.execute "SELECT pg_terminate_backend(pid)"\
+                       " FROM pg_stat_activity WHERE datname='#{self.database}'"
+          conn.execute "DROP DATABASE IF EXISTS #{self.database}"
+        end
+      rescue PG::Error => e
+        raise e unless e.message =~ /does not exist/
       end
     end
 
