@@ -20,5 +20,10 @@ module Ardb::TestHelpers
     $stdout = current_stdout
   end
 
-end
+  def reset_db
+    Ardb.adapter.drop_db
+    Ardb.adapter.create_db
+    self.load_schema
+  end
 
+end
