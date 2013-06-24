@@ -13,11 +13,7 @@ module Ardb::TestHelpers
   end
 
   def load_schema
-    # silence STDOUT
-    current_stdout = $stdout.dup
-    $stdout = File.new('/dev/null', 'w')
-    load Ardb.config.schema_path
-    $stdout = current_stdout
+    Ardb.adapter.load_schema
   end
 
   def reset_db!
