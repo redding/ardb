@@ -65,7 +65,7 @@ module Ardb
   class Adapter
     include Singleton
 
-    attr_reader :current
+    attr_accessor :current
 
     def init
       @current = Adapter.send(Ardb.config.db.adapter)
