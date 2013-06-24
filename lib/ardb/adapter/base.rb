@@ -17,6 +17,14 @@ class Ardb::Adapter::Base
 
   def drop_tables(*args); raise NotImplementedError; end
 
+  def load_schema
+    # silence STDOUT
+    current_stdout = $stdout.dup
+    $stdout = File.new('/dev/null', 'w')
+    load Ardb.config.schema_path
+    $stdout = current_stdout
+  end
+
   def ==(other_adapter)
     self.class == other_adapter.class
   end
