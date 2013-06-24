@@ -7,7 +7,7 @@ module Ardb::TestHelpers
     desc "Ardb test helpers"
     subject{ Ardb::TestHelpers }
 
-    should have_imeths :drop_tables, :load_schema
+    should have_imeths :drop_tables, :load_schema, :reset_db
 
   end
 
