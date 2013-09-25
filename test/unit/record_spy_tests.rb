@@ -29,6 +29,7 @@ module Ardb::RecordSpy
     should have_imeths :before_update,  :around_update,  :after_update
     should have_imeths :before_save,    :around_save,    :after_save
     should have_imeths :before_destroy, :around_destroy, :after_destroy
+    should have_imeths :after_commit, :after_rollback
     should have_imeths :after_initialize, :after_find
 
     should "included the record spy instance methods" do
@@ -59,7 +60,7 @@ module Ardb::RecordSpy
       assert_equal 'Linking', association.options[:class_name]
     end
 
-    should "add a validation config with #validates_presence_of" do
+    should "add a validation config for '*_of' validations" do
       subject.validates_presence_of :name, :email, :on => :create
       validation = subject.validations.last
       assert_equal :presence, validation.type
@@ -76,7 +77,7 @@ module Ardb::RecordSpy
       assert_includes :linkings, validation.associations
     end
 
-    should "add a validation config with #validates_associated" do
+    should "add a validation config with #validates_with" do
       first_validation_class  = Class.new
       second_validation_class = Class.new
       subject.validates_with first_validation_class, second_validation_class
@@ -109,14 +110,14 @@ module Ardb::RecordSpy
       assert_equal block,    validation.block
     end
 
-    should "add a callback config with #after_initialize" do
+    should "add a callback config with with a method name" do
       subject.after_initialize :a_callback_method
       callback = subject.callbacks.last
       assert_equal :after_initialize, callback.type
       assert_includes :a_callback_method, callback.args
     end
 
-    should "add a callback config with #before_validation" do
+    should "add a callback config with a block" do
       subject.before_validation(:on => :create) do
         self.name = 'test'
       end
