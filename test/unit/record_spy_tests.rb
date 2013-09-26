@@ -3,12 +3,7 @@ require 'ardb/record_spy'
 
 module Ardb::RecordSpy
 
-  class MyRecord
-    include Ardb::RecordSpy
-    attr_accessor :name
-  end
-
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::RecordSpy"
     setup do
       @instance = MyRecord.new
@@ -130,7 +125,7 @@ module Ardb::RecordSpy
 
   end
 
-  class GeneratorTests < BaseTests
+  class GeneratorTests < UnitTests
     desc "to generate record spy classes"
     setup do
       @record_spy_class = Ardb::RecordSpy.new do
@@ -147,6 +142,25 @@ module Ardb::RecordSpy
       assert @instance.respond_to? :name=
     end
 
+  end
+
+  class InstanceTests < UnitTests
+    subject{ @instance }
+
+    should have_imeths :update_column
+
+    should "allow spying the update_column method by just writing the value" do
+      assert_not_equal 'updated', subject.name
+
+      subject.update_column(:name, 'updated')
+      assert_equal 'updated', subject.name
+    end
+
+  end
+
+  class MyRecord
+    include Ardb::RecordSpy
+    attr_accessor :name
   end
 
 end
