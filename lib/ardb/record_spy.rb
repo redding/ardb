@@ -83,6 +83,10 @@ module Ardb
 
     module InstanceMethods
 
+      def update_column(col, value)
+        self.send("#{col}=", value)
+      end
+
     end
 
     class Association
