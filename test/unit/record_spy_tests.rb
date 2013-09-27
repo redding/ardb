@@ -157,11 +157,29 @@ module Ardb::RecordSpy
       assert_equal 'updated', subject.name
     end
 
+    should "have accessors for each association defined" do
+      assert_nil subject.bt_thing
+      subject.bt_thing = 'something'
+      assert_equal 'something', subject.bt_thing
+
+      assert_nil subject.ho_thing
+      subject.ho_thing = 'other thing'
+      assert_equal 'other thing', subject.ho_thing
+
+      assert_empty subject.hm_things
+      subject.hm_things = [1,2,3]
+      assert_equal [1,2,3], subject.hm_things
+    end
+
   end
 
   class MyRecord
     include Ardb::RecordSpy
     attr_accessor :name
+
+    belongs_to :bt_thing
+    has_one    :ho_thing
+    has_many   :hm_things
   end
 
 end
