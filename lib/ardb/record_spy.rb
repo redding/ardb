@@ -83,6 +83,8 @@ module Ardb
 
     module InstanceMethods
 
+      attr_accessor :id
+
       def update_column(col, value)
         self.send("#{col}=", value)
       end
