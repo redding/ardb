@@ -20,11 +20,19 @@ module Ardb
 
       attr_reader :associations, :callbacks, :validations
 
-      [ :belongs_to, :has_many, :has_one ].each do |method_name|
+      [ :belongs_to, :has_one, :has_many ].each do |method_name|
 
-        define_method(method_name) do |*args|
+        define_method(method_name) do |assoc_name, *args|
           @associations ||= []
-          @associations << Association.new(method_name, *args)
+
+          define_method(assoc_name) do
+            instance_variable_get("@#{assoc_name}") || (method_name == :has_many ? [] : nil)
+          end
+          define_method("#{assoc_name}=") do |value|
+            instance_variable_set("@#{assoc_name}", value)
+          end
+
+          @associations << Association.new(method_name, assoc_name, *args)
         end
 
       end
@@ -94,10 +102,10 @@ module Ardb
     class Association
       attr_reader :type, :name, :options
 
-      def initialize(type, name, options)
+      def initialize(type, name, options = nil)
         @type = type.to_sym
         @name = name
-        @options = options
+        @options = options || {}
       end
     end
 
