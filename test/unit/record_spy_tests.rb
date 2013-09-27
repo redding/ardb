@@ -147,6 +147,7 @@ module Ardb::RecordSpy
   class InstanceTests < UnitTests
     subject{ @instance }
 
+    should have_accessors :id
     should have_imeths :update_column
 
     should "allow spying the update_column method by just writing the value" do
