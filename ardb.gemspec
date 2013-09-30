@@ -11,6 +11,7 @@ Gem::Specification.new do |gem|
   gem.description = %q{Activerecord database tools.}
   gem.summary     = %q{Activerecord database tools.}
   gem.homepage    = "http://github.com/redding/ardb"
+  gem.license     = 'MIT'
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
