@@ -18,6 +18,7 @@ module Ardb
 
     module ClassMethods
 
+      attr_accessor :table_name
       attr_reader :associations, :callbacks, :validations
 
       [ :belongs_to, :has_one, :has_many ].each do |method_name|

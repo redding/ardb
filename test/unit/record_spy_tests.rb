@@ -10,6 +10,7 @@ module Ardb::RecordSpy
     end
     subject{ MyRecord }
 
+    should have_accessors :table_name
     should have_readers :associations, :callbacks, :validations
     should have_imeths :belongs_to, :has_many, :has_one
     should have_imeths :validates_acceptance_of, :validates_confirmation_of
@@ -29,6 +30,11 @@ module Ardb::RecordSpy
 
     should "included the record spy instance methods" do
       assert_includes Ardb::RecordSpy::InstanceMethods, subject.included_modules
+    end
+
+    should "allow reading and writing the record's table name" do
+      subject.table_name = 'my_records'
+      assert_equal 'my_records', subject.table_name
     end
 
     should "add an association config with #belongs_to" do
