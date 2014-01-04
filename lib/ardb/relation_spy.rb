@@ -3,17 +3,20 @@ module Ardb
   class RelationSpy
 
     attr_reader :applied
+    attr_accessor :order_values, :reverse_order_value
+    attr_accessor :limit_value, :offset_value
     attr_accessor :results
 
     def initialize
       @applied, @results = [], []
-      @offset, @limit = 0, nil
+      @order_values = []
+      @reverse_order_value = nil
+      @offset_value, @limit_value = nil, nil
     end
 
     [ :select,
       :joins,
       :where,
-      :order,
       :group, :having,
       :merge
     ].each do |type|
@@ -25,32 +28,30 @@ module Ardb
 
     end
 
+    def order(*args)
+      @order_values += args
+      @applied << AppliedExpression.new(:order, args)
+      self
+    end
+
     def limit(value)
-      @limit = value ? value.to_i : nil
+      @limit_value = value ? value.to_i : nil
       @applied << AppliedExpression.new(:limit, [ value ])
       self
     end
 
     def offset(value)
-      @offset = value ? value.to_i : 0
+      @offset_value = value ? value.to_i : 0
       @applied << AppliedExpression.new(:offset, [ value ])
       self
     end
 
     def all
-      @results[@offset, (@limit || @results.size)] || []
+      @results[(@offset_value || 0), (@limit_value || @results.size)] || []
     end
 
     def count
       all.size
-    end
-
-    def limit_value
-      @limit
-    end
-
-    def offset_value
-      @offset
     end
 
     def ==(other)
