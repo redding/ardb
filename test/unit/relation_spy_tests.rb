@@ -12,16 +12,19 @@ class Ardb::RelationSpy
 
     should have_readers :applied
     should have_accessors :results
+    should have_accessors :order_values, :reverse_order_value
+    should have_accessors :limit_value, :offset_value
     should have_imeths :select, :joins, :where, :order, :group, :having, :merge
     should have_imeths :limit, :offset
     should have_imeths :all, :count
-    should have_imeths :limit_value, :offset_value
 
     should "default it's attributes" do
       assert_equal [],  subject.applied
       assert_equal [],  subject.results
+      assert_equal [],  subject.order_values
+      assert_equal nil, subject.reverse_order_value
       assert_equal nil, subject.limit_value
-      assert_equal 0,   subject.offset_value
+      assert_equal nil, subject.offset_value
     end
 
     should "add an applied expression using `select`" do
@@ -58,6 +61,12 @@ class Ardb::RelationSpy
       assert_instance_of AppliedExpression, applied_expression
       assert_equal :order, applied_expression.type
       assert_equal [ :column_a, :column_b ], applied_expression.args
+    end
+
+    should "add args to it's `order_values` using `order" do
+      subject.order :column_a, :column_b
+      assert_includes :column_a, subject.order_values
+      assert_includes :column_b, subject.order_values
     end
 
     should "add an applied expression using `group`" do
