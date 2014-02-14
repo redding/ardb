@@ -15,6 +15,7 @@ class Ardb::Runner
   end
 
   def run
+    $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
     Ardb.init(false) # don't establish a connection
 
     case @cmd_name

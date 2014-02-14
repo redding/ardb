@@ -52,6 +52,12 @@ class Ardb::Runner
       ActiveRecord::Base.logger = default_ar_logger
     end
 
+    should "add the working directory to the load paths" do
+      $LOAD_PATH.delete(Dir.pwd)
+      subject.run
+      assert_includes Dir.pwd, $LOAD_PATH
+    end
+
     should "complain about unknown cmds" do
       runner = Ardb::Runner.new(['unknown'], {})
       assert_raises(UnknownCmdError) { runner.run }
