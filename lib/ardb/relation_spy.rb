@@ -11,6 +11,12 @@ module Ardb
       @offset_value, @limit_value = nil, nil
     end
 
+    def initialize_copy(copied_from)
+      super
+      @applied = copied_from.applied.dup
+      @results = copied_from.results.dup
+    end
+
     def ==(other)
       other.kind_of?(self.class) ? @applied == other.applied : super
     end
@@ -18,6 +24,7 @@ module Ardb
     # ActiveRecord::QueryMethods
 
     [ :select,
+      :from,
       :includes, :joins,
       :where,
       :group, :having,
@@ -58,18 +65,20 @@ module Ardb
 
     def except(*skips)
       skips = skips.map(&:to_sym)
-      @applied.reject!{ |a| skips.include?(a.type) }
-      @limit_value    = nil if skips.include?(:limit)
-      @offset_value   = nil if skips.include?(:offset)
-      self
+      self.dup.tap do |r|
+        r.applied.reject!{ |a| skips.include?(a.type) }
+        r.limit_value    = nil if skips.include?(:limit)
+        r.offset_value   = nil if skips.include?(:offset)
+      end
     end
 
     def only(*onlies)
       onlies = onlies.map(&:to_sym)
-      @applied.reject!{ |a| !onlies.include?(a.type) }
-      @limit_value    = nil unless onlies.include?(:limit)
-      @offset_value   = nil unless onlies.include?(:offset)
-      self
+      self.dup.tap do |r|
+        r.applied.reject!{ |a| !onlies.include?(a.type) }
+        r.limit_value    = nil unless onlies.include?(:limit)
+        r.offset_value   = nil unless onlies.include?(:offset)
+      end
     end
 
     # ActiveRecord::FinderMethods

@@ -14,6 +14,7 @@ class Ardb::RelationSpy
     should have_accessors :results
     should have_accessors :limit_value, :offset_value
     should have_imeths :select
+    should have_imeths :from
     should have_imeths :includes, :joins
     should have_imeths :where
     should have_imeths :order, :reverse_order
@@ -29,6 +30,12 @@ class Ardb::RelationSpy
       assert_equal [],  subject.results
       assert_equal nil, subject.limit_value
       assert_equal nil, subject.offset_value
+    end
+
+    should "dup its applied and results arrays when copied" do
+      new_relation_spy = subject.dup
+      assert_not_same subject.applied, new_relation_spy.applied
+      assert_not_same subject.results, new_relation_spy.results
     end
 
     should "be comparable using there applied collections" do
@@ -53,6 +60,21 @@ class Ardb::RelationSpy
       assert_instance_of AppliedExpression, @applied
       assert_equal :select, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
+    end
+
+  end
+
+  class FromTests < UnitTests
+    desc "from"
+    setup do
+      @relation_spy.from "some SQL"
+      @applied = subject.applied.first
+    end
+
+    should "have added a from applied expression with the passed args" do
+      assert_instance_of AppliedExpression, @applied
+      assert_equal :from, @applied.type
+      assert_equal [ "some SQL" ], @applied.args
     end
 
   end
@@ -270,9 +292,14 @@ class Ardb::RelationSpy
   class ExceptTests < WithExpressionsTests
     desc "except"
 
+    should "return a new relation spy" do
+      new_relation_spy = subject.except(:select)
+      assert_not_same subject, new_relation_spy
+    end
+
     should "remove any applied expressions in the passed types" do
-      subject.except(:includes, :where, :group, :offset)
-      applied_types = subject.applied.map(&:type)
+      relation_spy = subject.except(:includes, :where, :group, :offset)
+      applied_types = relation_spy.applied.map(&:type)
       [ :select, :joins, :order, :having, :limit ].each do |type|
         assert_includes type, applied_types
       end
@@ -282,17 +309,17 @@ class Ardb::RelationSpy
     end
 
     should "unset the limit value if limit is included in the passed types" do
-      subject.except(:select)
-      assert_not_nil subject.limit_value
-      subject.except(:limit)
-      assert_nil subject.limit_value
+      relation_spy = subject.except(:select)
+      assert_not_nil relation_spy.limit_value
+      relation_spy = subject.except(:limit)
+      assert_nil relation_spy.limit_value
     end
 
     should "unset the offset value if offset is included in the passed types" do
-      subject.except(:select)
-      assert_not_nil subject.offset_value
-      subject.except(:offset)
-      assert_nil subject.offset_value
+      relation_spy = subject.except(:select)
+      assert_not_nil relation_spy.offset_value
+      relation_spy = subject.except(:offset)
+      assert_nil relation_spy.offset_value
     end
 
   end
@@ -300,9 +327,14 @@ class Ardb::RelationSpy
   class OnlyTests < WithExpressionsTests
     desc "only"
 
+    should "return a new relation spy" do
+      new_relation_spy = subject.only(:select)
+      assert_not_same subject, new_relation_spy
+    end
+
     should "remove any applied expressions not in the passed types" do
-      subject.only(:includes, :where, :group, :offset)
-      applied_types = subject.applied.map(&:type)
+      relation_spy = subject.only(:includes, :where, :group, :offset)
+      applied_types = relation_spy.applied.map(&:type)
       [ :includes, :where, :group, :offset ].each do |type|
         assert_includes type, applied_types
       end
@@ -312,17 +344,17 @@ class Ardb::RelationSpy
     end
 
     should "unset the limit value if limit is not included in the passed types" do
-      subject.only(:limit)
-      assert_not_nil subject.limit_value
-      subject.only(:select)
-      assert_nil subject.limit_value
+      relation_spy = subject.only(:limit)
+      assert_not_nil relation_spy.limit_value
+      relation_spy = subject.only(:select)
+      assert_nil relation_spy.limit_value
     end
 
     should "unset the offset value if offset is not included in the passed types" do
-      subject.only(:offset)
-      assert_not_nil subject.offset_value
-      subject.only(:select)
-      assert_nil subject.offset_value
+      relation_spy = subject.only(:offset)
+      assert_not_nil relation_spy.offset_value
+      relation_spy = subject.only(:select)
+      assert_nil relation_spy.offset_value
     end
 
   end
