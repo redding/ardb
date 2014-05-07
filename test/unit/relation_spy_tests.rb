@@ -13,6 +13,7 @@ class Ardb::RelationSpy
     should have_readers :applied
     should have_accessors :results
     should have_accessors :limit_value, :offset_value
+    should have_imeths :to_sql
     should have_imeths :select
     should have_imeths :from
     should have_imeths :includes, :joins
@@ -45,6 +46,15 @@ class Ardb::RelationSpy
 
       subject.select :column_a
       assert_equal other_relation, subject
+    end
+
+    should "build a fake sql string for its applied expressions using `to_sql`" do
+      subject.select 'column'
+      subject.from 'table'
+      subject.joins 'my_table.my_column ON my_table.my_column = table.column'
+
+      expected = subject.applied.map(&:to_sql).join(', ')
+      assert_equal expected, subject.to_sql
     end
 
   end
@@ -444,6 +454,23 @@ class Ardb::RelationSpy
       assert_equal subject.all.size, subject.count
       subject.limit 2
       assert_equal subject.all.size, subject.count
+    end
+
+  end
+
+  class AppliedExpressionTests < UnitTests
+    desc "AppliedExpression"
+    setup do
+      @applied_expression = AppliedExpression.new(:select, 'column')
+    end
+    subject{ @applied_expression }
+
+    should have_readers :type, :args
+    should have_imeths :to_sql
+
+    should "return a string representing the expression using `to_sql`" do
+      expected = "#{subject.type}: #{subject.args.inspect}"
+      assert_equal expected, subject.to_sql
     end
 
   end

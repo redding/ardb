@@ -21,6 +21,10 @@ module Ardb
       other.kind_of?(self.class) ? @applied == other.applied : super
     end
 
+    def to_sql
+      @applied.map(&:to_sql).join(", ")
+    end
+
     # ActiveRecord::QueryMethods
 
     [ :select,
@@ -114,7 +118,11 @@ module Ardb
       all.size
     end
 
-    AppliedExpression = Struct.new(:type, :args)
+    class AppliedExpression < Struct.new(:type, :args)
+      def to_sql
+        "#{self.type}: #{self.args.inspect}"
+      end
+    end
 
     NotFoundError = Class.new(RuntimeError)
 
