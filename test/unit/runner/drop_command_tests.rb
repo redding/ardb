@@ -3,14 +3,14 @@ require 'ardb/runner/drop_command'
 
 class Ardb::Runner::DropCommand
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Runner::DropCommand"
     setup do
       @cmd = Ardb::Runner::DropCommand.new
     end
     subject{ @cmd }
 
-    should have_instance_methods :run
+    should have_imeths :run
 
   end
 

@@ -7,7 +7,7 @@ module Ardb::AdapterSpy
     include Ardb::AdapterSpy
   end
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::AdapterSpy"
     setup do
       @adapter = MyAdapter.new
@@ -19,7 +19,7 @@ module Ardb::AdapterSpy
     should have_imeths :drop_tables, :load_schema, :drop_db, :create_db
 
     should "included the record spy instance methods" do
-      assert_includes Ardb::AdapterSpy::InstanceMethods, subject.class.included_modules
+      assert_includes Ardb::AdapterSpy::InstanceMethods, subject.class
     end
 
     should "default all call counts to zero" do
@@ -45,7 +45,7 @@ module Ardb::AdapterSpy
 
   end
 
-  class NewMethTests < BaseTests
+  class NewMethTests < UnitTests
     desc "`new` method"
     setup do
       @adapter_spy_class = Ardb::AdapterSpy.new do
@@ -56,7 +56,7 @@ module Ardb::AdapterSpy
     subject{ @adapter }
 
     should "build a new spy class and use any custom definition" do
-      assert_includes Ardb::AdapterSpy, subject.class.included_modules
+      assert_includes Ardb::AdapterSpy, subject.class
       assert subject.respond_to? :name
       assert subject.respond_to? :name=
     end

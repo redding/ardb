@@ -3,7 +3,7 @@ require 'ardb/test_helpers'
 
 module Ardb::TestHelpers
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb test helpers"
     subject{ Ardb::TestHelpers }
 
@@ -11,7 +11,7 @@ module Ardb::TestHelpers
 
   end
 
-  class UsageTests < BaseTests
+  class UsageTests < UnitTests
     setup do
       @adapter_spy_class = Ardb::AdapterSpy.new
       @orig_ardb_adapter = Ardb.adapter

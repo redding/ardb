@@ -3,18 +3,18 @@ require 'ardb/runner/generate_command'
 
 class Ardb::Runner::GenerateCommand
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Runner::GenerateCommand"
     setup do
       @cmd = Ardb::Runner::GenerateCommand.new(['something'])
     end
     subject{ @cmd }
 
-    should have_instance_methods :run, :migration_cmd
+    should have_imeths :run, :migration_cmd
 
   end
 
-  class MigrationTests < BaseTests
+  class MigrationTests < UnitTests
     desc "Ardb::Runner::GenerateCommand::MigrationCommand"
     setup do
       @cmd = Ardb::Runner::GenerateCommand::MigrationCommand.new('a_migration')

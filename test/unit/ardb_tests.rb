@@ -3,7 +3,7 @@ require 'ardb'
 
 module Ardb
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb"
     subject{ Ardb }
     setup do
