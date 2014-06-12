@@ -5,11 +5,11 @@ require 'ardb/migration_helpers'
 
 class Ardb::Runner::MigrateCommand
 
-  attr_reader :migrations_path, :schema_file_path, :version, :verbose
+  attr_reader :migrations_path, :version, :verbose
 
   def initialize
+    @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
     @migrations_path = Ardb.config.migrations_path
-    @schema_file_path = Ardb.config.schema_path
     @version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
     @verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
   end
@@ -29,7 +29,9 @@ class Ardb::Runner::MigrateCommand
 
   def migrate_the_db
     if defined?(ActiveRecord::Migration::CommandRecorder)
-      ActiveRecord::Migration::CommandRecorder.send(:include, Ardb::MigrationHelpers::RecorderMixin)
+      ActiveRecord::Migration::CommandRecorder.class_eval do
+        include Ardb::MigrationHelpers::RecorderMixin
+      end
     end
 
     ActiveRecord::Migrator.migrations_path = @migrations_path
@@ -38,11 +40,7 @@ class Ardb::Runner::MigrateCommand
       ENV["SCOPE"].blank? || (ENV["SCOPE"] == migration.scope)
     end
 
-    require 'active_record/schema_dumper'
-    FileUtils.mkdir_p File.dirname(@schema_file_path)
-    File.open(@schema_file_path, "w:utf-8") do |file|
-      ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
-    end
+    @adapter.dump_schema
   end
 
 end
