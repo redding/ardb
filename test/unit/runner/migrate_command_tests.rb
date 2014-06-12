@@ -10,11 +10,10 @@ class Ardb::Runner::MigrateCommand
     end
     subject{ @cmd }
 
-    should have_readers :migrations_path, :schema_file_path, :version, :verbose
+    should have_readers :migrations_path, :version, :verbose
 
-    should "use the config's migrations and schema file paths" do
+    should "use the config's migrations path" do
       assert_equal Ardb.config.migrations_path, subject.migrations_path
-      assert_equal Ardb.config.schema_path, subject.schema_file_path
     end
 
     should "not target a specific version by default" do
