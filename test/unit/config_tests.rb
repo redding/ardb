@@ -23,8 +23,8 @@ class Ardb::Config
       assert_equal exp_path, subject.migrations_path
     end
 
-    should "should use `db/schema.rb` as the default schema path" do
-      exp_path = Pathname.new(TESTDB_PATH).join("db/schema.rb").to_s
+    should "should use `db/schema` as the default schema path" do
+      exp_path = Pathname.new(TESTDB_PATH).join("db/schema").to_s
       assert_equal exp_path, subject.schema_path
     end
 

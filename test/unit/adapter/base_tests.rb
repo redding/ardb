@@ -11,7 +11,7 @@ class Ardb::Adapter::Base
     subject{ @adapter }
 
     should have_readers :config_settings, :database
-    should have_readers :schema_path
+    should have_readers :ruby_schema_path, :sql_schema_path
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
     should have_imeths :create_db, :drop_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
@@ -25,8 +25,9 @@ class Ardb::Adapter::Base
       assert_equal Ardb.config.db.database, subject.database
     end
 
-    should "know its schema path" do
-      assert_equal Ardb.config.schema_path, subject.schema_path
+    should "know its schema paths" do
+      assert_equal "#{Ardb.config.schema_path}.rb",  subject.ruby_schema_path
+      assert_equal "#{Ardb.config.schema_path}.sql", subject.sql_schema_path
     end
 
     should "not implement the foreign key sql meths" do
@@ -56,16 +57,35 @@ class Ardb::Adapter::Base
       @captured_stdout = ""
       $stdout = StringIO.new(@captured_stdout)
 
+      @orig_schema_format = Ardb.config.schema_format
+
       @adapter = SchemaSpyAdapter.new
     end
     teardown do
+      Ardb.config.schema_format = @orig_schema_format
       $stdout = @orig_stdout
     end
 
-    should "load a ruby schema using `load_schema`" do
-      assert_false subject.load_ruby_schema_called
-      subject.load_schema
-      assert_true subject.load_ruby_schema_called
+    should "load a ruby schema using `load_schema` when the format is ruby" do
+      Ardb.config.schema_format = :ruby
+      adapter = SchemaSpyAdapter.new
+
+      assert_false adapter.load_ruby_schema_called
+      assert_false adapter.load_sql_schema_called
+      adapter.load_schema
+      assert_true adapter.load_ruby_schema_called
+      assert_false adapter.load_sql_schema_called
+    end
+
+    should "load a SQL schema using `load_schema` when the format is sql" do
+      Ardb.config.schema_format = :sql
+      adapter = SchemaSpyAdapter.new
+
+      assert_false adapter.load_ruby_schema_called
+      assert_false adapter.load_sql_schema_called
+      adapter.load_schema
+      assert_false adapter.load_ruby_schema_called
+      assert_true adapter.load_sql_schema_called
     end
 
     should "suppress stdout when loading the schema" do
@@ -73,10 +93,31 @@ class Ardb::Adapter::Base
       assert_empty @captured_stdout
     end
 
-    should "dump a ruby schema using `dump_schema`" do
-      assert_false subject.dump_ruby_schema_called
-      subject.dump_schema
-      assert_true subject.dump_ruby_schema_called
+    should "always dump a ruby schema using `dump_schema`" do
+      Ardb.config.schema_format = :ruby
+      adapter = SchemaSpyAdapter.new
+
+      assert_false adapter.dump_ruby_schema_called
+      assert_false adapter.dump_sql_schema_called
+      adapter.dump_schema
+      assert_true adapter.dump_ruby_schema_called
+      assert_false adapter.dump_sql_schema_called
+
+      Ardb.config.schema_format = :sql
+      adapter = SchemaSpyAdapter.new
+
+      assert_false adapter.dump_ruby_schema_called
+      adapter.dump_schema
+      assert_true adapter.dump_ruby_schema_called
+    end
+
+    should "dump a SQL schema using `dump_schema` when the format is sql" do
+      Ardb.config.schema_format = :sql
+      adapter = SchemaSpyAdapter.new
+
+      assert_false adapter.dump_ruby_schema_called
+      adapter.dump_schema
+      assert_true adapter.dump_ruby_schema_called
     end
 
     should "suppress stdout when dumping the schema" do
@@ -89,7 +130,7 @@ class Ardb::Adapter::Base
   class LoadRubySchemaTests < UnitTests
     setup do
       @orig_schema_path = Ardb.config.schema_path
-      Ardb.config.schema_path = 'fake_schema.rb'
+      Ardb.config.schema_path = 'fake_schema'
 
       @adapter = Ardb::Adapter::Base.new
     end
@@ -110,11 +151,14 @@ class Ardb::Adapter::Base
 
   class SchemaSpyAdapter < Ardb::Adapter::Base
     attr_reader :load_ruby_schema_called, :dump_ruby_schema_called
+    attr_reader :load_sql_schema_called, :dump_sql_schema_called
 
     def initialize(*args)
       super
       @load_ruby_schema_called = false
       @dump_ruby_schema_called = false
+      @load_sql_schema_called  = false
+      @dump_sql_schema_called  = false
     end
 
     def load_ruby_schema
@@ -125,6 +169,16 @@ class Ardb::Adapter::Base
     def dump_ruby_schema
       puts "[dump_ruby_schema] This should be suppressed!"
       @dump_ruby_schema_called = true
+    end
+
+    def load_sql_schema
+      puts "[load_sql_schema] This should be suppressed!"
+      @load_sql_schema_called = true
+    end
+
+    def dump_sql_schema
+      puts "[dump_sql_schema] This should be suppressed!"
+      @dump_sql_schema_called = true
     end
   end
 

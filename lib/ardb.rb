@@ -51,7 +51,8 @@ module Ardb
     option :root_path,       Pathname, :required => true
     option :logger,                    :required => true
     option :migrations_path, RootPath, :default => proc{ "db/migrations" }
-    option :schema_path,     RootPath, :default => proc{ "db/schema.rb" }
+    option :schema_path,     RootPath, :default => proc{ "db/schema" }
+    option :schema_format,   Symbol,   :default => :ruby
 
     def self.db_settings
       db.to_hash.inject({}) do |settings, (k, v)|
