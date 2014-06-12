@@ -3,15 +3,15 @@ require 'ardb/migration_helpers'
 
 module Ardb::MigrationHelpers
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb migration helpers"
     subject{ Ardb::MigrationHelpers }
 
-    should have_instance_methods :foreign_key, :drop_foreign_key, :remove_column_with_fk
+    should have_imeths :foreign_key, :drop_foreign_key, :remove_column_with_fk
 
   end
 
-  class ForeignKeyTests < BaseTests
+  class ForeignKeyTests < UnitTests
     desc "ForeignKey handler"
     setup do
       @fk = ForeignKey.new('fromtbl', 'fromcol', 'totbl')
@@ -20,7 +20,7 @@ module Ardb::MigrationHelpers
 
     should have_readers :from_table, :from_column, :to_table, :to_column
     should have_readers :name, :adapter
-    should have_instance_methods :add_sql, :drop_sql
+    should have_imeths :add_sql, :drop_sql
 
     should "know its from table/column and to table" do
       assert_equal 'fromtbl', subject.from_table

@@ -1,11 +1,13 @@
 require 'assert'
-require 'ns-options/assert_macros'
 require 'ardb'
+
+require 'ns-options/assert_macros'
 
 class Ardb::Config
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     include NsOptions::AssertMacros
+
     desc "Ardb::Config"
     subject{ Ardb::Config }
 
@@ -37,7 +39,7 @@ class Ardb::Config
 
   end
 
-  class DbTests < BaseTests
+  class DbTests < UnitTests
     desc "db namespace"
     subject{ Ardb::Config.db }
 

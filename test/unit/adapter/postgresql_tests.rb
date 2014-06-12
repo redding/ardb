@@ -3,16 +3,16 @@ require 'ardb/adapter/postgresql'
 
 class Ardb::Adapter::Postgresql
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Adapter::Postgresql"
     setup do
       @adapter = Ardb::Adapter::Postgresql.new
     end
     subject { @adapter }
 
-    should have_instance_method :public_schema_settings
+    should have_imeths :public_schema_settings
 
-    should "know it's public schema connection settings" do
+    should "know its public schema connection settings" do
       exp_settings = subject.config_settings.merge({
         'database' => 'postgres',
         'schema_search_path' => 'public'

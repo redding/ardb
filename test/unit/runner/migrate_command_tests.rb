@@ -3,7 +3,7 @@ require 'ardb/runner/migrate_command'
 
 class Ardb::Runner::MigrateCommand
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Runner::MigrateCommand"
     setup do
       @cmd = Ardb::Runner::MigrateCommand.new
@@ -27,7 +27,7 @@ class Ardb::Runner::MigrateCommand
 
   end
 
-  class VersionTests < BaseTests
+  class VersionTests < UnitTests
     desc "with a version ENV setting"
     setup do
       ENV["VERSION"] = '12345'
@@ -43,7 +43,7 @@ class Ardb::Runner::MigrateCommand
 
   end
 
-  class VerboseTests < BaseTests
+  class VerboseTests < UnitTests
     desc "with a verbose ENV setting"
     setup do
       ENV["VERBOSE"] = 'no'

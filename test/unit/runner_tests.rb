@@ -1,11 +1,12 @@
 require 'assert'
-require 'pathname'
-require 'active_record'
 require 'ardb/runner'
+
+require 'active_record'
+require 'pathname'
 
 class Ardb::Runner
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Runner"
     setup do
       @runner = Ardb::Runner.new(['null', 1, 2], 'some' => 'opts')
@@ -22,7 +23,7 @@ class Ardb::Runner
 
   end
 
-  class RunTests < BaseTests
+  class RunTests < UnitTests
     desc "when running a command"
     setup do
       Ardb::Adapter.reset

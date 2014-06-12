@@ -3,7 +3,7 @@ require 'ardb/adapter/sqlite'
 
 class Ardb::Adapter::Sqlite
 
-  class BaseTests < Assert::Context
+  class UnitTests < Assert::Context
     desc "Ardb::Adapter::Sqlite"
     setup do
       @adapter = Ardb::Adapter::Sqlite.new
@@ -19,19 +19,19 @@ class Ardb::Adapter::Sqlite
       FileUtils.rm(subject.db_file_path)
     end
 
-    should "know its db_file_path" do
+    should "know its db file path" do
       exp_path = Ardb.config.root_path.join(Ardb.config.db.database).to_s
       assert_equal exp_path, subject.db_file_path
     end
 
     should "not implement the foreign key sql meths" do
-      assert_raises(NotImplementedError) { subject.foreign_key_add_sql }
-      assert_raises(NotImplementedError) { subject.foreign_key_drop_sql }
+      assert_raises(NotImplementedError){ subject.foreign_key_add_sql }
+      assert_raises(NotImplementedError){ subject.foreign_key_drop_sql }
     end
 
     # not currently implemented, see: https://github.com/redding/ardb/issues/29
     should "not implement the drop tables method" do
-      assert_raises(NotImplementedError) { subject.drop_tables }
+      assert_raises(NotImplementedError){ subject.drop_tables }
     end
 
   end
