@@ -1,6 +1,8 @@
 require 'assert'
 require 'ardb/adapter/postgresql'
 
+require 'scmd'
+
 class Ardb::Adapter::Postgresql
 
   class UnitTests < Assert::Context
@@ -8,7 +10,7 @@ class Ardb::Adapter::Postgresql
     setup do
       @adapter = Ardb::Adapter::Postgresql.new
     end
-    subject { @adapter }
+    subject{ @adapter }
 
     should have_imeths :public_schema_settings
 
@@ -34,6 +36,73 @@ class Ardb::Adapter::Postgresql
       assert_equal exp_drop_sql, subject.foreign_key_drop_sql
     end
 
+  end
+
+  class SQLSchemaTests < UnitTests
+    setup do
+      @env = {
+        'PGHOST'     => @adapter.config_settings['host'],
+        'PGPORT'     => @adapter.config_settings['port'],
+        'PGUSER'     => @adapter.config_settings['username'],
+        'PGPASSWORD' => @adapter.config_settings['password']
+      }
+    end
+
+  end
+
+  class LoadSQLSchemaTests < SQLSchemaTests
+    setup do
+      cmd_str = "psql -f \"#{@adapter.sql_schema_path}\" #{@adapter.database}"
+      @cmd_spy = CmdSpy.new
+      Scmd.stubs(:new).tap do |s|
+        s.with(cmd_str, @env)
+        s.returns(@cmd_spy)
+      end
+    end
+    teardown do
+      Scmd.unstub(:new)
+    end
+
+    should "run a command for loading a SQL schema using `load_sql_schema`" do
+      subject.load_sql_schema
+      assert_true @cmd_spy.run_called
+    end
+
+  end
+
+  class DumpSQLSchemaTests < SQLSchemaTests
+    setup do
+      cmd_str = "pg_dump -i -s -x -O -f " \
+                "\"#{@adapter.sql_schema_path}\" #{@adapter.database}"
+      @cmd_spy = CmdSpy.new
+      Scmd.stubs(:new).tap do |s|
+        s.with(cmd_str, @env)
+        s.returns(@cmd_spy)
+      end
+    end
+    teardown do
+      Scmd.unstub(:new)
+    end
+
+    should "run a command for dumping a SQL schema using `dump_sql_schema`" do
+      subject.dump_sql_schema
+      assert_true @cmd_spy.run_called
+    end
+
+  end
+
+  class CmdSpy
+    attr_reader :run_called
+
+    def initialize
+      @run_called = false
+    end
+
+    def run
+      @run_called = true
+    end
+
+    def success?; true; end
   end
 
 end
