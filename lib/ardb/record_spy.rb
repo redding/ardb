@@ -1,3 +1,6 @@
+require 'arel'
+require 'ardb/relation_spy'
+
 module Ardb
 
   module RecordSpy
@@ -21,6 +24,8 @@ module Ardb
       attr_accessor :table_name
       attr_reader :associations, :callbacks, :validations
 
+      # Associations
+
       [ :belongs_to, :has_one, :has_many ].each do |method_name|
 
         define_method(method_name) do |assoc_name, *args|
@@ -38,10 +43,18 @@ module Ardb
 
       end
 
-      [ :validates_acceptance_of, :validates_confirmation_of,
-        :validates_exclusion_of,  :validates_format_of, :validates_inclusion_of,
-        :validates_length_of, :validates_numericality_of,
-        :validates_presence_of, :validates_size_of, :validates_uniqueness_of
+      # Validations
+
+      [ :validates_acceptance_of,
+        :validates_confirmation_of,
+        :validates_exclusion_of,
+        :validates_format_of,
+        :validates_inclusion_of,
+        :validates_length_of,
+        :validates_numericality_of,
+        :validates_presence_of,
+        :validates_size_of,
+        :validates_uniqueness_of
       ].each do |method_name|
         type = method_name.to_s.match(/\Avalidates_(.+)_of\Z/)[1]
 
@@ -72,18 +85,69 @@ module Ardb
         @validations << Validation.new(:custom, method_name, &block)
       end
 
-      [ :before_validation, :after_validation,
-        :before_create,  :around_create,  :after_create,
-        :before_update,  :around_update,  :after_update,
-        :before_save,    :around_save,    :after_save,
-        :before_destroy, :around_destroy, :after_destroy,
-        :after_commit, :after_rollback,
-        :after_initialize, :after_find
+      # Callbacks
+
+      [ :before_validation,
+        :after_validation,
+        :before_create,
+        :around_create,
+        :after_create,
+        :before_update,
+        :around_update,
+        :after_update,
+        :before_save,
+        :around_save,
+        :after_save,
+        :before_destroy,
+        :around_destroy,
+        :after_destroy,
+        :after_commit,
+        :after_rollback,
+        :after_initialize,
+        :after_find
       ].each do |method_name|
 
         define_method(method_name) do |*args, &block|
           @callbacks ||= []
           @callbacks << Callback.new(method_name, *args, &block)
+        end
+
+      end
+
+      # Scopes
+
+      attr_writer :relation_spy
+      def relation_spy
+        @relation_spy ||= RelationSpy.new
+      end
+
+      def arel_table
+        @arel_table ||= Arel::Table.new(self.table_name)
+      end
+
+      def scoped
+        self.relation_spy
+      end
+
+      [ :select,
+        :from,
+        :includes,
+        :joins,
+        :where,
+        :group,
+        :having,
+        :order,
+        :reverse_order,
+        :readonly,
+        :limit,
+        :offset,
+        :merge,
+        :except,
+        :only
+      ].each do |method_name|
+
+        define_method(method_name) do |*args|
+          self.relation_spy.send(method_name, *args)
         end
 
       end

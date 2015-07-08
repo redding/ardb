@@ -13,7 +13,7 @@ class Ardb::RelationSpy
     should have_readers :applied
     should have_accessors :results
     should have_accessors :limit_value, :offset_value
-    should have_imeths :to_sql
+    should have_imeths :to_sql, :reset!
     should have_imeths :select
     should have_imeths :from
     should have_imeths :includes, :joins
@@ -27,10 +27,10 @@ class Ardb::RelationSpy
     should have_imeths :count
 
     should "default it's attributes" do
-      assert_equal [],  subject.applied
-      assert_equal [],  subject.results
-      assert_equal nil, subject.limit_value
-      assert_equal nil, subject.offset_value
+      assert_equal [], subject.applied
+      assert_equal [], subject.results
+      assert_nil subject.limit_value
+      assert_nil subject.offset_value
     end
 
     should "dup its applied and results arrays when copied" do
@@ -57,6 +57,18 @@ class Ardb::RelationSpy
       assert_equal expected, subject.to_sql
     end
 
+    should "be able to be reset" do
+      Factory.integer(3).times.each{ subject.applied << Factory.string }
+      Factory.integer(3).times.each{ subject.results << Factory.string }
+      subject.limit_value  = Factory.integer
+      subject.offset_value = Factory.integer
+      subject.reset!
+      assert_equal [], subject.applied
+      assert_equal [], subject.results
+      assert_nil subject.limit_value
+      assert_nil subject.offset_value
+    end
+
   end
 
   class SelectTests < UnitTests
@@ -66,7 +78,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a select applied expression with the passed args" do
+    should "add a select applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :select, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
@@ -81,7 +93,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a from applied expression with the passed args" do
+    should "add a from applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :from, @applied.type
       assert_equal [ "some SQL" ], @applied.args
@@ -96,7 +108,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added an includes applied expression with the passed args" do
+    should "add an includes applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :includes, @applied.type
       assert_equal [ :table_a, :table_b ], @applied.args
@@ -111,7 +123,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a joins applied expression with the passed args" do
+    should "add a joins applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :joins, @applied.type
       assert_equal [ :table_a, :table_b ], @applied.args
@@ -126,7 +138,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a where applied expression with the passed args" do
+    should "add a where applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :where, @applied.type
       assert_equal [ { :column_a => 'some value' } ], @applied.args
@@ -141,7 +153,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added an order applied expression with the passed args" do
+    should "add an order applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :order, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
@@ -156,7 +168,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a reverse order applied expression with the passed args" do
+    should "add a reverse order applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :reverse_order, @applied.type
     end
@@ -170,7 +182,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a group applied expression with the passed args" do
+    should "add a group applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :group, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
@@ -185,7 +197,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a having applied expression with the passed args" do
+    should "add a having applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :having, @applied.type
       assert_equal [ 'COUNT(column_a) > 0' ], @applied.args
@@ -200,7 +212,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a readonly applied expression with the passed args" do
+    should "add a readonly applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :readonly, @applied.type
       assert_equal [ true ], @applied.args
@@ -215,7 +227,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a limit applied expression with the passed args" do
+    should "add a limit applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :limit, @applied.type
       assert_equal [ 100 ], @applied.args
@@ -234,7 +246,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a offset applied expression with the passed args" do
+    should "add an offset applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :offset, @applied.type
       assert_equal [ 100 ], @applied.args
@@ -269,7 +281,7 @@ class Ardb::RelationSpy
       @applied = subject.applied.first
     end
 
-    should "have added a merge applied expression with the passed args" do
+    should "add a merge applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :merge, @applied.type
       assert_equal [ @fake_relation ], @applied.args

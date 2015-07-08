@@ -27,10 +27,11 @@ module Ardb::RecordSpy
     should have_imeths :before_destroy, :around_destroy, :after_destroy
     should have_imeths :after_commit, :after_rollback
     should have_imeths :after_initialize, :after_find
-
-    should "included the record spy instance methods" do
-      assert_includes Ardb::RecordSpy::InstanceMethods, subject.included_modules
-    end
+    should have_writers :relation_spy
+    should have_imeths :relation_spy, :arel_table, :scoped
+    should have_imeths :select, :from, :includes, :joins, :where
+    should have_imeths :group, :having, :order, :reverse_order, :readonly
+    should have_imeths :limit, :offset, :merge, :except, :only
 
     should "allow reading and writing the record's table name" do
       subject.table_name = 'my_records'
@@ -127,6 +128,101 @@ module Ardb::RecordSpy
       assert_equal :create, callback.options[:on]
       @instance.instance_eval(&callback.block)
       assert_equal 'test', @instance.name
+    end
+
+    should "know its relation spy" do
+      assert_instance_of Ardb::RelationSpy, subject.relation_spy
+      spy = subject.relation_spy
+      assert_same spy, subject.relation_spy
+    end
+
+    should "know its arel table" do
+      subject.table_name = Factory.string
+      assert_instance_of Arel::Table, subject.arel_table
+      assert_equal subject.table_name, subject.arel_table.name
+    end
+
+    should "return its relation spy using `scoped`" do
+      assert_same subject.relation_spy, subject.scoped
+    end
+
+    should "demeter its scope methods to its relation spy" do
+      relation_spy = subject.relation_spy
+
+      select_args = [Factory.string]
+      subject.select(*select_args)
+      assert_equal :select,     relation_spy.applied.last.type
+      assert_equal select_args, relation_spy.applied.last.args
+
+      from_args = [Factory.string]
+      subject.from(*from_args)
+      assert_equal :from,     relation_spy.applied.last.type
+      assert_equal from_args, relation_spy.applied.last.args
+
+      includes_args = [Factory.string]
+      subject.includes(*includes_args)
+      assert_equal :includes,     relation_spy.applied.last.type
+      assert_equal includes_args, relation_spy.applied.last.args
+
+      joins_args = [Factory.string]
+      subject.joins(*joins_args)
+      assert_equal :joins,     relation_spy.applied.last.type
+      assert_equal joins_args, relation_spy.applied.last.args
+
+      where_args = [Factory.string]
+      subject.where(*where_args)
+      assert_equal :where,     relation_spy.applied.last.type
+      assert_equal where_args, relation_spy.applied.last.args
+
+      group_args = [Factory.string]
+      subject.group(*group_args)
+      assert_equal :group,     relation_spy.applied.last.type
+      assert_equal group_args, relation_spy.applied.last.args
+
+      having_args = [Factory.string]
+      subject.having(*having_args)
+      assert_equal :having,     relation_spy.applied.last.type
+      assert_equal having_args, relation_spy.applied.last.args
+
+      order_args = [Factory.string]
+      subject.order(*order_args)
+      assert_equal :order,     relation_spy.applied.last.type
+      assert_equal order_args, relation_spy.applied.last.args
+
+      subject.reverse_order
+      assert_equal :reverse_order, relation_spy.applied.last.type
+
+      readonly_args = [Factory.boolean]
+      subject.readonly(*readonly_args)
+      assert_equal :readonly,     relation_spy.applied.last.type
+      assert_equal readonly_args, relation_spy.applied.last.args
+
+      limit_args = [Factory.integer]
+      subject.limit(*limit_args)
+      assert_equal :limit,     relation_spy.applied.last.type
+      assert_equal limit_args, relation_spy.applied.last.args
+
+      offset_args = [Factory.integer]
+      subject.offset(*offset_args)
+      assert_equal :offset,     relation_spy.applied.last.type
+      assert_equal offset_args, relation_spy.applied.last.args
+
+      merge_args = [Factory.string]
+      subject.merge(*merge_args)
+      assert_equal :merge,     relation_spy.applied.last.type
+      assert_equal merge_args, relation_spy.applied.last.args
+
+      except_args = [Factory.string]
+      except_called_with = nil
+      Assert.stub(relation_spy, :except){ |*args| except_called_with = args }
+      subject.except(*except_args)
+      assert_equal except_args, except_called_with
+
+      only_args = [Factory.string]
+      only_called_with = nil
+      Assert.stub(relation_spy, :only){ |*args| only_called_with = args }
+      subject.only(*only_args)
+      assert_equal only_args, only_called_with
     end
 
   end
