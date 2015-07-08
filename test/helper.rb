@@ -6,7 +6,6 @@ $LOAD_PATH.unshift(File.expand_path("../..", __FILE__))
 
 # require pry for debugging (`binding.pry`)
 require 'pry'
-require 'assert-mocha' if defined?(Assert)
 
 ENV['ARDB_DB_FILE'] = 'tmp/testdb/config/db'
 require 'ardb'
