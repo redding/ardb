@@ -6,13 +6,17 @@ module Ardb::RecordSpy
   class UnitTests < Assert::Context
     desc "Ardb::RecordSpy"
     setup do
-      @instance = MyRecord.new
+      @record_spy_class = Class.new do
+        include Ardb::RecordSpy
+        attr_accessor :name
+      end
     end
-    subject{ MyRecord }
+    subject{ @record_spy_class }
 
     should have_accessors :table_name
-    should have_readers :associations, :callbacks, :validations
+    should have_imeths :associations
     should have_imeths :belongs_to, :has_many, :has_one
+    should have_imeths :validations
     should have_imeths :validates_acceptance_of, :validates_confirmation_of
     should have_imeths :validates_exclusion_of,  :validates_format_of
     should have_imeths :validates_inclusion_of, :validates_length_of
@@ -20,6 +24,7 @@ module Ardb::RecordSpy
     should have_imeths :validates_size_of, :validates_uniqueness_of
     should have_imeths :validates_associated, :validates_with, :validates_each
     should have_imeths :validate
+    should have_imeths :callbacks
     should have_imeths :before_validation, :after_validation
     should have_imeths :before_create,  :around_create,  :after_create
     should have_imeths :before_update,  :around_update,  :after_update
@@ -27,6 +32,7 @@ module Ardb::RecordSpy
     should have_imeths :before_destroy, :around_destroy, :after_destroy
     should have_imeths :after_commit, :after_rollback
     should have_imeths :after_initialize, :after_find
+    should have_imeths :custom_callback_types, :define_model_callbacks
     should have_writers :relation_spy
     should have_imeths :relation_spy, :arel_table, :scoped
     should have_imeths :select, :from, :includes, :joins, :where
@@ -36,6 +42,10 @@ module Ardb::RecordSpy
     should "allow reading and writing the record's table name" do
       subject.table_name = 'my_records'
       assert_equal 'my_records', subject.table_name
+    end
+
+    should "default its associations" do
+      assert_equal [], subject.associations
     end
 
     should "add an association config with #belongs_to" do
@@ -60,6 +70,10 @@ module Ardb::RecordSpy
       assert_equal :has_one,  association.type
       assert_equal :linking,  association.name
       assert_equal 'Linking', association.options[:class_name]
+    end
+
+    should "default its validations" do
+      assert_equal [], subject.validations
     end
 
     should "add a validation config for '*_of' validations" do
@@ -109,10 +123,14 @@ module Ardb::RecordSpy
       subject.validate(&block)
       validation = subject.validations.last
       assert_equal :custom, validation.type
-      assert_equal block,    validation.block
+      assert_equal block,   validation.block
     end
 
-    should "add a callback config with with a method name" do
+    should "default its callbacks" do
+      assert_equal [], subject.validations
+    end
+
+    should "add a callback config with a method name" do
       subject.after_initialize :a_callback_method
       callback = subject.callbacks.last
       assert_equal :after_initialize, callback.type
@@ -126,8 +144,46 @@ module Ardb::RecordSpy
       callback = subject.callbacks.last
       assert_equal :before_validation, callback.type
       assert_equal :create, callback.options[:on]
-      @instance.instance_eval(&callback.block)
-      assert_equal 'test', @instance.name
+      record_spy = subject.new
+      record_spy.instance_eval(&callback.block)
+      assert_equal 'test', record_spy.name
+    end
+
+    should "default its custom callback types" do
+      assert_equal [], subject.custom_callback_types
+    end
+
+    should "add a custom callback type using `define_model_callbacks`" do
+      name    = Factory.string
+      options = { Factory.string => Factory.string }
+      subject.define_model_callbacks(name, options)
+
+      callback_type = subject.custom_callback_types.last
+      assert_equal name,    callback_type.name
+      assert_equal options, callback_type.options
+    end
+
+    should "define callback methods using `define_model_callbacks`" do
+      name = Factory.string
+      subject.define_model_callbacks(name)
+
+      assert_respond_to "before_#{name}", subject
+      assert_respond_to "around_#{name}", subject
+      assert_respond_to "after_#{name}",  subject
+
+      callback_name = ["before_#{name}", "around_#{name}", "after_#{name}"].choice
+      method_name = Factory.string
+      subject.send(callback_name, method_name)
+      callback = subject.callbacks.last
+      assert_equal callback_name.to_sym, callback.type
+      assert_equal [method_name],        callback.args
+
+      name = Factory.string
+      subject.define_model_callbacks(name, :only => [:before])
+
+      assert_respond_to "before_#{name}", subject
+      assert_not_respond_to "around_#{name}", subject
+      assert_not_respond_to "after_#{name}",  subject
     end
 
     should "know its relation spy" do
@@ -247,10 +303,14 @@ module Ardb::RecordSpy
   end
 
   class InstanceTests < UnitTests
+    setup do
+      @instance = MyRecord.new
+    end
     subject{ @instance }
 
     should have_accessors :id
     should have_imeths :update_column
+    should have_imeths :manually_run_callbacks, :run_callbacks
 
     should "allow spying the update_column method by just writing the value" do
       assert_not_equal 'updated', subject.name
@@ -271,6 +331,23 @@ module Ardb::RecordSpy
       assert_empty subject.hm_things
       subject.hm_things = [1,2,3]
       assert_equal [1,2,3], subject.hm_things
+    end
+
+    should "default its manually run callbacks" do
+      assert_equal [], subject.manually_run_callbacks
+    end
+
+    should "spy any callbacks that are manually run" do
+      assert_empty subject.manually_run_callbacks
+      name = Factory.string
+      subject.run_callbacks(name)
+      assert_includes name, subject.manually_run_callbacks
+
+      name = Factory.string
+      block_called = false
+      subject.run_callbacks(name){ block_called = true }
+      assert_includes name, subject.manually_run_callbacks
+      assert_true block_called
     end
 
   end

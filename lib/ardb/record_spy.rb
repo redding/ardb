@@ -22,15 +22,16 @@ module Ardb
     module ClassMethods
 
       attr_accessor :table_name
-      attr_reader :associations, :callbacks, :validations
 
       # Associations
+
+      def associations
+        @associations ||= []
+      end
 
       [ :belongs_to, :has_one, :has_many ].each do |method_name|
 
         define_method(method_name) do |assoc_name, *args|
-          @associations ||= []
-
           define_method(assoc_name) do
             instance_variable_get("@#{assoc_name}") || (method_name == :has_many ? [] : nil)
           end
@@ -38,12 +39,16 @@ module Ardb
             instance_variable_set("@#{assoc_name}", value)
           end
 
-          @associations << Association.new(method_name, assoc_name, *args)
+          self.associations << Association.new(method_name, assoc_name, *args)
         end
 
       end
 
       # Validations
+
+      def validations
+        @validations ||= []
+      end
 
       [ :validates_acceptance_of,
         :validates_confirmation_of,
@@ -59,30 +64,29 @@ module Ardb
         type = method_name.to_s.match(/\Avalidates_(.+)_of\Z/)[1]
 
         define_method(method_name) do |*args|
-          @validations ||= []
-          @validations << Validation.new(type, *args)
+          self.validations << Validation.new(type, *args)
         end
 
       end
 
       def validates_associated(*args)
-        @validations ||= []
-        @validations << Validation.new(:associated, *args)
+        self.validations << Validation.new(:associated, *args)
       end
 
       def validates_with(*args)
-        @validations ||= []
-        @validations << Validation.new(:with, *args)
+        self.validations << Validation.new(:with, *args)
       end
 
       def validates_each(*args, &block)
-        @validations ||= []
-        @validations << Validation.new(:each, *args, &block)
+        self.validations << Validation.new(:each, *args, &block)
       end
 
       def validate(method_name = nil, &block)
-        @validations ||= []
-        @validations << Validation.new(:custom, method_name, &block)
+        self.validations << Validation.new(:custom, method_name, &block)
+      end
+
+      def callbacks
+        @callbacks ||= []
       end
 
       # Callbacks
@@ -108,11 +112,32 @@ module Ardb
       ].each do |method_name|
 
         define_method(method_name) do |*args, &block|
-          @callbacks ||= []
-          @callbacks << Callback.new(method_name, *args, &block)
+          self.callbacks << Callback.new(method_name, *args, &block)
         end
 
       end
+
+      def custom_callback_types
+        @custom_callback_types ||= []
+      end
+
+      def define_model_callbacks(*args)
+        options   = args.last.kind_of?(Hash) ? args.pop : {}
+        types     = options[:only] || [:before, :around, :after]
+        metaclass = class << self; self; end
+
+        args.each do |name|
+          self.custom_callback_types << CallbackType.new(name, options)
+          types.each do |type|
+            method_name = "#{type}_#{name}"
+            metaclass.send(:define_method, method_name) do |*args, &block|
+              self.callbacks << Callback.new(method_name, *args, &block)
+            end
+          end
+        end
+      end
+
+      CallbackType = Struct.new(:name, :options)
 
       # Scopes
 
@@ -160,6 +185,15 @@ module Ardb
 
       def update_column(col, value)
         self.send("#{col}=", value)
+      end
+
+      def manually_run_callbacks
+        @manually_run_callbacks ||= []
+      end
+
+      def run_callbacks(name, &block)
+        self.manually_run_callbacks << name
+        block.call if block
       end
 
     end
