@@ -25,14 +25,24 @@ module Ardb
       @applied.map(&:to_sql).join(", ")
     end
 
+    def reset!
+      @applied.clear
+      @results.clear
+      @offset_value = nil
+      @limit_value  = nil
+    end
+
     # ActiveRecord::QueryMethods
 
     [ :select,
       :from,
-      :includes, :joins,
+      :includes,
+      :joins,
       :where,
-      :group, :having,
-      :order, :reverse_order,
+      :group,
+      :having,
+      :order,
+      :reverse_order,
       :readonly
     ].each do |type|
 
