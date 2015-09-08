@@ -21,8 +21,9 @@ class Ardb::Runner::MigrateCommand
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue Exception => e
-      $stderr.puts e
       $stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
+      $stderr.puts e
+      $stderr.puts e.backtrace
       raise Ardb::Runner::CmdFail
     end
   end
