@@ -59,14 +59,14 @@ class Ardb::Adapter
     def load_sql_schema
       require 'scmd'
       cmd_str = "psql -f \"#{self.sql_schema_path}\" #{self.database}"
-      cmd = Scmd.new(cmd_str, env_var_hash).tap(&:run)
+      cmd = Scmd.new(cmd_str, :env => env_var_hash).tap(&:run)
       raise 'Error loading database' unless cmd.success?
     end
 
     def dump_sql_schema
       require 'scmd'
       cmd_str = "pg_dump -i -s -x -O -f \"#{self.sql_schema_path}\" #{self.database}"
-      cmd = Scmd.new(cmd_str, env_var_hash).tap(&:run)
+      cmd = Scmd.new(cmd_str, :env => env_var_hash).tap(&:run)
       raise 'Error dumping database' unless cmd.success?
     end
 
