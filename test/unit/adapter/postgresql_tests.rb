@@ -54,7 +54,7 @@ class Ardb::Adapter::Postgresql
     setup do
       cmd_str = "psql -f \"#{@adapter.sql_schema_path}\" #{@adapter.database}"
       @cmd_spy = CmdSpy.new
-      Assert.stub(Scmd, :new).with(cmd_str, @env){ @cmd_spy }
+      Assert.stub(Scmd, :new).with(cmd_str, :env => @env){ @cmd_spy }
     end
 
     should "run a command for loading a SQL schema using `load_sql_schema`" do
@@ -69,7 +69,7 @@ class Ardb::Adapter::Postgresql
       cmd_str = "pg_dump -i -s -x -O -f " \
                 "\"#{@adapter.sql_schema_path}\" #{@adapter.database}"
       @cmd_spy = CmdSpy.new
-      Assert.stub(Scmd, :new).with(cmd_str, @env){ @cmd_spy }
+      Assert.stub(Scmd, :new).with(cmd_str, :env => @env){ @cmd_spy }
     end
 
     should "run a command for dumping a SQL schema using `dump_sql_schema`" do
