@@ -4,11 +4,13 @@ module Ardb
 
     attr_reader :applied
     attr_accessor :limit_value, :offset_value
+    attr_accessor :pluck_values
     attr_accessor :results
 
     def initialize
       @applied, @results = [], []
       @offset_value, @limit_value = nil, nil
+      @pluck_values = {}
     end
 
     def initialize_copy(copied_from)
@@ -126,6 +128,10 @@ module Ardb
 
     def count
       all.size
+    end
+
+    def pluck(column_name)
+      [@pluck_values[column_name]] * @results.size
     end
 
     class AppliedExpression < Struct.new(:type, :args)
