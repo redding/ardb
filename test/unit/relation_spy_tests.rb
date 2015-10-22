@@ -13,6 +13,7 @@ class Ardb::RelationSpy
     should have_readers :applied
     should have_accessors :results
     should have_accessors :limit_value, :offset_value
+    should have_accessors :pluck_values
     should have_imeths :to_sql, :reset!
     should have_imeths :select
     should have_imeths :from
@@ -24,13 +25,14 @@ class Ardb::RelationSpy
     should have_imeths :limit, :offset
     should have_imeths :merge, :only, :except
     should have_imeths :find, :first, :first!, :last, :last!, :all
-    should have_imeths :count
+    should have_imeths :count, :pluck
 
     should "default it's attributes" do
       assert_equal [], subject.applied
       assert_equal [], subject.results
       assert_nil subject.limit_value
       assert_nil subject.offset_value
+      assert_equal({}, subject.pluck_values)
     end
 
     should "dup its applied and results arrays when copied" do
@@ -466,6 +468,21 @@ class Ardb::RelationSpy
       assert_equal subject.all.size, subject.count
       subject.limit 2
       assert_equal subject.all.size, subject.count
+    end
+
+  end
+
+  class PluckTests < WithResultsTests
+    desc "pluck"
+    setup do
+      @column_name  = Factory.string
+      @column_value = Factory.string
+      @relation_spy.pluck_values[@column_name] = @column_value
+    end
+
+    should "return a pluck value for every result" do
+      exp = [@column_value] * @results.size
+      assert_equal exp, @relation_spy.pluck(@column_name)
     end
 
   end
