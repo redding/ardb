@@ -15,36 +15,36 @@ module Ardb::UseDbDefault
     end
     subject{ @record_class }
 
-    should have_imeths :use_db_default, :use_db_default_attrs
+    should have_imeths :use_db_default, :ardb_use_db_default_attrs
 
     should "know its use db default attrs" do
-      assert_equal [], subject.use_db_default_attrs
+      assert_equal [], subject.ardb_use_db_default_attrs
     end
 
     should "add use db default attributes using `use_db_default`" do
       attr_name = Factory.string
       subject.use_db_default(attr_name)
-      assert_includes attr_name, subject.use_db_default_attrs
+      assert_includes attr_name, subject.ardb_use_db_default_attrs
 
       attr_names = [Factory.string, Factory.string.to_sym]
       subject.use_db_default(*attr_names)
       attr_names.each do |attr_name|
-        assert_includes attr_name.to_s, subject.use_db_default_attrs
+        assert_includes attr_name.to_s, subject.ardb_use_db_default_attrs
       end
     end
 
     should "not add duplicate attributes using `use_db_default`" do
       attr_name = Factory.string
       subject.use_db_default(attr_name)
-      assert_equal [attr_name], subject.use_db_default_attrs
+      assert_equal [attr_name], subject.ardb_use_db_default_attrs
 
       subject.use_db_default(attr_name)
-      assert_equal [attr_name], subject.use_db_default_attrs
+      assert_equal [attr_name], subject.ardb_use_db_default_attrs
 
       more_attr_names = [attr_name, Factory.string]
       subject.use_db_default(*more_attr_names)
       exp = ([attr_name] + more_attr_names).uniq
-      assert_equal exp, subject.use_db_default_attrs
+      assert_equal exp, subject.ardb_use_db_default_attrs
     end
 
     should "add an around create callback" do
