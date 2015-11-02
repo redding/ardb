@@ -52,18 +52,20 @@ module Ardb
       end
 
       def ardb_has_slug_generate_slug
-        slug_attr_value = self.send(self.class.ardb_has_slug_config[:attribute])
-        if !slug_attr_value || slug_attr_value.to_s.empty?
-          slug_attr_value = self.instance_eval(&self.class.ardb_has_slug_config[:source_proc])
+        attr_name = self.class.ardb_has_slug_config[:attribute]
+        slug_source = if !self.send(attr_name) || self.send(attr_name).to_s.empty?
+          self.instance_eval(&self.class.ardb_has_slug_config[:source_proc])
+        else
+          self.send(attr_name)
         end
 
-        generated_slug = Slug.new(slug_attr_value, {
+        generated_slug = Slug.new(slug_source, {
           :preprocessor      => self.class.ardb_has_slug_config[:preprocessor_proc],
           :allow_underscores => self.class.ardb_has_slug_config[:allow_underscores]
         })
-        return if slug_attr_value == generated_slug
-        self.send("#{self.class.ardb_has_slug_config[:attribute]}=", generated_slug)
-        self.update_column(self.class.ardb_has_slug_config[:attribute], generated_slug)
+        return if self.send(attr_name) == generated_slug
+        self.send("#{attr_name}=", generated_slug)
+        self.update_column(attr_name, generated_slug)
       end
 
     end
