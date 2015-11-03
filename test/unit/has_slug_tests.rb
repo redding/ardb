@@ -26,24 +26,49 @@ module Ardb::HasSlug
     should have_imeths :has_slug
     should have_imeths :ardb_has_slug_config
 
-    should "not have any has-slug configuration by default" do
+    should "not have any has-slug config by default" do
       assert_equal({}, subject.ardb_has_slug_config)
     end
 
-    should "set the record up to have a slug using `has_slug`" do
+    should "default the has slug config using `has_slug`" do
       subject.has_slug :source => @source_attribute
+      string = Factory.string
+      record = subject.new.tap{ |r| r.send("#{@source_attribute}=", string) }
 
       assert_equal :slug, subject.ardb_has_slug_config[:attribute]
       assert_false subject.ardb_has_slug_config[:allow_underscores]
 
-      value  = Factory.string
-      record = subject.new.tap{ |r| r.send("#{@source_attribute}=", value) }
-      assert_instance_of Proc, subject.ardb_has_slug_config[:source_proc]
-      assert_equal value, record.instance_eval(&subject.ardb_has_slug_config[:source_proc])
+      source_proc = subject.ardb_has_slug_config[:source_proc]
+      assert_instance_of Proc, source_proc
+      exp = record.send(@source_attribute)
+      assert_equal exp, record.instance_eval(&source_proc)
 
-      upcase_value = value.upcase
-      assert_instance_of Proc, subject.ardb_has_slug_config[:preprocessor_proc]
-      assert_equal value, subject.ardb_has_slug_config[:preprocessor_proc].call(upcase_value)
+      upcase_string = string.upcase
+      preprocessor_proc = subject.ardb_has_slug_config[:preprocessor_proc]
+      assert_instance_of Proc, preprocessor_proc
+      assert_equal string.downcase, preprocessor_proc.call(upcase_string)
+    end
+
+    should "allow customizing the has slug config using `has_slug`" do
+      allow_underscore = Factory.boolean
+      subject.has_slug({
+        :attribute         => @slug_attribute,
+        :source            => @source_attribute,
+        :preprocessor      => :upcase,
+        :allow_underscores => allow_underscore
+      })
+
+      assert_equal @slug_attribute,  subject.ardb_has_slug_config[:attribute]
+      assert_equal allow_underscore, subject.ardb_has_slug_config[:allow_underscores]
+
+      value = Factory.string.downcase
+      preprocessor_proc = subject.ardb_has_slug_config[:preprocessor_proc]
+      assert_instance_of Proc, preprocessor_proc
+      assert_equal value.upcase, preprocessor_proc.call(value)
+    end
+
+    should "add validations using `has_slug`" do
+      subject.has_slug :source => @source_attribute
 
       validation = subject.validations.find{ |v| v.type == :presence }
       assert_not_nil validation
@@ -55,6 +80,22 @@ module Ardb::HasSlug
       assert_equal [subject.ardb_has_slug_config[:attribute]], validation.columns
       assert_equal true, validation.options[:case_sensitive]
       assert_nil validation.options[:scope]
+    end
+
+    should "allow customizing its validations using `has_slug`" do
+      unique_scope = Factory.string.to_sym
+      subject.has_slug({
+        :source       => @source_attribute,
+        :unique_scope => unique_scope
+      })
+
+      validation = subject.validations.find{ |v| v.type == :uniqueness }
+      assert_not_nil validation
+      assert_equal unique_scope, validation.options[:scope]
+    end
+
+    should "add callbacks using `has_slug`" do
+      subject.has_slug :source => @source_attribute
 
       callback = subject.callbacks.find{ |v| v.type == :after_create }
       assert_not_nil callback
@@ -63,29 +104,6 @@ module Ardb::HasSlug
       callback = subject.callbacks.find{ |v| v.type == :after_update }
       assert_not_nil callback
       assert_equal [:ardb_has_slug_generate_slug], callback.args
-    end
-
-    should "allow passing custom options to `has_slug`" do
-      allow_underscore = Factory.boolean
-      unique_scope     = Factory.string.to_sym
-      subject.has_slug({
-        :attribute         => @slug_attribute,
-        :source            => @source_attribute,
-        :preprocessor      => :upcase,
-        :allow_underscores => allow_underscore,
-        :unique_scope      => unique_scope
-      })
-
-      assert_equal @slug_attribute,  subject.ardb_has_slug_config[:attribute]
-      assert_equal allow_underscore, subject.ardb_has_slug_config[:allow_underscores]
-
-      value = Factory.string.downcase
-      assert_instance_of Proc, subject.ardb_has_slug_config[:preprocessor_proc]
-      assert_equal value.upcase, subject.ardb_has_slug_config[:preprocessor_proc].call(value)
-
-      validation = subject.validations.find{ |v| v.type == :uniqueness }
-      assert_not_nil validation
-      assert_equal unique_scope, validation.options[:scope]
     end
 
     should "raise an argument error if `has_slug` isn't passed a source" do
