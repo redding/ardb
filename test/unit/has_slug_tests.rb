@@ -150,6 +150,23 @@ module Ardb::HasSlug
       assert_equal exp,             subject.slug_db_column_value
     end
 
+    should "slug its source even if its already a valid slug using `ardb_has_slug_generate_slug`" do
+      slug_source = Factory.slug
+      @record.send("#{@source_attribute}=", slug_source)
+      # ensure the preprocessor doesn't change our source
+      Assert.stub(slug_source, @preprocessor){ slug_source }
+
+      subject.instance_eval{ ardb_has_slug_generate_slug }
+
+      exp = Slug.new(slug_source, {
+        :preprocessor      => @preprocessor.to_proc,
+        :allow_underscores => @allow_underscores
+      })
+      assert_equal exp,             subject.send(@slug_attribute)
+      assert_equal @slug_attribute, subject.slug_db_column_name
+      assert_equal exp,             subject.slug_db_column_value
+    end
+
     should "not set its slug if it hasn't changed using `ardb_has_slug_generate_slug`" do
       generated_slug = Slug.new(@source_value, {
         :preprocessor      => @preprocessor.to_proc,
@@ -168,7 +185,7 @@ module Ardb::HasSlug
     desc "Slug"
     subject{ Slug }
 
-    NON_WORD_CHARS = ((' '..'/').to_a + (':'..'@').to_a + ('['+'`').to_a +
+    NON_WORD_CHARS = ((' '..'/').to_a + (':'..'@').to_a + ('['..'`').to_a +
                      ('{'..'~').to_a - ['-', '_']).freeze
 
     should have_imeths :new
