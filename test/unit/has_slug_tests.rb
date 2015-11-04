@@ -23,8 +23,17 @@ module Ardb::HasSlug
     end
     subject{ @record_class }
 
+    NON_WORD_CHARS = ((' '..'/').to_a + (':'..'@').to_a + ('['..'`').to_a +
+                     ('{'..'~').to_a - ['-', '_']).freeze
+
     should have_imeths :has_slug
     should have_imeths :ardb_has_slug_config
+
+    should "know its default attribute, preprocessor and separator" do
+      assert_equal :slug,     DEFAULT_ATTRIBUTE
+      assert_equal :downcase, DEFAULT_PREPROCESSOR
+      assert_equal '-',       DEFAULT_SEPARATOR
+    end
 
     should "not have any has-slug config by default" do
       assert_equal({}, subject.ardb_has_slug_config)
@@ -35,7 +44,8 @@ module Ardb::HasSlug
       string = Factory.string
       record = subject.new.tap{ |r| r.send("#{@source_attribute}=", string) }
 
-      assert_equal :slug, subject.ardb_has_slug_config[:attribute]
+      assert_equal DEFAULT_ATTRIBUTE, subject.ardb_has_slug_config[:attribute]
+      assert_equal DEFAULT_SEPARATOR, subject.ardb_has_slug_config[:separator]
       assert_false subject.ardb_has_slug_config[:allow_underscores]
 
       source_proc = subject.ardb_has_slug_config[:source_proc]
@@ -46,19 +56,23 @@ module Ardb::HasSlug
       upcase_string = string.upcase
       preprocessor_proc = subject.ardb_has_slug_config[:preprocessor_proc]
       assert_instance_of Proc, preprocessor_proc
-      assert_equal string.downcase, preprocessor_proc.call(upcase_string)
+      exp = upcase_string.send(DEFAULT_PREPROCESSOR)
+      assert_equal exp, preprocessor_proc.call(upcase_string)
     end
 
     should "allow customizing the has slug config using `has_slug`" do
+      separator        = NON_WORD_CHARS.choice
       allow_underscore = Factory.boolean
       subject.has_slug({
         :attribute         => @slug_attribute,
         :source            => @source_attribute,
         :preprocessor      => :upcase,
+        :separator         => separator,
         :allow_underscores => allow_underscore
       })
 
       assert_equal @slug_attribute,  subject.ardb_has_slug_config[:attribute]
+      assert_equal separator,        subject.ardb_has_slug_config[:separator]
       assert_equal allow_underscore, subject.ardb_has_slug_config[:allow_underscores]
 
       value = Factory.string.downcase
@@ -116,11 +130,13 @@ module Ardb::HasSlug
     desc "when init"
     setup do
       @preprocessor      = [:downcase, :upcase, :capitalize].choice
+      @separator         = NON_WORD_CHARS.choice
       @allow_underscores = Factory.boolean
       @record_class.has_slug({
         :attribute         => @slug_attribute,
         :source            => @source_attribute,
         :preprocessor      => @preprocessor,
+        :separator         => @separator,
         :allow_underscores => @allow_underscores,
       })
 
@@ -146,6 +162,7 @@ module Ardb::HasSlug
 
       exp = Slug.new(@source_value, {
         :preprocessor      => @preprocessor.to_proc,
+        :separator         => @separator,
         :allow_underscores => @allow_underscores
       })
       assert_equal exp,             subject.send(@slug_attribute)
@@ -161,6 +178,7 @@ module Ardb::HasSlug
 
       exp = Slug.new(@source_value, {
         :preprocessor      => @preprocessor.to_proc,
+        :separator         => @separator,
         :allow_underscores => @allow_underscores
       })
       assert_equal exp,             subject.send(@slug_attribute)
@@ -178,6 +196,7 @@ module Ardb::HasSlug
 
       exp = Slug.new(slug_source, {
         :preprocessor      => @preprocessor.to_proc,
+        :separator         => @separator,
         :allow_underscores => @allow_underscores
       })
       assert_equal exp,             subject.send(@slug_attribute)
@@ -188,6 +207,7 @@ module Ardb::HasSlug
     should "not set its slug if it hasn't changed using `ardb_has_slug_generate_slug`" do
       generated_slug = Slug.new(@source_value, {
         :preprocessor      => @preprocessor.to_proc,
+        :separator         => @separator,
         :allow_underscores => @allow_underscores
       })
       @record.send("#{@slug_attribute}=", generated_slug)
@@ -203,10 +223,13 @@ module Ardb::HasSlug
     desc "Slug"
     subject{ Slug }
 
-    NON_WORD_CHARS = ((' '..'/').to_a + (':'..'@').to_a + ('['..'`').to_a +
-                     ('{'..'~').to_a - ['-', '_']).freeze
-
     should have_imeths :new
+
+    should "know its default preprocessor" do
+      assert_instance_of Proc, Slug::DEFAULT_PREPROCESSOR
+      string = Factory.string
+      assert_same string, Slug::DEFAULT_PREPROCESSOR.call(string)
+    end
 
     should "not change strings that are made up of valid chars" do
       string = Factory.string
@@ -215,7 +238,7 @@ module Ardb::HasSlug
       assert_equal string, subject.new(string)
     end
 
-    should "turn invalid chars into a seperator" do
+    should "turn invalid chars into a separator" do
       string = Factory.integer(3).times.map do
         "#{Factory.string(3)}#{NON_WORD_CHARS.choice}#{Factory.string(3)}"
       end.join(NON_WORD_CHARS.choice)
@@ -232,22 +255,22 @@ module Ardb::HasSlug
       assert_equal preprocessor.call(string), slug
     end
 
-    should "allow passing a custom seperator" do
-      seperator = NON_WORD_CHARS.choice
+    should "allow passing a custom separator" do
+      separator = NON_WORD_CHARS.choice
 
-      invalid_char = (NON_WORD_CHARS - [seperator]).choice
+      invalid_char = (NON_WORD_CHARS - [separator]).choice
       string = "#{Factory.string}#{invalid_char}#{Factory.string}"
-      slug = subject.new(string, :seperator => seperator)
-      assert_equal string.gsub(/[^\w]+/, seperator), slug
+      slug = subject.new(string, :separator => separator)
+      assert_equal string.gsub(/[^\w]+/, separator), slug
 
-      # it won't change the seperator in the strings
-      string = "#{Factory.string}#{seperator}#{Factory.string}"
-      assert_equal string, subject.new(string, :seperator => seperator)
+      # it won't change the separator in the strings
+      string = "#{Factory.string}#{separator}#{Factory.string}"
+      assert_equal string, subject.new(string, :separator => separator)
 
-      # it will change the default seperator now
+      # it will change the default separator now
       string = "#{Factory.string}-#{Factory.string}"
-      slug = subject.new(string, :seperator => seperator)
-      assert_equal string.gsub('-', seperator), slug
+      slug = subject.new(string, :separator => separator)
+      assert_equal string.gsub('-', separator), slug
     end
 
     should "change underscores into its separator unless allowed" do
@@ -260,21 +283,21 @@ module Ardb::HasSlug
       assert_equal string, subject.new(string, :allow_underscores => true)
     end
 
-    should "not allow multiple seperators in a row" do
+    should "not allow multiple separators in a row" do
       string = "#{Factory.string}--#{Factory.string}"
       assert_equal string.gsub(/-{2,}/, '-'), subject.new(string)
 
-      # remove seperators that were added from changing invalid chars
+      # remove separators that were added from changing invalid chars
       invalid_chars = (Factory.integer(3) + 1).times.map{ NON_WORD_CHARS.choice }.join
       string = "#{Factory.string}#{invalid_chars}#{Factory.string}"
       assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string)
     end
 
-    should "remove leading and trailing seperators" do
+    should "remove leading and trailing separators" do
       string = "-#{Factory.string}-#{Factory.string}-"
       assert_equal string[1..-2], subject.new(string)
 
-      # remove seperators that were added from changing invalid chars
+      # remove separators that were added from changing invalid chars
       invalid_char = NON_WORD_CHARS.choice
       string = "#{invalid_char}#{Factory.string}-#{Factory.string}#{invalid_char}"
       assert_equal string[1..-2], subject.new(string)

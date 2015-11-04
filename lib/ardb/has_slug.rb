@@ -2,6 +2,10 @@ module Ardb
 
   module HasSlug
 
+    DEFAULT_ATTRIBUTE    = :slug
+    DEFAULT_PREPROCESSOR = :downcase
+    DEFAULT_SEPARATOR    = '-'.freeze
+
     def self.included(klass)
       klass.class_eval do
         extend ClassMethods
@@ -19,9 +23,10 @@ module Ardb
         raise(ArgumentError, "a source must be provided") unless options[:source]
 
         @ardb_has_slug_config.merge!({
-          :attribute         => (options[:attribute] || :slug),
+          :attribute         => options[:attribute] || DEFAULT_ATTRIBUTE,
           :source_proc       => options[:source].to_proc,
-          :preprocessor_proc => (options[:preprocessor] || :downcase).to_proc,
+          :preprocessor_proc => (options[:preprocessor] || DEFAULT_PREPROCESSOR).to_proc,
+          :separator         => options[:separator] || DEFAULT_SEPARATOR,
           :allow_underscores => !!options[:allow_underscores]
         })
 
@@ -61,6 +66,7 @@ module Ardb
 
         generated_slug = Slug.new(slug_source, {
           :preprocessor      => self.class.ardb_has_slug_config[:preprocessor_proc],
+          :separator         => self.class.ardb_has_slug_config[:separator],
           :allow_underscores => self.class.ardb_has_slug_config[:allow_underscores]
         })
         return if self.send(attr_name) == generated_slug
@@ -71,20 +77,22 @@ module Ardb
     end
 
     module Slug
+      DEFAULT_PREPROCESSOR = proc{ |slug| slug } # no-op
+
       def self.new(string, options = nil)
         options ||= {}
-        preprocessor       = options[:preprocessor] || proc{ |slug| slug } # no-op
-        seperator          = options[:seperator] || '-'
+        preprocessor       = options[:preprocessor] || DEFAULT_PREPROCESSOR
+        separator          = options[:separator] || DEFAULT_SEPARATOR
         allow_underscores  = options[:allow_underscores]
-        regexp_escaped_sep = Regexp.escape(seperator)
+        regexp_escaped_sep = Regexp.escape(separator)
 
         slug = preprocessor.call(string.to_s)
         # Turn unwanted chars into the separator
-        slug.gsub!(/[^\w#{regexp_escaped_sep}]+/, seperator)
+        slug.gsub!(/[^\w#{regexp_escaped_sep}]+/, separator)
         # Turn underscores into the separator, unless allowing
-        slug.gsub!(/_/, seperator) unless allow_underscores
+        slug.gsub!(/_/, separator) unless allow_underscores
         # No more than one of the separator in a row.
-        slug.gsub!(/#{regexp_escaped_sep}{2,}/, seperator)
+        slug.gsub!(/#{regexp_escaped_sep}{2,}/, separator)
         # Remove leading/trailing separator.
         slug.gsub!(/\A#{regexp_escaped_sep}|#{regexp_escaped_sep}\z/, '')
         slug
