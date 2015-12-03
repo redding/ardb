@@ -17,7 +17,8 @@ module Ardb
 
     module InstanceMethods
 
-      attr_accessor :drop_tables_called_count, :load_schema_called_count
+      attr_accessor :drop_tables_called_count
+      attr_accessor :dump_schema_called_count, :load_schema_called_count
       attr_accessor :drop_db_called_count, :create_db_called_count
       attr_accessor :migrate_db_called_count
 
@@ -25,12 +26,32 @@ module Ardb
         @drop_tables_called_count ||= 0
       end
 
+      def drop_tables_called?
+        self.drop_tables_called_count > 0
+      end
+
       def drop_tables(*args, &block)
         self.drop_tables_called_count += 1
       end
 
+      def dump_schema_called_count
+        @dump_schema_called_count ||= 0
+      end
+
+      def dump_schema_called?
+        self.dump_schema_called_count > 0
+      end
+
+      def dump_schema(*args, &block)
+        self.dump_schema_called_count += 1
+      end
+
       def load_schema_called_count
         @load_schema_called_count ||= 0
+      end
+
+      def load_schema_called?
+        self.load_schema_called_count > 0
       end
 
       def load_schema(*args, &block)
@@ -41,6 +62,10 @@ module Ardb
         @drop_db_called_count ||= 0
       end
 
+      def drop_db_called?
+        self.drop_db_called_count > 0
+      end
+
       def drop_db(*args, &block)
         self.drop_db_called_count += 1
       end
@@ -49,12 +74,20 @@ module Ardb
         @create_db_called_count ||= 0
       end
 
+      def create_db_called?
+        self.create_db_called_count > 0
+      end
+
       def create_db(*args, &block)
         self.create_db_called_count += 1
       end
 
       def migrate_db_called_count
         @migrate_db_called_count ||= 0
+      end
+
+      def migrate_db_called?
+        self.migrate_db_called_count > 0
       end
 
       def migrate_db(*args, &block)

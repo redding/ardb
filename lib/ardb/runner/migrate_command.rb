@@ -4,7 +4,9 @@ require 'ardb/runner'
 
 class Ardb::Runner::MigrateCommand
 
-  def initialize
+  def initialize(out_io = nil, err_io = nil)
+    @out_io = out_io || $stdout
+    @err_io = err_io || $stderr
     @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
   end
 
@@ -15,10 +17,10 @@ class Ardb::Runner::MigrateCommand
       @adapter.dump_schema
     rescue Ardb::Runner::CmdError => e
       raise e
-    rescue Exception => e
-      $stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
-      $stderr.puts e
-      $stderr.puts e.backtrace
+    rescue StandardError => e
+      @err_io.puts "error migrating #{Ardb.config.db.database.inspect} database"
+      @err_io.puts e
+      @err_io.puts e.backtrace
       raise Ardb::Runner::CmdFail
     end
   end
