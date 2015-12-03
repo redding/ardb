@@ -20,6 +20,25 @@ class Ardb::Adapter::Base
   def create_db(*args); raise NotImplementedError; end
   def drop_db(*args);   raise NotImplementedError; end
 
+  def migrate_db
+    verbose = ENV["MIGRATE_QUIET"].nil?
+    version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
+    migrations_path = Ardb.config.migrations_path
+
+    if defined?(ActiveRecord::Migration::CommandRecorder)
+      require 'ardb/migration_helpers'
+      ActiveRecord::Migration::CommandRecorder.class_eval do
+        include Ardb::MigrationHelpers::RecorderMixin
+      end
+    end
+
+    ActiveRecord::Migrator.migrations_path = migrations_path
+    ActiveRecord::Migration.verbose = verbose
+    ActiveRecord::Migrator.migrate(migrations_path, version) do |migration|
+      ENV["MIGRATE_SCOPE"].blank? || (ENV["MIGRATE_SCOPE"] == migration.scope)
+    end
+  end
+
   def drop_tables(*args); raise NotImplementedError; end
 
   def load_schema

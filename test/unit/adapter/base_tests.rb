@@ -13,7 +13,7 @@ class Ardb::Adapter::Base
     should have_readers :config_settings, :database
     should have_readers :ruby_schema_path, :sql_schema_path
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
-    should have_imeths :create_db, :drop_db
+    should have_imeths :create_db, :drop_db, :migrate_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
     should have_imeths :dump_schema, :dump_ruby_schema, :dump_sql_schema
 
@@ -47,6 +47,43 @@ class Ardb::Adapter::Base
     should "not implement the load and dump sql schema methods" do
       assert_raises(NotImplementedError){ subject.load_sql_schema }
       assert_raises(NotImplementedError){ subject.dump_sql_schema }
+    end
+
+  end
+
+  class MigrateDbTests < UnitTests
+    desc "`migrate_db`"
+    setup do
+      ENV["MIGRATE_VERSION"] = Factory.integer.to_s if Factory.boolean
+      ENV["MIGRATE_QUIET"]   = Factory.boolean.to_s if Factory.boolean
+
+      @migrator_called_with = []
+      Assert.stub(ActiveRecord::Migrator, :migrate) do |*args|
+        @migrator_called_with = args
+      end
+
+      @adapter.migrate_db
+    end
+
+    should "add the Ardb MigrationHelper Recorder to the ActiveRecord Command Recorder" do
+      exp = Ardb::MigrationHelpers::RecorderMixin
+      assert_includes exp, ActiveRecord::Migration::CommandRecorder
+    end
+
+    should "set the ActiveRecord Migrator's migrations path" do
+      exp = Ardb.config.migrations_path
+      assert_equal exp, ActiveRecord::Migrator.migrations_path
+    end
+
+    should "set the ActiveRecord Migration's verbose" do
+      exp = ENV["MIGRATE_QUIET"].nil?
+      assert_equal exp, ActiveRecord::Migration.verbose
+    end
+
+    should "call the ActiveRecord Migrator's migrate" do
+      version = ENV.key?("MIGRATE_VERSION") ? ENV["MIGRATE_VERSION"].to_i : nil
+      exp = [Ardb.config.migrations_path, version]
+      assert_equal exp, @migrator_called_with
     end
 
   end

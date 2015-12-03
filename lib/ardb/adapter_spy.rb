@@ -19,6 +19,7 @@ module Ardb
 
       attr_accessor :drop_tables_called_count, :load_schema_called_count
       attr_accessor :drop_db_called_count, :create_db_called_count
+      attr_accessor :migrate_db_called_count
 
       def drop_tables_called_count
         @drop_tables_called_count ||= 0
@@ -50,6 +51,14 @@ module Ardb
 
       def create_db(*args, &block)
         self.create_db_called_count += 1
+      end
+
+      def migrate_db_called_count
+        @migrate_db_called_count ||= 0
+      end
+
+      def migrate_db(*args, &block)
+        self.migrate_db_called_count += 1
       end
 
     end
