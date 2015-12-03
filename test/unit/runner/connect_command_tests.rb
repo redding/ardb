@@ -1,7 +1,7 @@
 require 'assert'
 require 'ardb/runner/connect_command'
 
-class Ardb::Runner::CreateCommand
+class Ardb::Runner::ConnectCommand
 
   class UnitTests < Assert::Context
     desc "Ardb::Runner::ConnectCommand"
