@@ -1,6 +1,8 @@
 require 'assert'
 require 'ardb/adapter_spy'
 
+require 'much-plugin'
+
 module Ardb::AdapterSpy
 
   class UnitTests < Assert::Context
@@ -22,7 +24,11 @@ module Ardb::AdapterSpy
     should have_imeths :connect_db_called?, :connect_db
     should have_imeths :migrate_db_called?, :migrate_db
 
-    should "included the record spy instance methods" do
+    should "use much-plugin" do
+      assert_includes MuchPlugin, Ardb::AdapterSpy
+    end
+
+    should "included the adapter spy instance methods" do
       assert_includes Ardb::AdapterSpy::InstanceMethods, subject.class
     end
 

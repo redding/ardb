@@ -1,6 +1,8 @@
 require 'assert'
 require 'ardb/record_spy'
 
+require 'much-plugin'
+
 module Ardb::RecordSpy
 
   class UnitTests < Assert::Context
@@ -38,6 +40,10 @@ module Ardb::RecordSpy
     should have_imeths :select, :from, :includes, :joins, :where
     should have_imeths :group, :having, :order, :reverse_order, :readonly
     should have_imeths :limit, :offset, :merge, :except, :only
+
+    should "use much-plugin" do
+      assert_includes MuchPlugin, Ardb::RecordSpy
+    end
 
     should "allow reading and writing the record's table name" do
       subject.table_name = 'my_records'
