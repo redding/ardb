@@ -1,6 +1,7 @@
 require 'assert'
 require 'ardb/has_slug'
 
+require 'much-plugin'
 require 'ardb/record_spy'
 
 module Ardb::HasSlug
@@ -28,6 +29,10 @@ module Ardb::HasSlug
 
     should have_imeths :has_slug
     should have_imeths :ardb_has_slug_config
+
+    should "use much-plugin" do
+      assert_includes MuchPlugin, Ardb::UseDbDefault
+    end
 
     should "know its default attribute, preprocessor and separator" do
       assert_equal :slug,     DEFAULT_ATTRIBUTE

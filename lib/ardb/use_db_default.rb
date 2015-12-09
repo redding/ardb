@@ -1,17 +1,18 @@
+require 'much-plugin'
+
 module Ardb
 
   module UseDbDefault
+    include MuchPlugin
 
-    def self.included(klass)
-      klass.class_eval do
-        extend ClassMethods
-        include InstanceMethods
+    plugin_included do
+      extend ClassMethods
+      include InstanceMethods
 
-        @ardb_use_db_default_attrs = []
+      @ardb_use_db_default_attrs = []
 
-        around_create :ardb_allow_db_to_default_attrs
+      around_create :ardb_allow_db_to_default_attrs
 
-      end
     end
 
     module ClassMethods
