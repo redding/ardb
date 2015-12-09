@@ -1,19 +1,20 @@
+require 'much-plugin'
+
 module Ardb
 
   module HasSlug
+    include MuchPlugin
 
     DEFAULT_ATTRIBUTE    = :slug
     DEFAULT_PREPROCESSOR = :downcase
     DEFAULT_SEPARATOR    = '-'.freeze
 
-    def self.included(klass)
-      klass.class_eval do
-        extend ClassMethods
-        include InstanceMethods
+    plugin_included do
+      extend ClassMethods
+      include InstanceMethods
 
-        @ardb_has_slug_config = {}
+      @ardb_has_slug_config = {}
 
-      end
     end
 
     module ClassMethods

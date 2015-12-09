@@ -1,9 +1,11 @@
 require 'arel'
+require 'much-plugin'
 require 'ardb/relation_spy'
 
 module Ardb
 
   module RecordSpy
+    include MuchPlugin
 
     def self.new(&block)
       block ||= proc{ }
@@ -12,11 +14,9 @@ module Ardb
       record_spy
     end
 
-    def self.included(klass)
-      klass.class_eval do
-        extend ClassMethods
-        include InstanceMethods
-      end
+    plugin_included do
+      extend ClassMethods
+      include InstanceMethods
     end
 
     module ClassMethods
