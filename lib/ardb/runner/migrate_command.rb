@@ -14,7 +14,7 @@ class Ardb::Runner::MigrateCommand
     begin
       Ardb.init
       @adapter.migrate_db
-      @adapter.dump_schema
+      @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
     rescue Ardb::Runner::CmdError => e
       raise e
     rescue StandardError => e

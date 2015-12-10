@@ -31,16 +31,40 @@ class Ardb::Runner::MigrateCommand
 
   end
 
-  class RunTests < InitTests
+  class RunSetupTests < InitTests
     desc "and run"
+
+  end
+
+  class RunTests < RunSetupTests
     setup do
       @command.run
     end
 
     should "initialize Ardb, migrate the db and dump schema via the adapter" do
-      assert_equal true, @ardb_init_called
-      assert_equal true, @adapter_spy.migrate_db_called?
-      assert_equal true, @adapter_spy.dump_schema_called?
+      assert_true @ardb_init_called
+      assert_true @adapter_spy.migrate_db_called?
+      assert_true @adapter_spy.dump_schema_called?
+    end
+
+  end
+
+  class RunWithNoSchemaEnvVarTests < RunSetupTests
+    desc "with no schema dump env var set"
+    setup do
+      @current_no_schema = ENV['ARDB_MIGRATE_NO_SCHEMA']
+      ENV['ARDB_MIGRATE_NO_SCHEMA'] = 'yes'
+
+      @command.run
+    end
+    teardown do
+      ENV['ARDB_MIGRATE_NO_SCHEMA'] = @current_no_schema
+    end
+
+    should "initialize Ardb and migrate the db but not dump schema" do
+      assert_true  @ardb_init_called
+      assert_true  @adapter_spy.migrate_db_called?
+      assert_false @adapter_spy.dump_schema_called?
     end
 
   end
