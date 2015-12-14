@@ -1,20 +1,24 @@
 require 'ardb/runner'
 
-class Ardb::Runner::ConnectCommand
+class Ardb::Runner
 
-  def run
-    begin
-      Ardb.init
-      ActiveRecord::Base.connection
-      $stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
-    rescue Ardb::Runner::CmdError => e
-      raise e
-    rescue Exception => e
-      $stderr.puts e, *e.backtrace
-      $stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database"\
-                   " with #{Ardb.config.db_settings.inspect}"
-      raise Ardb::Runner::CmdFail
+  class ConnectCommand
+
+    def run
+      begin
+        Ardb.init
+        ActiveRecord::Base.connection
+        $stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      rescue Ardb::Runner::CmdError => e
+        raise e
+      rescue Exception => e
+        $stderr.puts e, *e.backtrace
+        $stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database"\
+                     " with #{Ardb.config.db_settings.inspect}"
+        raise Ardb::Runner::CmdFail
+      end
     end
+
   end
 
 end

@@ -1,11 +1,12 @@
 require 'assert'
-require 'ardb/adapter_spy'
 require 'ardb/test_helpers'
+
+require 'ardb/adapter_spy'
 
 module Ardb::TestHelpers
 
   class UnitTests < Assert::Context
-    desc "Ardb test helpers"
+    desc "Ardb::TestHelpers"
     subject{ Ardb::TestHelpers }
 
     should have_imeths :drop_tables, :load_schema

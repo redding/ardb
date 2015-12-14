@@ -2,11 +2,14 @@
 # to the full qualifed root path.  The goal here is to specify path options
 # with root-relative path strings.
 
-module Ardb; end
-class Ardb::RootPath < String
+module Ardb
 
-  def initialize(path_string)
-    super(Ardb.config.root_path.join(path_string).to_s)
+  class RootPath < String
+
+    def initialize(path_string)
+      super(Ardb.config.root_path.join(path_string).to_s)
+    end
+
   end
 
 end

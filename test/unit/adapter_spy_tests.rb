@@ -3,10 +3,6 @@ require 'ardb/adapter_spy'
 
 module Ardb::AdapterSpy
 
-  class MyAdapter
-    include Ardb::AdapterSpy
-  end
-
   class UnitTests < Assert::Context
     desc "Ardb::AdapterSpy"
     setup do
@@ -88,6 +84,10 @@ module Ardb::AdapterSpy
       assert subject.respond_to? :name=
     end
 
+  end
+
+  class MyAdapter
+    include Ardb::AdapterSpy
   end
 
 end
