@@ -33,9 +33,6 @@ module Ardb
       when 'drop'
         require 'ardb/runner/drop_command'
         DropCommand.new.run
-      when 'connect'
-        require 'ardb/runner/connect_command'
-        ConnectCommand.new.run
       when 'null'
         NullCommand.new.run
       else
