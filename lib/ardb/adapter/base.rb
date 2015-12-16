@@ -21,6 +21,10 @@ class Ardb::Adapter
     def create_db(*args); raise NotImplementedError; end
     def drop_db(*args);   raise NotImplementedError; end
 
+    def connect_db
+      ActiveRecord::Base.connection
+    end
+
     def migrate_db
       verbose = ENV["MIGRATE_QUIET"].nil?
       version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil

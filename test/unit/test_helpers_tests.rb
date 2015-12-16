@@ -11,7 +11,8 @@ module Ardb::TestHelpers
 
     should have_imeths :drop_tables, :load_schema
     should have_imeths :create_db!, :create_db, :drop_db!, :drop_db
-    should have_imeths :migrate_db!, :migrate_db, :reset_db, :reset_db!
+    should have_imeths :connect_db!, :connect_db, :migrate_db!, :migrate_db
+    should have_imeths :reset_db, :reset_db!
 
   end
 
@@ -87,6 +88,27 @@ module Ardb::TestHelpers
       assert_equal 1, @adapter_spy.drop_db_called_count
       subject.drop_db!
       assert_equal 2, @adapter_spy.drop_db_called_count
+    end
+
+  end
+
+  class ConnectDbTests < UsageTests
+    desc "connect db methods"
+
+    should "tell the adapter to connect to the db only once" do
+      assert_equal 0, @adapter_spy.connect_db_called_count
+      subject.connect_db
+      assert_equal 1, @adapter_spy.connect_db_called_count
+      subject.connect_db
+      assert_equal 1, @adapter_spy.connect_db_called_count
+    end
+
+    should "force the adapter to connect to the db" do
+      assert_equal 0, @adapter_spy.connect_db_called_count
+      subject.connect_db!
+      assert_equal 1, @adapter_spy.connect_db_called_count
+      subject.connect_db!
+      assert_equal 2, @adapter_spy.connect_db_called_count
     end
 
   end
