@@ -1,109 +1,90 @@
 require 'ardb/version'
-require 'ardb/runner'
+require 'ardb/clirb'
 
 module Ardb
 
   class CLI
 
-    def self.run(*args)
-      self.new.run(*args)
+    class InvalidCommand; end
+    COMMANDS = Hash.new{ |h, k| InvalidCommand.new(k) }.tap do |h|
     end
 
-    def initialize
-      @cli = CLIRB.new
+    def self.run(args)
+      self.new.run(args)
     end
 
-    def run(*args)
+    def initialize(kernel = nil, stdout = nil, stderr = nil)
+      @kernel = kernel || Kernel
+      @stdout = stdout || $stdout
+      @stderr = stderr || $stderr
+    end
+
+    def run(args)
       begin
-        @cli.parse!(args)
-        Ardb::Runner.new(@cli.args, @cli.opts).run
+        cmd_name = args.shift
+        cmd = COMMANDS[cmd_name].new(args)
+        cmd.init
+        cmd.run
       rescue CLIRB::HelpExit
-        puts help
+        @stdout.puts cmd.help
       rescue CLIRB::VersionExit
-        puts Ardb::VERSION
-      rescue Ardb::Runner::UnknownCmdError => err
-        $stderr.puts "#{err.message}\n\n"
-        $stderr.puts help
-        exit(1)
-      rescue Ardb::NotConfiguredError, Ardb::Runner::CmdError => err
-        $stderr.puts "#{err.message}"
-        exit(1)
-      rescue Ardb::Runner::CmdFail => err
-        exit(1)
-      rescue CLIRB::Error => exception
-        $stderr.puts "#{exception.message}\n\n"
-        $stderr.puts help
-        exit(1)
-      rescue Exception => exception
-        $stderr.puts "#{exception.class}: #{exception.message}"
-        $stderr.puts exception.backtrace.join("\n")
-        exit(1)
+        @stdout.puts Ardb::VERSION
+      rescue CLIRB::Error, ArgumentError, InvalidCommandError => exception
+        display_debug(exception)
+        @stderr.puts "#{exception.message}\n\n"
+        @stdout.puts cmd.help
+        @kernel.exit 1
+      rescue StandardError => exception
+        @stderr.puts "#{exception.class}: #{exception.message}"
+        @stderr.puts exception.backtrace.join("\n")
+        @kernel.exit 1
       end
-      exit(0)
+      @kernel.exit 0
     end
 
-    def help
-      "Usage: ardb [options] COMMAND\n"\
-      "\n"\
-      "Options:"\
-      "#{@cli}"
-    end
+    private
 
-  end
-
-  class CLIRB  # Version 1.0.0, https://github.com/redding/cli.rb
-    Error    = Class.new(RuntimeError);
-    HelpExit = Class.new(RuntimeError); VersionExit = Class.new(RuntimeError)
-    attr_reader :argv, :args, :opts, :data
-
-    def initialize(&block)
-      @options = []; instance_eval(&block) if block
-      require 'optparse'
-      @data, @args, @opts = [], [], {}; @parser = OptionParser.new do |p|
-        p.banner = ''; @options.each do |o|
-          @opts[o.name] = o.value; p.on(*o.parser_args){ |v| @opts[o.name] = v }
-        end
-        p.on_tail('--version', ''){ |v| raise VersionExit, v.to_s }
-        p.on_tail('--help',    ''){ |v| raise HelpExit,    v.to_s }
+    def display_debug(exception)
+      if ENV['DEBUG']
+        @stderr.puts "#{exception.class}: #{exception.message}"
+        @stderr.puts exception.backtrace.join("\n")
       end
     end
 
-    def option(*args); @options << Option.new(*args); end
-    def parse!(argv)
-      @args = (argv || []).dup.tap do |args_list|
-        begin; @parser.parse!(args_list)
-        rescue OptionParser::ParseError => err; raise Error, err.message; end
-      end; @data = @args + [@opts]
-    end
-    def to_s; @parser.to_s; end
-    def inspect
-      "#<#{self.class}:#{'0x0%x' % (object_id << 1)} @data=#{@data.inspect}>"
-    end
+    class InvalidCommand
 
-    class Option
-      attr_reader :name, :opt_name, :desc, :abbrev, :value, :klass, :parser_args
+      attr_reader :name, :argv, :clirb
 
-      def initialize(name, *args)
-        settings, @desc = args.last.kind_of?(::Hash) ? args.pop : {}, args.pop || ''
-        @name, @opt_name, @abbrev = parse_name_values(name, settings[:abbrev])
-        @value, @klass = gvalinfo(settings[:value])
-        @parser_args = if [TrueClass, FalseClass, NilClass].include?(@klass)
-          ["-#{@abbrev}", "--[no-]#{@opt_name}", @desc]
-        else
-          ["-#{@abbrev}", "--#{@opt_name} #{@opt_name.upcase}", @klass, @desc]
-        end
+      def initialize(name)
+        @name  = name
+        @argv  = []
+        @clirb = Ardb::CLIRB.new
       end
 
-      private
-
-      def parse_name_values(name, custom_abbrev)
-        [ (processed_name = name.to_s.strip.downcase), processed_name.gsub('_', '-'),
-          custom_abbrev || processed_name.gsub(/[^a-z]/, '').chars.first || 'a'
-        ]
+      def new(args)
+        @argv = [@name, args].flatten.compact
+        self
       end
-      def gvalinfo(v); v.kind_of?(Class) ? [nil,gklass(v)] : [v,gklass(v.class)]; end
-      def gklass(k); k == Fixnum ? Integer : k; end
+
+      def init
+        @clirb.parse!(@argv)
+        raise CLIRB::HelpExit if @clirb.args.empty? || @name.to_s.empty?
+      end
+
+      def run
+        raise InvalidCommandError, "'#{self.name}' is not a command."
+      end
+
+      def help
+        "Usage: ardb [COMMAND] [options]\n\n" \
+        "Commands: #{COMMANDS.keys.sort.join(', ')}\n" \
+        "Options: #{@clirb}"
+      end
+
     end
+
+    InvalidCommandError = Class.new(ArgumentError)
+
   end
 
 end
