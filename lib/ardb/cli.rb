@@ -1,4 +1,4 @@
-require 'ardb/version'
+require 'ardb'
 require 'ardb/clirb'
 
 module Ardb
@@ -34,6 +34,8 @@ module Ardb
         @stderr.puts "#{exception.message}\n\n"
         @stdout.puts cmd.help
         @kernel.exit 1
+      rescue CommandExitError
+        @kernel.exit 1
       rescue StandardError => exception
         @stderr.puts "#{exception.class}: #{exception.message}"
         @stderr.puts exception.backtrace.join("\n")
@@ -50,6 +52,9 @@ module Ardb
         @stderr.puts exception.backtrace.join("\n")
       end
     end
+
+    InvalidCommandError = Class.new(ArgumentError)
+    CommandExitError    = Class.new(RuntimeError)
 
     class InvalidCommand
 
@@ -83,7 +88,41 @@ module Ardb
 
     end
 
-    InvalidCommandError = Class.new(ArgumentError)
+    class ConnectCommand
+
+      attr_reader :clirb
+
+      def initialize(argv, stdout = nil, stderr = nil)
+        @argv   = argv
+        @stdout = stdout || $stdout
+        @stderr = stderr || $stderr
+
+        @clirb   = Ardb::CLIRB.new
+        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      end
+
+      def init
+        @clirb.parse!(@argv)
+      end
+
+      def run
+        Ardb.init
+        @adapter.connect_db
+        @stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      rescue StandardError => e
+        @stderr.puts e
+        @stderr.puts e.backtrace.join("\n")
+        @stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database " \
+                     "with #{Ardb.config.db_settings.inspect}"
+        raise CommandExitError
+      end
+
+      def help
+        "Usage: ardb connect [options]\n\n" \
+        "Options: #{@clirb}"
+      end
+
+    end
 
   end
 
