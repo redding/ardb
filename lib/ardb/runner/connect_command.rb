@@ -4,16 +4,22 @@ class Ardb::Runner
 
   class ConnectCommand
 
+    def initialize(out_io = nil, err_io = nil)
+      @out_io = out_io || $stdout
+      @err_io = err_io || $stderr
+      @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+    end
+
     def run
       begin
         Ardb.init
-        ActiveRecord::Base.connection
-        $stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+        @adapter.connect_db
+        @out_io.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
       rescue Ardb::Runner::CmdError => e
         raise e
-      rescue Exception => e
-        $stderr.puts e, *e.backtrace
-        $stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database"\
+      rescue StandardError => e
+        @err_io.puts e, *e.backtrace
+        @err_io.puts "error connecting to #{Ardb.config.db.database.inspect} database"\
                      " with #{Ardb.config.db_settings.inspect}"
         raise Ardb::Runner::CmdFail
       end

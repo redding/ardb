@@ -1,6 +1,7 @@
 require 'assert'
-require 'ardb/adapter_spy'
 require 'ardb/runner/migrate_command'
+
+require 'ardb/adapter_spy'
 
 class Ardb::Runner::MigrateCommand
 
@@ -41,7 +42,7 @@ class Ardb::Runner::MigrateCommand
       @command.run
     end
 
-    should "initialize Ardb, migrate the db and dump schema via the adapter" do
+    should "initialize ardb, migrate the db and dump schema via the adapter" do
       assert_true @ardb_init_called
       assert_true @adapter_spy.migrate_db_called?
       assert_true @adapter_spy.dump_schema_called?
@@ -61,7 +62,7 @@ class Ardb::Runner::MigrateCommand
       ENV['ARDB_MIGRATE_NO_SCHEMA'] = @current_no_schema
     end
 
-    should "initialize Ardb and migrate the db but not dump schema" do
+    should "initialize ardb and migrate the db but not dump schema" do
       assert_true  @ardb_init_called
       assert_true  @adapter_spy.migrate_db_called?
       assert_false @adapter_spy.dump_schema_called?
@@ -81,7 +82,7 @@ class Ardb::Runner::MigrateCommand
 
   end
 
-  class RunWithUnspecifiedErrorTests < InitTests
+  class RunWithStandardErrorTests < InitTests
     desc "and run with a standard error"
     setup do
       Assert.stub(@adapter_spy, :migrate_db){ raise StandardError.new }

@@ -39,6 +39,17 @@ module Ardb
       end
     end
 
+    def connect_db!
+      Ardb.adapter.connect_db
+    end
+
+    def connect_db
+      @connect_db ||= begin
+        self.connect_db!
+        true
+      end
+    end
+
     def migrate_db!
       Ardb.adapter.migrate_db
     end

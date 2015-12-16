@@ -13,12 +13,13 @@ module Ardb::AdapterSpy
     should have_accessors :drop_tables_called_count
     should have_accessors :dump_schema_called_count, :load_schema_called_count
     should have_accessors :drop_db_called_count, :create_db_called_count
-    should have_accessors :migrate_db_called_count
+    should have_accessors :connect_db_called_count, :migrate_db_called_count
     should have_imeths :drop_tables_called?, :drop_tables
     should have_imeths :dump_schema_called?, :dump_schema
     should have_imeths :load_schema_called?, :load_schema
     should have_imeths :drop_db_called?, :drop_db
     should have_imeths :create_db_called?, :create_db
+    should have_imeths :connect_db_called?, :connect_db
     should have_imeths :migrate_db_called?, :migrate_db
 
     should "included the record spy instance methods" do
@@ -31,6 +32,7 @@ module Ardb::AdapterSpy
       assert_equal 0, subject.load_schema_called_count
       assert_equal 0, subject.drop_db_called_count
       assert_equal 0, subject.create_db_called_count
+      assert_equal 0, subject.connect_db_called_count
       assert_equal 0, subject.migrate_db_called_count
     end
 
@@ -64,6 +66,11 @@ module Ardb::AdapterSpy
       subject.migrate_db
       assert_equal 1, subject.migrate_db_called_count
       assert_equal true, subject.migrate_db_called?
+
+      assert_equal false, subject.connect_db_called?
+      subject.connect_db
+      assert_equal 1, subject.connect_db_called_count
+      assert_equal true, subject.connect_db_called?
     end
 
   end

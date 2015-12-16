@@ -1,6 +1,7 @@
 require 'assert'
-require 'ardb/adapter_spy'
 require 'ardb/runner/drop_command'
+
+require 'ardb/adapter_spy'
 
 class Ardb::Runner::DropCommand
 

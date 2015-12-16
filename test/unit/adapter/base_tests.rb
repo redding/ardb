@@ -13,7 +13,7 @@ class Ardb::Adapter::Base
     should have_readers :config_settings, :database
     should have_readers :ruby_schema_path, :sql_schema_path
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
-    should have_imeths :create_db, :drop_db, :migrate_db
+    should have_imeths :create_db, :drop_db, :connect_db, :migrate_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
     should have_imeths :dump_schema, :dump_ruby_schema, :dump_sql_schema
 
@@ -51,6 +51,23 @@ class Ardb::Adapter::Base
 
   end
 
+  class ConnectDbTests < UnitTests
+    desc "`connect_db`"
+    setup do
+      @ar_base_conn_called = false
+      Assert.stub(ActiveRecord::Base, :connection) do |*args|
+        @ar_base_conn_called = true
+      end
+
+      @adapter.connect_db
+    end
+
+    should "call activerecord base's connection method" do
+      assert_true @ar_base_conn_called
+    end
+
+  end
+
   class MigrateDbTests < UnitTests
     desc "`migrate_db`"
     setup do
@@ -65,22 +82,22 @@ class Ardb::Adapter::Base
       @adapter.migrate_db
     end
 
-    should "add the Ardb MigrationHelper Recorder to the ActiveRecord Command Recorder" do
+    should "add the ardb migration helper recorder to activerecord's command recorder" do
       exp = Ardb::MigrationHelpers::RecorderMixin
       assert_includes exp, ActiveRecord::Migration::CommandRecorder
     end
 
-    should "set the ActiveRecord Migrator's migrations path" do
+    should "set the activerecord migrator's migrations path" do
       exp = Ardb.config.migrations_path
       assert_equal exp, ActiveRecord::Migrator.migrations_path
     end
 
-    should "set the ActiveRecord Migration's verbose" do
+    should "set the activerecord migration's verbose attr" do
       exp = ENV["MIGRATE_QUIET"].nil?
       assert_equal exp, ActiveRecord::Migration.verbose
     end
 
-    should "call the ActiveRecord Migrator's migrate" do
+    should "call the activerecord migrator's migrate method" do
       version = ENV.key?("MIGRATE_VERSION") ? ENV["MIGRATE_VERSION"].to_i : nil
       exp = [Ardb.config.migrations_path, version]
       assert_equal exp, @migrator_called_with
