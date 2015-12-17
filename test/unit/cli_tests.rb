@@ -357,6 +357,61 @@ class Ardb::CLI
 
   end
 
+  class DropCommandTests < UnitTests
+    desc "DropCommand"
+    setup do
+      @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
+      Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
+
+      @ardb_init_called_with = []
+      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
+
+      @command_class = DropCommand
+      @cmd = @command_class.new([], @stdout, @stderr)
+    end
+    subject{ @cmd }
+
+    should have_readers :clirb
+
+    should "know its CLI.RB" do
+      assert_instance_of Ardb::CLIRB, subject.clirb
+    end
+
+    should "know its help" do
+      exp = "Usage: ardb drop [options]\n\n" \
+            "Options: #{subject.clirb}"
+      assert_equal exp, subject.help
+    end
+
+    should "parse its args when `init`" do
+      subject.init
+      assert_equal [], subject.clirb.args
+    end
+
+    should "initialize ardb and connect to the db via the adapter on run" do
+      subject.run
+
+      assert_equal [false], @ardb_init_called_with
+      assert_true @adapter_spy.drop_db_called?
+
+      exp = "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
+      assert_equal exp, @stdout.read
+    end
+
+    should "output any errors and raise an exit error on run" do
+      err = StandardError.new(Factory.string)
+      Assert.stub(Ardb, :init){ raise err }
+
+      assert_raises(CommandExitError){ subject.run }
+      err_output = @stderr.read
+
+      assert_includes err.to_s, err_output
+      exp = "error dropping #{Ardb.config.db.database.inspect} database"
+      assert_includes exp, err_output
+    end
+
+  end
+
   class CLISpy
     attr_reader :run_called_with
 
