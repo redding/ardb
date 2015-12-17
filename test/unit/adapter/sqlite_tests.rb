@@ -15,7 +15,7 @@ class Ardb::Adapter::Sqlite
     should "complain if the db file already exists" do
       FileUtils.mkdir_p(File.dirname(subject.db_file_path))
       FileUtils.touch(subject.db_file_path)
-      assert_raises(Ardb::Runner::CmdError) { subject.validate! }
+      assert_raises(RuntimeError) { subject.validate! }
       FileUtils.rm(subject.db_file_path)
     end
 

@@ -5,8 +5,18 @@ module Ardb
 
   class CLI
 
-    class InvalidCommand; end
+    class InvalidCommand;           end
+    class ConnectCommand;           end
+    class CreateCommand;            end
+    class DropCommand;              end
+    class MigrateCommand;           end
+    class GenerateMigrationCommand; end
     COMMANDS = Hash.new{ |h, k| InvalidCommand.new(k) }.tap do |h|
+      h['connect']            = ConnectCommand
+      h['create']             = CreateCommand
+      h['drop']               = DropCommand
+      h['migrate']            = MigrateCommand
+      h['generate-migration'] = GenerateMigrationCommand
     end
 
     def self.run(args)
