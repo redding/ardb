@@ -2,6 +2,7 @@ require 'assert'
 require 'ardb/cli'
 
 require 'ardb/adapter_spy'
+require 'ardb/migration'
 
 class Ardb::CLI
 
@@ -369,7 +370,7 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and connect to the db on run" do
+    should "parse its args, init ardb and drop the db on run" do
       subject.run
 
       assert_equal [], subject.clirb.args
@@ -459,6 +460,80 @@ class Ardb::CLI
 
   end
 
+  class GenerateMigrationCommandTests < UnitTests
+    desc "GenerateMigrationCommand"
+    setup do
+      @ardb_init_called_with = []
+      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
+
+      @migration_spy   = nil
+      @migration_class = Ardb::Migration
+      Assert.stub(@migration_class, :new) do |*args|
+        @migration_spy = MigrationSpy.new(*args)
+      end
+
+      @command_class = GenerateMigrationCommand
+      @identifier    = Factory.migration_id
+      @cmd = @command_class.new([@identifier], @stdout, @stderr)
+    end
+    subject{ @cmd }
+
+    should have_readers :clirb
+
+    should "know its CLI.RB" do
+      assert_instance_of Ardb::CLIRB, subject.clirb
+    end
+
+    should "know its help" do
+      exp = "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
+            "Options: #{subject.clirb}"
+      assert_equal exp, subject.help
+    end
+
+    should "parse its args, init ardb and save a migration for the identifier on run" do
+      subject.run
+
+      assert_equal [@identifier], subject.clirb.args
+      assert_equal [false],       @ardb_init_called_with
+      assert_equal @identifier,   @migration_spy.identifier
+      assert_true @migration_spy.save_called
+
+      exp = "generated #{@migration_spy.file_path}\n"
+      assert_equal exp, @stdout.read
+    end
+
+    should "re-raise a specific argument error on migration 'no identifer' errors" do
+      Assert.stub(@migration_class, :new) { raise Ardb::Migration::NoIdentifierError }
+      err = nil
+      begin
+        cmd = @command_class.new([])
+        cmd.run
+      rescue ArgumentError => err
+      end
+
+      assert_not_nil err
+      exp = "MIGRATION-NAME must be provided"
+      assert_equal exp, err.message
+      assert_not_empty err.backtrace
+    end
+
+    should "output any errors and raise an exit error on run" do
+      err = StandardError.new(Factory.string)
+      err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
+      Assert.stub(Ardb, :init){ raise err }
+
+      assert_raises(CommandExitError){ subject.run }
+      err_output = @stderr.read
+
+      assert_includes err.to_s,                 err_output
+      assert_includes err.backtrace.join("\n"), err_output
+
+      exp = "error generating migration"
+      assert_includes exp, err_output
+    end
+
+  end
+
   class CLISpy
     attr_reader :run_called_with
 
@@ -511,6 +586,21 @@ class Ardb::CLI
     def read
       @io.rewind
       @io.read
+    end
+  end
+
+  class MigrationSpy
+    attr_reader :identifier, :file_path, :save_called
+
+    def initialize(*args)
+      @identifier  = args.first
+      @file_path   = Factory.path
+      @save_called = false
+    end
+
+    def save!
+      @save_called = true
+      self
     end
   end
 
