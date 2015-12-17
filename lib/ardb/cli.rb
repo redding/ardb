@@ -192,6 +192,41 @@ module Ardb
 
     end
 
+    class MigrateCommand
+
+      attr_reader :clirb
+
+      def initialize(argv, stdout = nil, stderr = nil)
+        @argv   = argv
+        @stdout = stdout || $stdout
+        @stderr = stderr || $stderr
+
+        @clirb   = Ardb::CLIRB.new
+        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      end
+
+      def init
+        @clirb.parse!(@argv)
+      end
+
+      def run
+        Ardb.init
+        @adapter.migrate_db
+        @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
+      rescue StandardError => e
+        @stderr.puts e
+        @stderr.puts e.backtrace.join("\n")
+        @stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
+        raise CommandExitError
+      end
+
+      def help
+        "Usage: ardb migrate [options]\n\n" \
+        "Options: #{@clirb}"
+      end
+
+    end
+
   end
 
 end
