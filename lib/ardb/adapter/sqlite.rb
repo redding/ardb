@@ -17,7 +17,7 @@ class Ardb::Adapter
 
     def validate!
       if File.exist?(self.db_file_path)
-        raise Ardb::Runner::CmdError, "#{self.database} already exists"
+        raise RuntimeError, "`#{self.database}` already exists"
       end
     end
 
