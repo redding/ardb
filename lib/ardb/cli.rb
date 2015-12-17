@@ -124,6 +124,40 @@ module Ardb
 
     end
 
+    class CreateCommand
+
+      attr_reader :clirb
+
+      def initialize(argv, stdout = nil, stderr = nil)
+        @argv   = argv
+        @stdout = stdout || $stdout
+        @stderr = stderr || $stderr
+
+        @clirb   = Ardb::CLIRB.new
+        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      end
+
+      def init
+        @clirb.parse!(@argv)
+      end
+
+      def run
+        Ardb.init(false)
+        @adapter.create_db
+        @stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      rescue StandardError => e
+        @stderr.puts e
+        @stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
+        raise CommandExitError
+      end
+
+      def help
+        "Usage: ardb create [options]\n\n" \
+        "Options: #{@clirb}"
+      end
+
+    end
+
   end
 
 end
