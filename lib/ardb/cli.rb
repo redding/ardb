@@ -23,7 +23,6 @@ module Ardb
       begin
         cmd_name = args.shift
         cmd = COMMANDS[cmd_name].new(args)
-        cmd.init
         cmd.run
       rescue CLIRB::HelpExit
         @stdout.puts cmd.help
@@ -71,12 +70,9 @@ module Ardb
         self
       end
 
-      def init
+      def run
         @clirb.parse!(@argv)
         raise CLIRB::HelpExit if @clirb.args.empty? || @name.to_s.empty?
-      end
-
-      def run
         raise InvalidCommandError, "'#{self.name}' is not a command."
       end
 
@@ -101,11 +97,8 @@ module Ardb
         @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
       end
 
-      def init
-        @clirb.parse!(@argv)
-      end
-
       def run
+        @clirb.parse!(@argv)
         Ardb.init
         @adapter.connect_db
         @stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
@@ -137,11 +130,8 @@ module Ardb
         @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
       end
 
-      def init
-        @clirb.parse!(@argv)
-      end
-
       def run
+        @clirb.parse!(@argv)
         Ardb.init(false)
         @adapter.create_db
         @stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
@@ -171,11 +161,8 @@ module Ardb
         @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
       end
 
-      def init
-        @clirb.parse!(@argv)
-      end
-
       def run
+        @clirb.parse!(@argv)
         Ardb.init(false)
         @adapter.drop_db
         @stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
@@ -205,11 +192,8 @@ module Ardb
         @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
       end
 
-      def init
-        @clirb.parse!(@argv)
-      end
-
       def run
+        @clirb.parse!(@argv)
         Ardb.init
         @adapter.migrate_db
         @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']

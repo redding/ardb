@@ -71,8 +71,7 @@ class Ardb::CLI
       @cli.run(@argv)
     end
 
-    should "have init and run the command" do
-      assert_true @command_spy.init_called
+    should "have run the command" do
       assert_true @command_spy.run_called
     end
 
@@ -122,7 +121,7 @@ class Ardb::CLI
   class RunWithCommandExitErrorTests < RunSetupTests
     desc "and run with a command that error exits"
     setup do
-      Assert.stub(@command_spy, :init){ raise CommandExitError }
+      Assert.stub(@command_spy, :run){ raise CommandExitError }
       @cli.run(@argv)
     end
 
@@ -197,7 +196,7 @@ class Ardb::CLI
     subject{ @cmd }
 
     should have_readers :name, :argv, :clirb
-    should have_imeths :new, :init, :run, :help
+    should have_imeths :new, :run, :help
 
     should "know its attrs" do
       assert_equal @name, subject.name
@@ -213,25 +212,18 @@ class Ardb::CLI
       assert_equal [@name, args].flatten, subject.argv
     end
 
-    should "parse its argv when `init`" do
-      subject.new([ '--help' ])
-      assert_raises(Ardb::CLIRB::HelpExit){ subject.init }
-      subject.new([ '--version' ])
-      assert_raises(Ardb::CLIRB::VersionExit){ subject.init }
+    should "parse its argv on run`" do
+      assert_raises(Ardb::CLIRB::HelpExit){ subject.new(['--help']).run }
+      assert_raises(Ardb::CLIRB::VersionExit){ subject.new(['--version']).run }
     end
 
-    should "raise a help exit if its argv is empty when `init`" do
-      cmd = @command_class.new(nil)
-      cmd.new([])
-      assert_raises(Ardb::CLIRB::HelpExit){ cmd.init }
-
-      cli = @command_class.new("")
-      cli.new([])
-      assert_raises(Ardb::CLIRB::HelpExit){ cli.init }
+    should "raise a help exit if its argv is empty" do
+      cmd = @command_class.new([nil, ''].choice)
+      assert_raises(Ardb::CLIRB::HelpExit){ cmd.new([]).run }
     end
 
     should "raise an invalid command error when run" do
-      assert_raises(InvalidCommandError){ subject.run }
+      assert_raises(InvalidCommandError){ subject.new([Factory.string]).run }
     end
 
     should "know its help" do
@@ -269,13 +261,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args when `init`" do
-      subject.init
-      assert_equal [], subject.clirb.args
-    end
-
-    should "initialize ardb and connect to the db via the adapter on run" do
+    should "parse its args, init ardb and connect to the db on run" do
       subject.run
+
+      assert_equal [], subject.clirb.args
 
       assert_true @ardb_init_called
       assert_true @adapter_spy.connect_db_called?
@@ -328,13 +317,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args when `init`" do
-      subject.init
-      assert_equal [], subject.clirb.args
-    end
-
-    should "initialize ardb and create the db via the adapter on run" do
+    should "parse its args, init ardb and create the db on run" do
       subject.run
+
+      assert_equal [], subject.clirb.args
 
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
@@ -383,13 +369,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args when `init`" do
-      subject.init
-      assert_equal [], subject.clirb.args
-    end
-
-    should "initialize ardb and connect to the db via the adapter on run" do
+    should "parse its args, init ardb and connect to the db on run" do
       subject.run
+
+      assert_equal [], subject.clirb.args
 
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
@@ -438,20 +421,17 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args when `init`" do
-      subject.init
-      assert_equal [], subject.clirb.args
-    end
-
-    should "initialize ardb and migrate the db and dump schema via the adapter on run" do
+    should "parse its args, init ardb and migrate the db, dump schema on run" do
       subject.run
+
+      assert_equal [], subject.clirb.args
 
       assert_true @ardb_init_called
       assert_true @adapter_spy.migrate_db_called?
       assert_true @adapter_spy.dump_schema_called?
     end
 
-    should "initialize ardb and only migrate on run with no schema dump env var set" do
+    should "init ardb and only migrate on run with no schema dump env var set" do
       current_no_schema = ENV['ARDB_MIGRATE_NO_SCHEMA']
       ENV['ARDB_MIGRATE_NO_SCHEMA'] = 'yes'
       subject.run
@@ -492,15 +472,10 @@ class Ardb::CLI
   end
 
   class CommandSpy
-    attr_reader :init_called, :run_called
+    attr_reader :run_called
 
     def initialize
-      @init_called = false
       @run_called = false
-    end
-
-    def init
-      @init_called = true
     end
 
     def run
