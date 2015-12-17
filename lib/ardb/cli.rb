@@ -158,6 +158,40 @@ module Ardb
 
     end
 
+    class DropCommand
+
+      attr_reader :clirb
+
+      def initialize(argv, stdout = nil, stderr = nil)
+        @argv   = argv
+        @stdout = stdout || $stdout
+        @stderr = stderr || $stderr
+
+        @clirb   = Ardb::CLIRB.new
+        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      end
+
+      def init
+        @clirb.parse!(@argv)
+      end
+
+      def run
+        Ardb.init(false)
+        @adapter.drop_db
+        @stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+      rescue StandardError => e
+        @stderr.puts e
+        @stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
+        raise CommandExitError
+      end
+
+      def help
+        "Usage: ardb drop [options]\n\n" \
+        "Options: #{@clirb}"
+      end
+
+    end
+
   end
 
 end
