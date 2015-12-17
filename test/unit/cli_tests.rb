@@ -64,6 +64,9 @@ class Ardb::CLI
       @command_spy = CommandSpy.new
       Assert.stub(@command_class, :new).with(@argv){ @command_spy }
 
+      @ardb_init_called_with = nil
+      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
+
       @invalid_command = InvalidCommand.new(@command_name)
     end
     teardown do
@@ -76,6 +79,14 @@ class Ardb::CLI
     desc "and run"
     setup do
       @cli.run(@argv)
+    end
+
+    should "push the pwd onto the load path" do
+      assert_includes Dir.pwd, $LOAD_PATH
+    end
+
+    should "init Ardb without establishing a connection" do
+      assert_equal [false], @ardb_init_called_with
     end
 
     should "have run the command" do
@@ -304,9 +315,6 @@ class Ardb::CLI
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
       Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
 
-      @ardb_init_called_with = []
-      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
-
       @command_class = CreateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
     end
@@ -324,12 +332,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and create the db on run" do
+    should "parse its args and create the db on run" do
       subject.run
 
       assert_equal [], subject.clirb.args
-
-      assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
 
       exp = "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
@@ -338,7 +344,7 @@ class Ardb::CLI
 
     should "output any errors and raise an exit error on run" do
       err = StandardError.new(Factory.string)
-      Assert.stub(Ardb, :init){ raise err }
+      Assert.stub(@adapter_spy, :create_db){ raise err }
 
       assert_raises(CommandExitError){ subject.run }
       err_output = @stderr.read
@@ -355,9 +361,6 @@ class Ardb::CLI
     setup do
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
       Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
-
-      @ardb_init_called_with = []
-      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
 
       @command_class = DropCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -376,12 +379,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and drop the db on run" do
+    should "parse its args and drop the db on run" do
       subject.run
 
       assert_equal [], subject.clirb.args
-
-      assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
 
       exp = "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
@@ -390,7 +391,7 @@ class Ardb::CLI
 
     should "output any errors and raise an exit error on run" do
       err = StandardError.new(Factory.string)
-      Assert.stub(Ardb, :init){ raise err }
+      Assert.stub(@adapter_spy, :drop_db){ raise err }
 
       assert_raises(CommandExitError){ subject.run }
       err_output = @stderr.read
@@ -469,9 +470,6 @@ class Ardb::CLI
   class GenerateMigrationCommandTests < UnitTests
     desc "GenerateMigrationCommand"
     setup do
-      @ardb_init_called_with = []
-      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
-
       @migration_spy   = nil
       @migration_class = Ardb::Migration
       Assert.stub(@migration_class, :new) do |*args|
@@ -496,11 +494,10 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and save a migration for the identifier on run" do
+    should "parse its args and save a migration for the identifier on run" do
       subject.run
 
       assert_equal [@identifier], subject.clirb.args
-      assert_equal [false],       @ardb_init_called_with
       assert_equal @identifier,   @migration_spy.identifier
       assert_true @migration_spy.save_called
 
@@ -526,7 +523,7 @@ class Ardb::CLI
     should "output any errors and raise an exit error on run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
-      Assert.stub(Ardb, :init){ raise err }
+      Assert.stub(@migration_class, :new){ raise err }
 
       assert_raises(CommandExitError){ subject.run }
       err_output = @stderr.read

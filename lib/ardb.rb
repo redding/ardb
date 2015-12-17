@@ -22,7 +22,7 @@ module Ardb
     end
   end
 
-  def self.init(establish_connection=true)
+  def self.init(establish_connection = true)
     require self.config.db_file
     validate!
     Adapter.init

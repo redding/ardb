@@ -31,6 +31,9 @@ module Ardb
 
     def run(args)
       begin
+        $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
+        Ardb.init(false) # don't establish a connection
+
         cmd_name = args.shift
         cmd = COMMANDS[cmd_name].new(args)
         cmd.run
@@ -109,15 +112,17 @@ module Ardb
 
       def run
         @clirb.parse!(@argv)
-        Ardb.init
-        @adapter.connect_db
-        @stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
-        @stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database " \
-                     "with #{Ardb.config.db_settings.inspect}"
-        raise CommandExitError
+        begin
+          Ardb.init
+          @adapter.connect_db
+          @stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts e.backtrace.join("\n")
+          @stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database " \
+                       "with #{Ardb.config.db_settings.inspect}"
+          raise CommandExitError
+        end
       end
 
       def help
@@ -142,13 +147,14 @@ module Ardb
 
       def run
         @clirb.parse!(@argv)
-        Ardb.init(false)
-        @adapter.create_db
-        @stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
-        raise CommandExitError
+        begin
+          @adapter.create_db
+          @stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
+          raise CommandExitError
+        end
       end
 
       def help
@@ -173,13 +179,14 @@ module Ardb
 
       def run
         @clirb.parse!(@argv)
-        Ardb.init(false)
-        @adapter.drop_db
-        @stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
-        raise CommandExitError
+        begin
+          @adapter.drop_db
+          @stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
+          raise CommandExitError
+        end
       end
 
       def help
@@ -204,14 +211,16 @@ module Ardb
 
       def run
         @clirb.parse!(@argv)
-        Ardb.init
-        @adapter.migrate_db
-        @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
-        @stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
-        raise CommandExitError
+        begin
+          Ardb.init
+          @adapter.migrate_db
+          @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts e.backtrace.join("\n")
+          @stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
+          raise CommandExitError
+        end
       end
 
       def help
@@ -235,19 +244,20 @@ module Ardb
 
       def run
         @clirb.parse!(@argv)
-        require "ardb/migration"
-        Ardb.init(false)
-        path = Ardb::Migration.new(@clirb.args.first).save!.file_path
-        @stdout.puts "generated #{path}"
-      rescue Ardb::Migration::NoIdentifierError => exception
-        error = ArgumentError.new("MIGRATION-NAME must be provided")
-        error.set_backtrace(exception.backtrace)
-        raise error
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
-        @stderr.puts "error generating migration"
-        raise CommandExitError
+        begin
+          require "ardb/migration"
+          path = Ardb::Migration.new(@clirb.args.first).save!.file_path
+          @stdout.puts "generated #{path}"
+        rescue Ardb::Migration::NoIdentifierError => exception
+          error = ArgumentError.new("MIGRATION-NAME must be provided")
+          error.set_backtrace(exception.backtrace)
+          raise error
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts e.backtrace.join("\n")
+          @stderr.puts "error generating migration"
+          raise CommandExitError
+        end
       end
 
       def help
