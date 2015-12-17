@@ -211,6 +211,42 @@ module Ardb
 
     end
 
+    class GenerateMigrationCommand
+
+      attr_reader :clirb
+
+      def initialize(argv, stdout = nil, stderr = nil)
+        @argv   = argv
+        @stdout = stdout || $stdout
+        @stderr = stderr || $stderr
+
+        @clirb = Ardb::CLIRB.new
+      end
+
+      def run
+        @clirb.parse!(@argv)
+        require "ardb/migration"
+        Ardb.init(false)
+        path = Ardb::Migration.new(@clirb.args.first).save!.file_path
+        @stdout.puts "generated #{path}"
+      rescue Ardb::Migration::NoIdentifierError => exception
+        error = ArgumentError.new("MIGRATION-NAME must be provided")
+        error.set_backtrace(exception.backtrace)
+        raise error
+      rescue StandardError => e
+        @stderr.puts e
+        @stderr.puts e.backtrace.join("\n")
+        @stderr.puts "error generating migration"
+        raise CommandExitError
+      end
+
+      def help
+        "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
+        "Options: #{@clirb}"
+      end
+
+    end
+
   end
 
 end
