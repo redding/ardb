@@ -4,4 +4,4 @@
 #
 
 require 'ardb/cli'
-Ardb::CLI.run *ARGV
+Ardb::CLI.run ARGV
