@@ -29,7 +29,6 @@ module Ardb
       self
     end
 
-
     private
 
     def get_file_name(identifier)

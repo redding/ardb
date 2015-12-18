@@ -8,14 +8,14 @@ class Ardb::Adapter::Sqlite
     setup do
       @adapter = Ardb::Adapter::Sqlite.new
     end
-    subject { @adapter }
+    subject{ @adapter }
 
     should have_imeths :db_file_path, :validate!
 
     should "complain if the db file already exists" do
       FileUtils.mkdir_p(File.dirname(subject.db_file_path))
       FileUtils.touch(subject.db_file_path)
-      assert_raises(RuntimeError) { subject.validate! }
+      assert_raises(RuntimeError){ subject.validate! }
       FileUtils.rm(subject.db_file_path)
     end
 

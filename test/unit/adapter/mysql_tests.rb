@@ -8,7 +8,7 @@ class Ardb::Adapter::Mysql
     setup do
       @adapter = Ardb::Adapter::Mysql.new
     end
-    subject { @adapter }
+    subject{ @adapter }
 
     should "know its foreign key add sql" do
       exp_add_sql = "ALTER TABLE :from_table"\
