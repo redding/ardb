@@ -1,6 +1,9 @@
+require 'much-plugin'
+
 module Ardb
 
   module AdapterSpy
+    include MuchPlugin
 
     def self.new(&block)
       block ||= proc{ }
@@ -9,10 +12,8 @@ module Ardb
       record_spy
     end
 
-    def self.included(klass)
-      klass.class_eval do
-        include InstanceMethods
-      end
+    plugin_included do
+      include InstanceMethods
     end
 
     module InstanceMethods
