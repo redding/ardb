@@ -23,6 +23,7 @@ module Ardb
   end
 
   def self.init(establish_connection = true)
+    require 'ardb/require_autoloaded_active_record_files'
     require self.config.db_file
     validate!
     Adapter.init
