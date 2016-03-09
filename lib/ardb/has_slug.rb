@@ -13,8 +13,7 @@ module Ardb
       extend ClassMethods
       include InstanceMethods
 
-      @ardb_has_slug_config = {}
-
+      @ardb_has_slug_configs = Hash.new{ |h, k| h[k] = {} }
     end
 
     module ClassMethods
@@ -23,8 +22,8 @@ module Ardb
         options ||= {}
         raise(ArgumentError, "a source must be provided") unless options[:source]
 
-        @ardb_has_slug_config.merge!({
-          :attribute         => options[:attribute] || DEFAULT_ATTRIBUTE,
+        attribute = (options[:attribute] || DEFAULT_ATTRIBUTE).to_sym
+        @ardb_has_slug_configs[attribute].merge!({
           :source_proc       => options[:source].to_proc,
           :preprocessor_proc => (options[:preprocessor] || DEFAULT_PREPROCESSOR).to_proc,
           :separator         => options[:separator] || DEFAULT_SEPARATOR,
@@ -33,18 +32,18 @@ module Ardb
 
         # since the slug isn't written till an after callback we can't always
         # validate presence of it
-        validates_presence_of(self.ardb_has_slug_config[:attribute], :on => :update)
-        validates_uniqueness_of(self.ardb_has_slug_config[:attribute], {
+        validates_presence_of(attribute, :on => :update)
+        validates_uniqueness_of(attribute, {
           :case_sensitive => true,
           :scope          => options[:unique_scope]
         })
 
-        after_create :ardb_has_slug_generate_slug
-        after_update :ardb_has_slug_generate_slug
+        after_create :ardb_has_slug_generate_slugs
+        after_update :ardb_has_slug_generate_slugs
       end
 
-      def ardb_has_slug_config
-        @ardb_has_slug_config
+      def ardb_has_slug_configs
+        @ardb_has_slug_configs
       end
 
     end
@@ -53,37 +52,37 @@ module Ardb
 
       private
 
-      def reset_slug
-        self.send("#{self.class.ardb_has_slug_config[:attribute]}=", nil)
+      def reset_slug(attribute = nil)
+        attribute ||= DEFAULT_ATTRIBUTE
+        self.send("#{attribute}=", nil)
       end
 
-      def ardb_has_slug_generate_slug
-        attr_name = self.class.ardb_has_slug_config[:attribute]
-        slug_source = if !self.send(attr_name) || self.send(attr_name).to_s.empty?
-          self.instance_eval(&self.class.ardb_has_slug_config[:source_proc])
-        else
-          self.send(attr_name)
-        end
+      def ardb_has_slug_generate_slugs
+        self.class.ardb_has_slug_configs.each do |attr_name, config|
+          slug_source = if !self.send(attr_name) || self.send(attr_name).to_s.empty?
+            self.instance_eval(&config[:source_proc])
+          else
+            self.send(attr_name)
+          end
 
-        generated_slug = Slug.new(slug_source, {
-          :preprocessor      => self.class.ardb_has_slug_config[:preprocessor_proc],
-          :separator         => self.class.ardb_has_slug_config[:separator],
-          :allow_underscores => self.class.ardb_has_slug_config[:allow_underscores]
-        })
-        return if self.send(attr_name) == generated_slug
-        self.send("#{attr_name}=", generated_slug)
-        self.update_column(attr_name, generated_slug)
+          generated_slug = Slug.new(slug_source, {
+            :preprocessor      => config[:preprocessor_proc],
+            :separator         => config[:separator],
+            :allow_underscores => config[:allow_underscores]
+          })
+          next if self.send(attr_name) == generated_slug
+          self.send("#{attr_name}=", generated_slug)
+          self.update_column(attr_name, generated_slug)
+        end
       end
 
     end
 
     module Slug
-      DEFAULT_PREPROCESSOR = proc{ |slug| slug } # no-op
-
       def self.new(string, options = nil)
         options ||= {}
-        preprocessor       = options[:preprocessor] || DEFAULT_PREPROCESSOR
-        separator          = options[:separator] || DEFAULT_SEPARATOR
+        preprocessor       = options[:preprocessor]
+        separator          = options[:separator]
         allow_underscores  = options[:allow_underscores]
         regexp_escaped_sep = Regexp.escape(separator)
 

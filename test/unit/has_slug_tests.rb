@@ -13,12 +13,12 @@ module Ardb::HasSlug
       slug_attribute   = @slug_attribute   = Factory.string.to_sym
       @record_class = Ardb::RecordSpy.new do
         include Ardb::HasSlug
-        attr_accessor source_attribute, slug_attribute
-        attr_reader :slug_db_column_name, :slug_db_column_value
+        attr_accessor source_attribute, slug_attribute, DEFAULT_ATTRIBUTE
+        attr_reader :slug_db_column_updates
 
-        def update_column(name, value)
-          @slug_db_column_name  = name
-          @slug_db_column_value = value
+        def update_column(*args)
+          @slug_db_column_updates ||= []
+          @slug_db_column_updates << args
         end
       end
     end
@@ -28,10 +28,10 @@ module Ardb::HasSlug
                      ('{'..'~').to_a - ['-', '_']).freeze
 
     should have_imeths :has_slug
-    should have_imeths :ardb_has_slug_config
+    should have_imeths :ardb_has_slug_configs
 
     should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::UseDbDefault
+      assert_includes MuchPlugin, Ardb::HasSlug
     end
 
     should "know its default attribute, preprocessor and separator" do
@@ -40,8 +40,8 @@ module Ardb::HasSlug
       assert_equal '-',       DEFAULT_SEPARATOR
     end
 
-    should "not have any has-slug config by default" do
-      assert_equal({}, subject.ardb_has_slug_config)
+    should "not have any has-slug configs by default" do
+      assert_equal({}, subject.ardb_has_slug_configs)
     end
 
     should "default the has slug config using `has_slug`" do
@@ -49,17 +49,17 @@ module Ardb::HasSlug
       string = Factory.string
       record = subject.new.tap{ |r| r.send("#{@source_attribute}=", string) }
 
-      assert_equal DEFAULT_ATTRIBUTE, subject.ardb_has_slug_config[:attribute]
-      assert_equal DEFAULT_SEPARATOR, subject.ardb_has_slug_config[:separator]
-      assert_false subject.ardb_has_slug_config[:allow_underscores]
+      config = subject.ardb_has_slug_configs[DEFAULT_ATTRIBUTE]
+      assert_equal DEFAULT_SEPARATOR, config[:separator]
+      assert_false config[:allow_underscores]
 
-      source_proc = subject.ardb_has_slug_config[:source_proc]
+      source_proc = config[:source_proc]
       assert_instance_of Proc, source_proc
       exp = record.send(@source_attribute)
       assert_equal exp, record.instance_eval(&source_proc)
 
       upcase_string = string.upcase
-      preprocessor_proc = subject.ardb_has_slug_config[:preprocessor_proc]
+      preprocessor_proc = config[:preprocessor_proc]
       assert_instance_of Proc, preprocessor_proc
       exp = upcase_string.send(DEFAULT_PREPROCESSOR)
       assert_equal exp, preprocessor_proc.call(upcase_string)
@@ -76,27 +76,28 @@ module Ardb::HasSlug
         :allow_underscores => allow_underscore
       })
 
-      assert_equal @slug_attribute,  subject.ardb_has_slug_config[:attribute]
-      assert_equal separator,        subject.ardb_has_slug_config[:separator]
-      assert_equal allow_underscore, subject.ardb_has_slug_config[:allow_underscores]
+      config = subject.ardb_has_slug_configs[@slug_attribute]
+      assert_equal separator,        config[:separator]
+      assert_equal allow_underscore, config[:allow_underscores]
 
       value = Factory.string.downcase
-      preprocessor_proc = subject.ardb_has_slug_config[:preprocessor_proc]
+      preprocessor_proc = config[:preprocessor_proc]
       assert_instance_of Proc, preprocessor_proc
       assert_equal value.upcase, preprocessor_proc.call(value)
     end
 
     should "add validations using `has_slug`" do
       subject.has_slug :source => @source_attribute
+      exp_attr_name = DEFAULT_ATTRIBUTE
 
       validation = subject.validations.find{ |v| v.type == :presence }
       assert_not_nil validation
-      assert_equal [subject.ardb_has_slug_config[:attribute]], validation.columns
+      assert_equal [exp_attr_name], validation.columns
       assert_equal :update, validation.options[:on]
 
       validation = subject.validations.find{ |v| v.type == :uniqueness }
       assert_not_nil validation
-      assert_equal [subject.ardb_has_slug_config[:attribute]], validation.columns
+      assert_equal [exp_attr_name], validation.columns
       assert_equal true, validation.options[:case_sensitive]
       assert_nil validation.options[:scope]
     end
@@ -118,11 +119,11 @@ module Ardb::HasSlug
 
       callback = subject.callbacks.find{ |v| v.type == :after_create }
       assert_not_nil callback
-      assert_equal [:ardb_has_slug_generate_slug], callback.args
+      assert_equal [:ardb_has_slug_generate_slugs], callback.args
 
       callback = subject.callbacks.find{ |v| v.type == :after_update }
       assert_not_nil callback
-      assert_equal [:ardb_has_slug_generate_slug], callback.args
+      assert_equal [:ardb_has_slug_generate_slugs], callback.args
     end
 
     should "raise an argument error if `has_slug` isn't passed a source" do
@@ -137,6 +138,8 @@ module Ardb::HasSlug
       @preprocessor      = [:downcase, :upcase, :capitalize].choice
       @separator         = NON_WORD_CHARS.choice
       @allow_underscores = Factory.boolean
+
+      @record_class.has_slug(:source => @source_attribute)
       @record_class.has_slug({
         :attribute         => @slug_attribute,
         :source            => @source_attribute,
@@ -152,112 +155,121 @@ module Ardb::HasSlug
       # generating a slug
       @source_value = "#{Factory.string.downcase}_#{Factory.string.upcase}"
       @record.send("#{@source_attribute}=", @source_value)
+
+      @exp_default_slug = Slug.new(@source_value, {
+        :preprocessor => DEFAULT_PREPROCESSOR.to_proc,
+        :separator    => DEFAULT_SEPARATOR
+      })
+      @exp_custom_slug = Slug.new(@source_value, {
+        :preprocessor      => @preprocessor.to_proc,
+        :separator         => @separator,
+        :allow_underscores => @allow_underscores
+      })
     end
     subject{ @record }
 
     should "reset its slug using `reset_slug`" do
+      # reset the default attribute
+      subject.send("#{DEFAULT_ATTRIBUTE}=", Factory.slug)
+      assert_not_nil subject.send(DEFAULT_ATTRIBUTE)
+      subject.instance_eval{ reset_slug }
+      assert_nil subject.send(DEFAULT_ATTRIBUTE)
+
+      # reset a custom attribute
       subject.send("#{@slug_attribute}=", Factory.slug)
       assert_not_nil subject.send(@slug_attribute)
-      subject.instance_eval{ reset_slug }
+      sa = @slug_attribute
+      subject.instance_eval{ reset_slug(sa) }
       assert_nil subject.send(@slug_attribute)
     end
 
-    should "default its slug attribute using `ardb_has_slug_generate_slug`" do
-      subject.instance_eval{ ardb_has_slug_generate_slug }
+    should "default its slug attribute" do
+      subject.instance_eval{ ardb_has_slug_generate_slugs }
+      assert_equal 2, subject.slug_db_column_updates.size
 
-      exp = Slug.new(@source_value, {
-        :preprocessor      => @preprocessor.to_proc,
-        :separator         => @separator,
-        :allow_underscores => @allow_underscores
-      })
-      assert_equal exp,             subject.send(@slug_attribute)
-      assert_equal @slug_attribute, subject.slug_db_column_name
-      assert_equal exp,             subject.slug_db_column_value
+      exp = @exp_default_slug
+      assert_equal exp, subject.send(DEFAULT_ATTRIBUTE)
+      assert_includes [DEFAULT_ATTRIBUTE, exp], subject.slug_db_column_updates
+
+      exp = @exp_custom_slug
+      assert_equal exp,                    subject.send(@slug_attribute)
+      assert_includes [@slug_attribute, exp], subject.slug_db_column_updates
     end
 
-    should "slug its slug attribute value if set using `ardb_has_slug_generate_slug`" do
+    should "not set its slug if it hasn't changed" do
+      @record.send("#{DEFAULT_ATTRIBUTE}=", @exp_default_slug)
+      @record.send("#{@slug_attribute}=",   @exp_custom_slug)
+
+      subject.instance_eval{ ardb_has_slug_generate_slugs }
+      assert_nil subject.slug_db_column_updates
+    end
+
+    should "slug its slug attribute value if set" do
       @record.send("#{@slug_attribute}=", @source_value)
       # change the source attr to some random value, to avoid a false positive
       @record.send("#{@source_attribute}=", Factory.string)
-      subject.instance_eval{ ardb_has_slug_generate_slug }
+      subject.instance_eval{ ardb_has_slug_generate_slugs }
 
-      exp = Slug.new(@source_value, {
-        :preprocessor      => @preprocessor.to_proc,
-        :separator         => @separator,
-        :allow_underscores => @allow_underscores
-      })
-      assert_equal exp,             subject.send(@slug_attribute)
-      assert_equal @slug_attribute, subject.slug_db_column_name
-      assert_equal exp,             subject.slug_db_column_value
+      exp = @exp_custom_slug
+      assert_equal exp, subject.send(@slug_attribute)
+      assert_includes [@slug_attribute, exp], subject.slug_db_column_updates
     end
 
-    should "slug its source even if its already a valid slug using `ardb_has_slug_generate_slug`" do
+    should "slug its source even if its already a valid slug" do
       slug_source = Factory.slug
       @record.send("#{@source_attribute}=", slug_source)
       # ensure the preprocessor doesn't change our source
       Assert.stub(slug_source, @preprocessor){ slug_source }
 
-      subject.instance_eval{ ardb_has_slug_generate_slug }
+      subject.instance_eval{ ardb_has_slug_generate_slugs }
 
       exp = Slug.new(slug_source, {
         :preprocessor      => @preprocessor.to_proc,
         :separator         => @separator,
         :allow_underscores => @allow_underscores
       })
-      assert_equal exp,             subject.send(@slug_attribute)
-      assert_equal @slug_attribute, subject.slug_db_column_name
-      assert_equal exp,             subject.slug_db_column_value
-    end
-
-    should "not set its slug if it hasn't changed using `ardb_has_slug_generate_slug`" do
-      generated_slug = Slug.new(@source_value, {
-        :preprocessor      => @preprocessor.to_proc,
-        :separator         => @separator,
-        :allow_underscores => @allow_underscores
-      })
-      @record.send("#{@slug_attribute}=", generated_slug)
-      subject.instance_eval{ ardb_has_slug_generate_slug }
-
-      assert_nil subject.slug_db_column_name
-      assert_nil subject.slug_db_column_value
+      assert_equal exp, subject.send(@slug_attribute)
+      assert_includes [@slug_attribute, exp], subject.slug_db_column_updates
     end
 
   end
 
   class SlugTests < UnitTests
     desc "Slug"
+    setup do
+      @no_op_pp = proc{ |slug| slug }
+      @args = {
+        :preprocessor => @no_op_pp,
+        :separator    => '-'
+      }
+    end
     subject{ Slug }
 
     should have_imeths :new
 
-    should "know its default preprocessor" do
-      assert_instance_of Proc, Slug::DEFAULT_PREPROCESSOR
-      string = Factory.string
-      assert_same string, Slug::DEFAULT_PREPROCESSOR.call(string)
-    end
-
     should "not change strings that are made up of valid chars" do
       string = Factory.string
-      assert_equal string, subject.new(string)
+      assert_equal string, subject.new(string, @args)
+
       string = "#{Factory.string}-#{Factory.string.upcase}"
-      assert_equal string, subject.new(string)
+      assert_equal string, subject.new(string, @args)
     end
 
     should "turn invalid chars into a separator" do
       string = Factory.integer(3).times.map do
         "#{Factory.string(3)}#{NON_WORD_CHARS.choice}#{Factory.string(3)}"
       end.join(NON_WORD_CHARS.choice)
-      assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string)
+      assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string, @args)
     end
 
     should "allow passing a custom preprocessor proc" do
       string = "#{Factory.string}-#{Factory.string.upcase}"
-      slug = subject.new(string, :preprocessor => :downcase.to_proc)
-      assert_equal string.downcase, slug
+      exp = string.downcase
+      assert_equal exp, subject.new(string, @args.merge(:preprocessor => :downcase.to_proc))
 
       preprocessor = proc{ |s| s.gsub(/[A-Z]/, 'a') }
-      slug = subject.new(string, :preprocessor => preprocessor)
-      assert_equal preprocessor.call(string), slug
+      exp = preprocessor.call(string)
+      assert_equal exp, subject.new(string, @args.merge(:preprocessor => preprocessor))
     end
 
     should "allow passing a custom separator" do
@@ -265,47 +277,48 @@ module Ardb::HasSlug
 
       invalid_char = (NON_WORD_CHARS - [separator]).choice
       string = "#{Factory.string}#{invalid_char}#{Factory.string}"
-      slug = subject.new(string, :separator => separator)
-      assert_equal string.gsub(/[^\w]+/, separator), slug
+      exp = string.gsub(/[^\w]+/, separator)
+      assert_equal exp, subject.new(string, @args.merge(:separator => separator))
 
       # it won't change the separator in the strings
       string = "#{Factory.string}#{separator}#{Factory.string}"
-      assert_equal string, subject.new(string, :separator => separator)
+      exp = string
+      assert_equal string, subject.new(string, @args.merge(:separator => separator))
 
       # it will change the default separator now
       string = "#{Factory.string}-#{Factory.string}"
-      slug = subject.new(string, :separator => separator)
-      assert_equal string.gsub('-', separator), slug
+      exp = string.gsub('-', separator)
+      assert_equal exp, subject.new(string, @args.merge(:separator => separator))
     end
 
     should "change underscores into its separator unless allowed" do
       string = "#{Factory.string}_#{Factory.string}"
-      assert_equal string.gsub('_', '-'), subject.new(string)
+      assert_equal string.gsub('_', '-'), subject.new(string, @args)
 
-      slug = subject.new(string, :allow_underscores => false)
-      assert_equal string.gsub('_', '-'), slug
+      exp = string.gsub('_', '-')
+      assert_equal exp, subject.new(string, @args.merge(:allow_underscores => false))
 
-      assert_equal string, subject.new(string, :allow_underscores => true)
+      assert_equal string, subject.new(string, @args.merge(:allow_underscores => true))
     end
 
     should "not allow multiple separators in a row" do
       string = "#{Factory.string}--#{Factory.string}"
-      assert_equal string.gsub(/-{2,}/, '-'), subject.new(string)
+      assert_equal string.gsub(/-{2,}/, '-'), subject.new(string, @args)
 
       # remove separators that were added from changing invalid chars
       invalid_chars = (Factory.integer(3) + 1).times.map{ NON_WORD_CHARS.choice }.join
       string = "#{Factory.string}#{invalid_chars}#{Factory.string}"
-      assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string)
+      assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string, @args)
     end
 
     should "remove leading and trailing separators" do
       string = "-#{Factory.string}-#{Factory.string}-"
-      assert_equal string[1..-2], subject.new(string)
+      assert_equal string[1..-2], subject.new(string, @args)
 
       # remove separators that were added from changing invalid chars
       invalid_char = NON_WORD_CHARS.choice
       string = "#{invalid_char}#{Factory.string}-#{Factory.string}#{invalid_char}"
-      assert_equal string[1..-2], subject.new(string)
+      assert_equal string[1..-2], subject.new(string, @args)
     end
 
   end
