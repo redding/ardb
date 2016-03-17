@@ -247,6 +247,11 @@ module Ardb::HasSlug
 
     should have_imeths :new
 
+    should "always dup the given string" do
+      string = Factory.string
+      assert_not_same string, subject.new(string, @args)
+    end
+
     should "not change strings that are made up of valid chars" do
       string = Factory.string
       assert_equal string, subject.new(string, @args)

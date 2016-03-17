@@ -86,7 +86,7 @@ module Ardb
         allow_underscores  = options[:allow_underscores]
         regexp_escaped_sep = Regexp.escape(separator)
 
-        slug = preprocessor.call(string.to_s)
+        slug = preprocessor.call(string.to_s.dup)
         # Turn unwanted chars into the separator
         slug.gsub!(/[^\w#{regexp_escaped_sep}]+/, separator)
         # Turn underscores into the separator, unless allowing
