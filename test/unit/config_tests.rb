@@ -43,13 +43,15 @@ class Ardb::Config
     desc "db namespace"
     subject{ Ardb::Config.db }
 
-    should have_option :adapter,  String,  :required => true
-    should have_option :database, String,  :required => true
-    should have_option :encoding, String,  :required => false
-    should have_option :host,     String,  :required => false
-    should have_option :port,     Integer, :required => false
-    should have_option :username, String,  :required => false
-    should have_option :password, String,  :required => false
+    should have_option :adapter,          String,  :required => true
+    should have_option :database,         String,  :required => true
+    should have_option :encoding,         String,  :required => false
+    should have_option :host,             String,  :required => false
+    should have_option :port,             Integer, :required => false
+    should have_option :username,         String,  :required => false
+    should have_option :password,         String,  :required => false
+    should have_option :pool,             Integer, :required => false
+    should have_option :checkout_timeout, Integer, :required => false
 
   end
 
