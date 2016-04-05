@@ -5,16 +5,20 @@ module Ardb
 
   class UnitTests < Assert::Context
     desc "Ardb"
-    subject{ Ardb }
     setup do
       @orig_ar_logger = ActiveRecord::Base.logger
+      Adapter.reset
+
+      @module = Ardb
     end
     teardown do
       Adapter.reset
       ActiveRecord::Base.logger = @orig_ar_logger
     end
+    subject{ @module }
 
     should have_imeths :config, :configure, :adapter, :validate!, :init
+    should have_imeths :escape_like_pattern
 
     should "return its `Config` class with the `config` method" do
       assert_same Config, subject.config
@@ -23,12 +27,11 @@ module Ardb
     should "complain if init'ing and not all configs are set" do
       orig_adapter = Ardb.config.db.adapter
       Ardb.config.db.adapter = nil
-      assert_raises(NotConfiguredError) { subject.init }
+      assert_raises(NotConfiguredError){ subject.init }
       Ardb.config.db.adapter = orig_adapter
     end
 
     should "init the adapter on init" do
-      Adapter.reset
       assert_nil Adapter.current
       begin
         subject.init
@@ -49,6 +52,22 @@ module Ardb
         # tests anyway
         subject.init
       end
+    end
+
+  end
+
+  class InitTests < UnitTests
+    desc "when init"
+    setup do
+      # don't establish connection, otherwise this errors if it can't connect to
+      # an actual DB
+      @module.init(false)
+    end
+
+    should "demeter its adapter" do
+      pattern = "%#{Factory.string}\\#{Factory.string}_"
+      exp = subject.adapter.escape_like_pattern(pattern)
+      assert_equal exp, subject.escape_like_pattern(pattern)
     end
 
   end

@@ -35,6 +35,10 @@ module Ardb
     end
   end
 
+  def self.escape_like_pattern(pattern, escape_char = nil)
+    self.adapter.escape_like_pattern(pattern, escape_char)
+  end
+
   class Config
     include NsOptions::Proxy
 
