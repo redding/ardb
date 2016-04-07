@@ -102,6 +102,16 @@ module Ardb::HasSlug
       assert_nil validation.options[:scope]
     end
 
+    should "not add a unique validation if skipping unique validation" do
+      subject.has_slug({
+        :source                 => @source_attribute,
+        :skip_unique_validation => true
+      })
+
+      validation = subject.validations.find{ |v| v.type == :uniqueness }
+      assert_nil validation
+    end
+
     should "allow customizing its validations using `has_slug`" do
       unique_scope = Factory.string.to_sym
       subject.has_slug({
