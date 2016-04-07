@@ -33,10 +33,13 @@ module Ardb
         # since the slug isn't written till an after callback we can't always
         # validate presence of it
         validates_presence_of(attribute, :on => :update)
-        validates_uniqueness_of(attribute, {
-          :case_sensitive => true,
-          :scope          => options[:unique_scope]
-        })
+
+        if options[:skip_unique_validation] != true
+          validates_uniqueness_of(attribute, {
+            :case_sensitive => true,
+            :scope          => options[:unique_scope]
+          })
+        end
 
         after_create :ardb_has_slug_generate_slugs
         after_update :ardb_has_slug_generate_slugs
