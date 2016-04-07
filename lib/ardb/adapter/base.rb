@@ -15,6 +15,14 @@ class Ardb::Adapter
       @sql_schema_path  = "#{schema_path}.sql"
     end
 
+    def escape_like_pattern(pattern, escape_char = nil)
+      escape_char ||= "\\"
+      pattern = pattern.to_s.dup
+      pattern.gsub!(escape_char){ escape_char * 2 }
+      # don't allow custom wildcards
+      pattern.gsub!(/%|_/){ |wildcard_char| "#{escape_char}#{wildcard_char}" }
+    end
+
     def foreign_key_add_sql(*args);  raise NotImplementedError; end
     def foreign_key_drop_sql(*args); raise NotImplementedError; end
 

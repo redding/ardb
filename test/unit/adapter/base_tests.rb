@@ -12,6 +12,7 @@ class Ardb::Adapter::Base
 
     should have_readers :config_settings, :database
     should have_readers :ruby_schema_path, :sql_schema_path
+    should have_imeths :escape_like_pattern
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
     should have_imeths :create_db, :drop_db, :connect_db, :migrate_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
@@ -28,6 +29,29 @@ class Ardb::Adapter::Base
     should "know its schema paths" do
       assert_equal "#{Ardb.config.schema_path}.rb",  subject.ruby_schema_path
       assert_equal "#{Ardb.config.schema_path}.sql", subject.sql_schema_path
+    end
+
+    should "know how to escape like patterns" do
+      pattern = "#{Factory.string}%" \
+                "#{Factory.string}_" \
+                "#{Factory.string}\\" \
+                "#{Factory.string} " \
+                "#{Factory.string}"
+      exp = pattern.gsub("\\"){ "\\\\" }.gsub('%', "\\%").gsub('_', "\\_")
+      assert_equal exp, subject.escape_like_pattern(pattern)
+    end
+
+    should "allow using a custom escape char when escaping like patterns" do
+      escape_char = '#'
+      pattern = "#{Factory.string}%" \
+                "#{Factory.string}_" \
+                "#{Factory.string}\\" \
+                "#{Factory.string}#{escape_char}" \
+                "#{Factory.string} " \
+                "#{Factory.string}"
+      exp = pattern.gsub(escape_char, "#{escape_char}#{escape_char}")
+      exp = exp.gsub('%', "#{escape_char}%").gsub('_', "#{escape_char}_")
+      assert_equal exp, subject.escape_like_pattern(pattern, escape_char)
     end
 
     should "not implement the foreign key sql meths" do
