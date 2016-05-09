@@ -4,10 +4,14 @@
 # add the root dir to the load path
 $LOAD_PATH.unshift(File.expand_path("../..", __FILE__))
 
+TMP_PATH = File.expand_path("../../tmp", __FILE__)
+
 # require pry for debugging (`binding.pry`)
 require 'pry'
 require 'test/support/factory'
 
+# TODO - rework the tests so this isn't needed, requires removing coupling from
+# the main `Ardb` module
 ENV['ARDB_DB_FILE'] = 'tmp/testdb/config/db'
 require 'ardb'
 Ardb.init(false)
