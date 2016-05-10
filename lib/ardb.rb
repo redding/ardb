@@ -9,6 +9,7 @@ require 'ardb/root_path'
 ENV['ARDB_DB_FILE'] ||= 'config/db'
 
 module Ardb
+
   NotConfiguredError = Class.new(RuntimeError)
 
   def self.config; Config; end
@@ -24,7 +25,8 @@ module Ardb
 
   def self.init(establish_connection = true)
     require 'ardb/require_autoloaded_active_record_files'
-    require self.config.db_file
+    require_db_file
+
     validate!
     Adapter.init
 
@@ -37,6 +39,18 @@ module Ardb
 
   def self.escape_like_pattern(pattern, escape_char = nil)
     self.adapter.escape_like_pattern(pattern, escape_char)
+  end
+
+  private
+
+  # try requiring the db file via the load path or as an absolute path, if
+  # that fails it tries requiring relative to the current working directory
+  def self.require_db_file
+    begin
+      require ENV['ARDB_DB_FILE']
+    rescue LoadError
+      require File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD'])
+    end
   end
 
   class Config
@@ -54,7 +68,6 @@ module Ardb
       option :checkout_timeout, Integer, :required => false
     end
 
-    option :db_file,         Pathname, :default => ENV['ARDB_DB_FILE']
     option :root_path,       Pathname, :required => true
     option :logger,                    :required => true
     option :migrations_path, RootPath, :default => proc{ "db/migrations" }

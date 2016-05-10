@@ -12,7 +12,6 @@ class Ardb::Config
     subject{ Ardb::Config }
 
     should have_namespace :db
-    should have_option  :db_file,   Pathname, :default => ENV['ARDB_DB_FILE']
     should have_option  :root_path, Pathname, :required => true
     should have_option  :logger, :required => true
     should have_options :migrations_path, :schema_path

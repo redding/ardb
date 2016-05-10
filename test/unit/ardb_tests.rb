@@ -1,67 +1,125 @@
 require 'assert'
 require 'ardb'
 
+require 'logger'
+
 module Ardb
 
   class UnitTests < Assert::Context
     desc "Ardb"
     setup do
-      @orig_ar_logger = ActiveRecord::Base.logger
-      Adapter.reset
-
       @module = Ardb
-    end
-    teardown do
-      Adapter.reset
-      ActiveRecord::Base.logger = @orig_ar_logger
     end
     subject{ @module }
 
     should have_imeths :config, :configure, :adapter, :validate!, :init
     should have_imeths :escape_like_pattern
 
+    should "default the db file env var" do
+      skip # this won't pass while the `test/helper` overwrites it
+      assert_equal 'config/db', ENV['ARDB_DB_FILE']
+    end
+
     should "return its `Config` class with the `config` method" do
       assert_same Config, subject.config
     end
 
-    should "complain if init'ing and not all configs are set" do
-      orig_adapter = Ardb.config.db.adapter
-      Ardb.config.db.adapter = nil
-      assert_raises(NotConfiguredError){ subject.init }
-      Ardb.config.db.adapter = orig_adapter
-    end
+  end
 
-    should "init the adapter on init" do
-      assert_nil Adapter.current
-      begin
-        subject.init
-      rescue LoadError
+  class InitMethodSetupTests < UnitTests
+    setup do
+      @orig_env_pwd             = ENV['PWD']
+      @orig_env_ardb_db_file    = ENV['ARDB_DB_FILE']
+      @orig_ar_logger           = ActiveRecord::Base.logger
+      @orig_ardb_config_options = Config.to_hash
+      Config.reset
+      Adapter.reset
+
+      ENV['ARDB_DB_FILE'] = 'test/support/require_test_db_file'
+      Ardb.configure do |c|
+        c.root_path    = TMP_PATH
+        c.logger       = Logger.new(STDOUT)
+        c.db.adapter   = 'postgresql'
+        c.db.database  = Factory.string
       end
 
-      assert_not_nil Adapter.current
-      exp_adapter = Adapter.send(subject.config.db.adapter)
-      assert_equal exp_adapter, Adapter.current
-      assert_same Adapter.current, subject.adapter
-    end
-
-    should "establish an AR connection on init" do
-      assert_raises(LoadError) do
-        # not going to test this b/c I don't want to bring in all the crap it
-        # takes to actually establish a connection with AR (adapters, etc)
-        # plus, most of this should be handled by AR, ns-options, and the above
-        # tests anyway
-        subject.init
+      @ar_establish_connection_called_with = nil
+      Assert.stub(ActiveRecord::Base, :establish_connection) do |options|
+        @ar_establish_connection_called_with = options
       end
+    end
+    teardown do
+      Adapter.reset
+      Config.apply(@orig_ardb_config_options)
+      ActiveRecord::Base.logger = @orig_ar_logger
+      ENV['ARDB_DB_FILE']       = @orig_env_ardb_db_file
+      ENV['PWD']                = @orig_env_pwd
     end
 
   end
 
-  class InitTests < UnitTests
+  class InitMethodTests < InitMethodSetupTests
+    desc "`init` method"
+
+    should "require the autoloaded active record files" do
+      subject.init
+      assert_false require('ardb/require_autoloaded_active_record_files')
+    end
+
+    should "require the db file" do
+      subject.init
+      assert_false require(ENV['ARDB_DB_FILE'])
+    end
+
+    should "require the db file relative to the working directory if needed" do
+      ENV['PWD']          = 'test/support'
+      ENV['ARDB_DB_FILE'] = 'relative_require_test_db_file'
+      subject.init
+      assert_false require(File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD']))
+    end
+
+    should "init the adapter" do
+      assert_nil Adapter.current
+      subject.init
+
+      assert_not_nil Adapter.current
+      exp = Adapter.send(subject.config.db.adapter)
+      assert_equal exp, Adapter.current
+      assert_same Adapter.current, subject.adapter
+    end
+
+    should "optionally establish an AR connection" do
+      subject.init
+      exp = Ardb.config.db_settings
+      assert_equal exp, @ar_establish_connection_called_with
+
+      @ar_establish_connection_called_with = nil
+      subject.init(true)
+      exp = Ardb.config.db_settings
+      assert_equal exp, @ar_establish_connection_called_with
+
+      @ar_establish_connection_called_with = nil
+      subject.init(false)
+      assert_nil @ar_establish_connection_called_with
+    end
+
+    should "raise an error if not all configs are set when init" do
+      if Factory.boolean
+        required_option = [:root_path, :logger].choice
+        Ardb.config.send("#{required_option}=", nil)
+      else
+        required_option = [:adapter, :database].choice
+        Ardb.config.db.send("#{required_option}=", nil)
+      end
+      assert_raises(NotConfiguredError){ subject.init }
+    end
+
+  end
+
+  class InitTests < InitMethodSetupTests
     desc "when init"
     setup do
-      # don't establish connection, otherwise this errors if it can't connect to
-      # an actual DB
-      @module.init(false)
+      @module.init
     end
 
     should "demeter its adapter" do
