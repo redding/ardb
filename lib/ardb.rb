@@ -1,10 +1,8 @@
-require 'pathname'
 require 'singleton'
 require 'active_record'
 require 'ns-options'
 
 require 'ardb/version'
-require 'ardb/root_path'
 
 ENV['ARDB_DB_FILE'] ||= 'config/db'
 
@@ -12,8 +10,13 @@ module Ardb
 
   NotConfiguredError = Class.new(RuntimeError)
 
-  def self.config; Config; end
-  def self.configure(&block); Config.define(&block); end
+  def self.config
+    @config ||= Config.new
+  end
+
+  def self.configure(&block)
+    self.config.tap(&block)
+  end
 
   def self.adapter; Adapter.current; end
 
@@ -68,14 +71,28 @@ module Ardb
       option :checkout_timeout, Integer, :required => false
     end
 
-    option :root_path,       Pathname, :required => true
-    option :logger,                    :required => true
-    option :migrations_path, RootPath, :default => proc{ "db/migrations" }
-    option :schema_path,     RootPath, :default => proc{ "db/schema" }
-    option :schema_format,   Symbol,   :default => :ruby
+    option :logger,                :required => true
+    option :schema_format, Symbol, :default => :ruby
 
-    def self.db_settings
-      db.to_hash.inject({}) do |settings, (k, v)|
+    attr_accessor :root_path
+    attr_writer :migrations_path, :schema_path
+
+    def initialize
+      @root_path       = ENV['PWD']
+      @migrations_path = 'db/migrations'
+      @schema_path     = 'db/schema'
+    end
+
+    def migrations_path
+      File.expand_path(@migrations_path.to_s, @root_path.to_s)
+    end
+
+    def schema_path
+      File.expand_path(@schema_path.to_s, @root_path.to_s)
+    end
+
+    def db_settings
+      self.db.to_hash.inject({}) do |settings, (k, v)|
         settings[k.to_s] = v if !v.nil?
         settings
       end
