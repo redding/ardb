@@ -1,4 +1,3 @@
-require 'pathname'
 require 'fileutils'
 require 'ardb'
 require 'ardb/adapter/base'
@@ -8,11 +7,7 @@ class Ardb::Adapter
   class Sqlite < Base
 
     def db_file_path
-      if (path = Pathname.new(self.database)).absolute?
-        path.to_s
-      else
-        Ardb.config.root_path.join(path).to_s
-      end
+      File.expand_path(self.database, Ardb.config.root_path)
     end
 
     def validate!

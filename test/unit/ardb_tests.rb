@@ -20,27 +20,33 @@ module Ardb
       assert_equal 'config/db', ENV['ARDB_DB_FILE']
     end
 
-    should "return its `Config` class with the `config` method" do
-      assert_same Config, subject.config
+    should "know its config" do
+      assert_instance_of Config, subject.config
+      result = subject.config
+      assert_same result, subject.config
     end
 
   end
 
   class InitMethodSetupTests < UnitTests
     setup do
-      @orig_env_pwd             = ENV['PWD']
-      @orig_env_ardb_db_file    = ENV['ARDB_DB_FILE']
-      @orig_ar_logger           = ActiveRecord::Base.logger
-      @orig_ardb_config_options = Config.to_hash
-      Config.reset
+      @orig_env_pwd          = ENV['PWD']
+      @orig_env_ardb_db_file = ENV['ARDB_DB_FILE']
+      @orig_ar_logger        = ActiveRecord::Base.logger
+
+      # stub in a temporary config, this allows us to modify it and not worry
+      # about affecting Ardb's global config which could cause issues on other
+      # tests
+      @ardb_config = Config.new
+      Assert.stub(Ardb, :config){ @ardb_config }
+
       Adapter.reset
 
       ENV['ARDB_DB_FILE'] = 'test/support/require_test_db_file'
       Ardb.configure do |c|
-        c.root_path    = TMP_PATH
-        c.logger       = Logger.new(STDOUT)
-        c.db.adapter   = 'postgresql'
-        c.db.database  = Factory.string
+        c.logger      = Logger.new(STDOUT)
+        c.db.adapter  = 'postgresql'
+        c.db.database = Factory.string
       end
 
       @ar_establish_connection_called_with = nil
@@ -50,7 +56,6 @@ module Ardb
     end
     teardown do
       Adapter.reset
-      Config.apply(@orig_ardb_config_options)
       ActiveRecord::Base.logger = @orig_ar_logger
       ENV['ARDB_DB_FILE']       = @orig_env_ardb_db_file
       ENV['PWD']                = @orig_env_pwd
@@ -105,7 +110,7 @@ module Ardb
 
     should "raise an error if not all configs are set when init" do
       if Factory.boolean
-        required_option = [:root_path, :logger].choice
+        required_option = [:logger].choice
         Ardb.config.send("#{required_option}=", nil)
       else
         required_option = [:adapter, :database].choice

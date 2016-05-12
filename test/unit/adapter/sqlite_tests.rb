@@ -20,8 +20,14 @@ class Ardb::Adapter::Sqlite
     end
 
     should "know its db file path" do
-      exp_path = Ardb.config.root_path.join(Ardb.config.db.database).to_s
-      assert_equal exp_path, subject.db_file_path
+      exp = File.expand_path(Ardb.config.db.database, Ardb.config.root_path)
+      assert_equal exp, subject.db_file_path
+
+      orig_ardb_database = Ardb.config.db.database
+      Ardb.config.db.database = "#{TMP_PATH}/abs_sqlite_db_test"
+      adapter = Ardb::Adapter::Sqlite.new
+      assert_equal Ardb.config.db.database, adapter.db_file_path
+      Ardb.config.db.database = orig_ardb_database
     end
 
     should "not implement the foreign key sql meths" do
