@@ -5,22 +5,22 @@ class Ardb::Adapter
 
   class Postgresql < Base
 
-    def public_schema_settings
-      self.config_settings.merge({
+    def public_ar_connect_hash
+      self.ar_connect_hash.merge({
         'database'           => 'postgres',
         'schema_search_path' => 'public'
       })
     end
 
     def create_db
-      ActiveRecord::Base.establish_connection(self.public_schema_settings)
-      ActiveRecord::Base.connection.create_database(self.database, self.config_settings)
-      ActiveRecord::Base.establish_connection(self.config_settings)
+      ActiveRecord::Base.establish_connection(self.public_ar_connect_hash)
+      ActiveRecord::Base.connection.create_database(self.database, self.ar_connect_hash)
+      ActiveRecord::Base.establish_connection(self.ar_connect_hash)
     end
 
     def drop_db
       begin
-        ActiveRecord::Base.establish_connection(self.public_schema_settings)
+        ActiveRecord::Base.establish_connection(self.public_ar_connect_hash)
         ActiveRecord::Base.connection.tap do |conn|
           conn.execute "UPDATE pg_catalog.pg_database"\
                        " SET datallowconn=false WHERE datname='#{self.database}'"
@@ -74,10 +74,10 @@ class Ardb::Adapter
 
     def env_var_hash
       @env_var_hash ||= {
-        'PGHOST'     => self.config_settings['host'],
-        'PGPORT'     => self.config_settings['port'],
-        'PGUSER'     => self.config_settings['username'],
-        'PGPASSWORD' => self.config_settings['password']
+        'PGHOST'     => self.ar_connect_hash['host'],
+        'PGPORT'     => self.ar_connect_hash['port'],
+        'PGUSER'     => self.ar_connect_hash['username'],
+        'PGPASSWORD' => self.ar_connect_hash['password']
       }
     end
 

@@ -3,12 +3,12 @@ class Ardb::Adapter
 
   class Base
 
-    attr_reader :config_settings, :database
+    attr_reader :ar_connect_hash, :database
     attr_reader :schema_format, :ruby_schema_path, :sql_schema_path
 
     def initialize
-      @config_settings = Ardb.config.db_settings
-      @database = Ardb.config.db.database
+      @ar_connect_hash = Ardb.config.activerecord_connect_hash
+      @database = Ardb.config.database
       @schema_format = Ardb.config.schema_format
       schema_path = Ardb.config.schema_path
       @ruby_schema_path = "#{schema_path}.rb"

@@ -12,7 +12,7 @@ module Ardb
     end
     subject{ @module }
 
-    should have_imeths :config, :configure, :adapter, :validate!, :init
+    should have_imeths :config, :configure, :adapter, :init
     should have_imeths :escape_like_pattern
 
     should "default the db file env var" do
@@ -24,6 +24,12 @@ module Ardb
       assert_instance_of Config, subject.config
       result = subject.config
       assert_same result, subject.config
+    end
+
+    should "yield its config using `configure`" do
+      yielded = nil
+      subject.configure{ |c| yielded = c }
+      assert_same subject.config, yielded
     end
 
   end
@@ -43,11 +49,8 @@ module Ardb
       Adapter.reset
 
       ENV['ARDB_DB_FILE'] = 'test/support/require_test_db_file'
-      Ardb.configure do |c|
-        c.logger      = Logger.new(STDOUT)
-        c.db.adapter  = 'postgresql'
-        c.db.database = Factory.string
-      end
+      @ardb_config.adapter  = 'postgresql' # TODO - randomize, choice or Factory.string
+      @ardb_config.database = Factory.string
 
       @ar_establish_connection_called_with = nil
       Assert.stub(ActiveRecord::Base, :establish_connection) do |options|
@@ -83,40 +86,37 @@ module Ardb
       assert_false require(File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD']))
     end
 
+    should "validate its config" do
+      validate_called = false
+      Assert.stub(@ardb_config, :validate!){ validate_called = true }
+
+      subject.init
+      assert_true validate_called
+    end
+
     should "init the adapter" do
       assert_nil Adapter.current
       subject.init
 
       assert_not_nil Adapter.current
-      exp = Adapter.send(subject.config.db.adapter)
+      exp = Adapter.send(subject.config.adapter)
       assert_equal exp, Adapter.current
       assert_same Adapter.current, subject.adapter
     end
 
     should "optionally establish an AR connection" do
       subject.init
-      exp = Ardb.config.db_settings
+      exp = Ardb.config.activerecord_connect_hash
       assert_equal exp, @ar_establish_connection_called_with
 
       @ar_establish_connection_called_with = nil
       subject.init(true)
-      exp = Ardb.config.db_settings
+      exp = Ardb.config.activerecord_connect_hash
       assert_equal exp, @ar_establish_connection_called_with
 
       @ar_establish_connection_called_with = nil
       subject.init(false)
       assert_nil @ar_establish_connection_called_with
-    end
-
-    should "raise an error if not all configs are set when init" do
-      if Factory.boolean
-        required_option = [:logger].choice
-        Ardb.config.send("#{required_option}=", nil)
-      else
-        required_option = [:adapter, :database].choice
-        Ardb.config.db.send("#{required_option}=", nil)
-      end
-      assert_raises(NotConfiguredError){ subject.init }
     end
 
   end

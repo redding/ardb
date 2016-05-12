@@ -23,7 +23,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency('activerecord',  ["~> 3.2"])
   gem.add_dependency('activesupport', ["~> 3.2"])
   gem.add_dependency('much-plugin',   ["~> 0.1.0"])
-  gem.add_dependency('ns-options',    ["~> 1.1.6"])
   gem.add_dependency('scmd',          ["~> 3.0.1"])
 
 end
