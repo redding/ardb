@@ -10,7 +10,7 @@ class Ardb::Adapter::Base
     end
     subject{ @adapter }
 
-    should have_readers :config_settings, :database
+    should have_readers :ar_connect_hash, :database
     should have_readers :ruby_schema_path, :sql_schema_path
     should have_imeths :escape_like_pattern
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
@@ -19,11 +19,11 @@ class Ardb::Adapter::Base
     should have_imeths :dump_schema, :dump_ruby_schema, :dump_sql_schema
 
     should "know its config settings " do
-      assert_equal Ardb.config.db_settings, subject.config_settings
+      assert_equal Ardb.config.activerecord_connect_hash, subject.ar_connect_hash
     end
 
     should "know its database" do
-      assert_equal Ardb.config.db.database, subject.database
+      assert_equal Ardb.config.database, subject.database
     end
 
     should "know its schema paths" do

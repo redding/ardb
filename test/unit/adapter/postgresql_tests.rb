@@ -12,14 +12,14 @@ class Ardb::Adapter::Postgresql
     end
     subject{ @adapter }
 
-    should have_imeths :public_schema_settings
+    should have_imeths :public_ar_connect_hash
 
     should "know its public schema connection settings" do
-      exp_settings = subject.config_settings.merge({
+      exp_settings = subject.public_ar_connect_hash.merge({
         'database' => 'postgres',
         'schema_search_path' => 'public'
       })
-      assert_equal exp_settings, subject.public_schema_settings
+      assert_equal exp_settings, subject.public_ar_connect_hash
     end
 
     should "know its foreign key add sql" do
@@ -41,10 +41,10 @@ class Ardb::Adapter::Postgresql
   class SQLSchemaTests < UnitTests
     setup do
       @env = {
-        'PGHOST'     => @adapter.config_settings['host'],
-        'PGPORT'     => @adapter.config_settings['port'],
-        'PGUSER'     => @adapter.config_settings['username'],
-        'PGPASSWORD' => @adapter.config_settings['password']
+        'PGHOST'     => @adapter.ar_connect_hash['host'],
+        'PGPORT'     => @adapter.ar_connect_hash['port'],
+        'PGUSER'     => @adapter.ar_connect_hash['username'],
+        'PGPASSWORD' => @adapter.ar_connect_hash['password']
       }
     end
 

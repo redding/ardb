@@ -38,7 +38,7 @@ module Ardb::MigrationHelpers
     end
 
     should "use Ardb's config db adapter" do
-      exp_adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+      exp_adapter = Ardb::Adapter.send(Ardb.config.adapter)
       assert_equal exp_adapter, subject.adapter
     end
 

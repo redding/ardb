@@ -1,21 +1,42 @@
 require 'assert'
 require 'ardb'
 
-require 'ns-options/assert_macros'
-
 class Ardb::Config
 
   class UnitTests < Assert::Context
-    include NsOptions::AssertMacros
-
     desc "Ardb::Config"
     setup do
       @config_class = Ardb::Config
     end
     subject{ @config_class }
 
-    should "be an ns-options proxy" do
-      assert_includes NsOptions::Proxy, subject
+    should "know its activerecord attrs" do
+      exp = [
+        :adapter,
+        :database,
+        :encoding,
+        :host,
+        :port,
+        :username,
+        :password,
+        :pool,
+        :checkout_timeout
+      ]
+      assert_equal exp, ACTIVERECORD_ATTRS
+    end
+
+    should "know its default migrations path" do
+      assert_equal 'db/migrations', DEFAULT_MIGRATIONS_PATH
+    end
+
+    should "know its default schema path" do
+      assert_equal 'db/schema', DEFAULT_SCHEMA_PATH
+    end
+
+    should "know its default and valid schema formats" do
+      assert_equal :ruby, DEFAULT_SCHEMA_FORMAT
+      exp = [:ruby, :sql]
+      assert_equal exp, VALID_SCHEMA_FORMATS
     end
 
   end
@@ -27,18 +48,20 @@ class Ardb::Config
     end
     subject{ @config }
 
-    should have_namespace :db
-    should have_option :logger, :required => true
-    should have_accessors :root_path
+    should have_accessors *ACTIVERECORD_ATTRS
+    should have_accessors :logger, :root_path
+    should have_readers :schema_format
     should have_writers :migrations_path, :schema_path
-    should have_imeths :migrations_path, :schema_path, :db_settings
+    should have_imeths :activerecord_connect_hash, :validate!
 
-    should "default its paths" do
+    should "default its attributs" do
+      assert_instance_of Logger, subject.logger
       assert_equal ENV['PWD'], subject.root_path
-      exp = File.expand_path('db/migrations', subject.root_path)
+      exp = File.expand_path(DEFAULT_MIGRATIONS_PATH, subject.root_path)
       assert_equal exp, subject.migrations_path
-      exp = File.expand_path('db/schema', subject.root_path)
+      exp = File.expand_path(DEFAULT_SCHEMA_PATH, subject.root_path)
       assert_equal exp, subject.schema_path
+      assert_equal DEFAULT_SCHEMA_FORMAT, subject.schema_format
     end
 
     should "allow reading/writing its paths" do
@@ -67,38 +90,41 @@ class Ardb::Config
       assert_equal new_schema_path,     subject.schema_path
     end
 
-    should "build the db connection settings from the db configs" do
-      subject.db.adapter          = [Factory.string,  nil].choice
-      subject.db.database         = [Factory.string,  nil].choice
-      subject.db.encoding         = [Factory.string,  nil].choice
-      subject.db.host             = [Factory.string,  nil].choice
-      subject.db.port             = [Factory.integer, nil].choice
-      subject.db.username         = [Factory.string,  nil].choice
-      subject.db.password         = [Factory.string,  nil].choice
-      subject.db.pool             = [Factory.integer, nil].choice
-      subject.db.checkout_timeout = [Factory.integer, nil].choice
+    should "allow reading/writing the schema format" do
+      new_schema_format = Factory.string
 
-      exp = subject.db.to_hash.inject({}) do |h, (k, v)|
-        !v.nil? ? h.merge!(k.to_s => v) : h
-      end
-      assert_equal exp, subject.db_settings
+      subject.schema_format = new_schema_format
+      assert_equal new_schema_format.to_sym, subject.schema_format
     end
 
-  end
+    should "know its activerecord connection hash" do
+      attrs_and_values = ACTIVERECORD_ATTRS.map do |attr_name|
+        value = [Factory.string,  nil].choice
+        subject.send("#{attr_name}=", value)
+        [attr_name.to_s, value] if !value.nil?
+      end.compact
+      assert_equal Hash[attrs_and_values], subject.activerecord_connect_hash
+    end
 
-  class DbTests < UnitTests
-    desc "db namespace"
-    subject{ Ardb::Config.db }
+    should "raise errors with invalid attribute values using `validate!`" do
+      subject.adapter  = Factory.string
+      subject.database = Factory.string
+      assert_nothing_raised{ subject.validate! }
 
-    should have_option :adapter,          String,  :required => true
-    should have_option :database,         String,  :required => true
-    should have_option :encoding,         String,  :required => false
-    should have_option :host,             String,  :required => false
-    should have_option :port,             Integer, :required => false
-    should have_option :username,         String,  :required => false
-    should have_option :password,         String,  :required => false
-    should have_option :pool,             Integer, :required => false
-    should have_option :checkout_timeout, Integer, :required => false
+      subject.adapter = nil
+      assert_raises(Ardb::ConfigurationError){ subject.validate! }
+
+      subject.adapter  = Factory.string
+      subject.database = nil
+      assert_raises(Ardb::ConfigurationError){ subject.validate! }
+
+      subject.database      = Factory.string
+      subject.schema_format = Factory.string
+      assert_raises(Ardb::ConfigurationError){ subject.validate! }
+
+      subject.schema_format = VALID_SCHEMA_FORMATS.choice
+      assert_nothing_raised{ subject.validate! }
+    end
 
   end
 

@@ -257,7 +257,7 @@ class Ardb::CLI
     desc "ConnectCommand"
     setup do
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
-      Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
+      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @ardb_init_called = false
       Assert.stub(Ardb, :init){ @ardb_init_called = true }
@@ -287,7 +287,7 @@ class Ardb::CLI
       assert_true @ardb_init_called
       assert_true @adapter_spy.connect_db_called?
 
-      exp = "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
+      exp = "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
       assert_equal exp, @stdout.read
     end
 
@@ -302,8 +302,8 @@ class Ardb::CLI
       assert_includes err.to_s,                 err_output
       assert_includes err.backtrace.join("\n"), err_output
 
-      exp = "error connecting to #{Ardb.config.db.database.inspect} database " \
-            "with #{Ardb.config.db_settings.inspect}"
+      exp = "error connecting to #{Ardb.config.database.inspect} database " \
+            "with #{Ardb.config.activerecord_connect_hash.inspect}"
       assert_includes exp, err_output
     end
 
@@ -313,7 +313,7 @@ class Ardb::CLI
     desc "CreateCommand"
     setup do
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
-      Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
+      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @command_class = CreateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -338,7 +338,7 @@ class Ardb::CLI
       assert_equal [], subject.clirb.args
       assert_true @adapter_spy.create_db_called?
 
-      exp = "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
+      exp = "created #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
       assert_equal exp, @stdout.read
     end
 
@@ -350,7 +350,7 @@ class Ardb::CLI
       err_output = @stderr.read
 
       assert_includes err.to_s, err_output
-      exp = "error creating #{Ardb.config.db.database.inspect} database"
+      exp = "error creating #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
 
@@ -360,7 +360,7 @@ class Ardb::CLI
     desc "DropCommand"
     setup do
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
-      Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
+      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @command_class = DropCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -385,7 +385,7 @@ class Ardb::CLI
       assert_equal [], subject.clirb.args
       assert_true @adapter_spy.drop_db_called?
 
-      exp = "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`\n"
+      exp = "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
       assert_equal exp, @stdout.read
     end
 
@@ -397,7 +397,7 @@ class Ardb::CLI
       err_output = @stderr.read
 
       assert_includes err.to_s, err_output
-      exp = "error dropping #{Ardb.config.db.database.inspect} database"
+      exp = "error dropping #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
 
@@ -407,7 +407,7 @@ class Ardb::CLI
     desc "MigrateCommand"
     setup do
       @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
-      Assert.stub(Ardb::Adapter, Ardb.config.db.adapter.to_sym){ @adapter_spy }
+      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @ardb_init_called = false
       Assert.stub(Ardb, :init){ @ardb_init_called = true }
@@ -461,7 +461,7 @@ class Ardb::CLI
       assert_includes err.to_s,                 err_output
       assert_includes err.backtrace.join("\n"), err_output
 
-      exp = "error migrating #{Ardb.config.db.database.inspect} database"
+      exp = "error migrating #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
 

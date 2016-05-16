@@ -19,7 +19,7 @@ class Ardb::Adapter
     def create_db
       validate!
       FileUtils.mkdir_p File.dirname(self.db_file_path)
-      ActiveRecord::Base.establish_connection(self.config_settings)
+      ActiveRecord::Base.establish_connection(self.ar_connect_hash)
     end
 
     def drop_db
