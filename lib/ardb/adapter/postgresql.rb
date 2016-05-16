@@ -1,12 +1,14 @@
-require 'ardb'
 require 'ardb/adapter/base'
 
 module Ardb::Adapter
 
   class Postgresql < Base
 
+    # the 'postgres' db is a "public" (doesn't typically require auth/grants to
+    # connect to) db that typically exists for all postgres installations; the
+    # adapter uses it to create/drop other databases
     def public_connect_hash
-      self.connect_hash.merge({
+      @public_connect_hash ||= self.connect_hash.merge({
         'database'           => 'postgres',
         'schema_search_path' => 'public'
       })

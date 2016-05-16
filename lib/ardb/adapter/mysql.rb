@@ -1,4 +1,3 @@
-require 'ardb'
 require 'ardb/adapter/base'
 
 module Ardb::Adapter
