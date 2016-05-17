@@ -10,8 +10,8 @@ module Ardb
     attr_accessor :drop_db_called_count, :create_db_called_count
     attr_accessor :connect_db_called_count, :migrate_db_called_count
 
-    def initialize
-      super
+    def initialize(config = nil)
+      super(config || Ardb::Config.new)
       @drop_tables_called_count = 0
       @dump_schema_called_count = 0
       @load_schema_called_count = 0

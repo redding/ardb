@@ -2,6 +2,10 @@ require 'assert'
 require 'ardb'
 
 require 'logger'
+require 'ardb/adapter_spy'
+require 'ardb/adapter/mysql'
+require 'ardb/adapter/postgresql'
+require 'ardb/adapter/sqlite'
 
 module Ardb
 
@@ -16,7 +20,6 @@ module Ardb
     should have_imeths :escape_like_pattern
 
     should "default the db file env var" do
-      skip # this won't pass while the `test/helper` overwrites it
       assert_equal 'config/db', ENV['ARDB_DB_FILE']
     end
 
@@ -46,10 +49,13 @@ module Ardb
       @ardb_config = Config.new
       Assert.stub(Ardb, :config){ @ardb_config }
 
-      Adapter.reset
+      @ardb_adapter = nil
+      Assert.stub(Ardb::Adapter, :new) do |*args|
+        @ardb_adapter = Ardb::AdapterSpy.new(*args)
+      end
 
       ENV['ARDB_DB_FILE'] = 'test/support/require_test_db_file'
-      @ardb_config.adapter  = 'postgresql' # TODO - randomize, choice or Factory.string
+      @ardb_config.adapter  = Adapter::VALID_ADAPTERS.choice
       @ardb_config.database = Factory.string
 
       @ar_establish_connection_called_with = nil
@@ -58,7 +64,6 @@ module Ardb
       end
     end
     teardown do
-      Adapter.reset
       ActiveRecord::Base.logger = @orig_ar_logger
       ENV['ARDB_DB_FILE']       = @orig_env_ardb_db_file
       ENV['PWD']                = @orig_env_pwd
@@ -94,14 +99,12 @@ module Ardb
       assert_true validate_called
     end
 
-    should "init the adapter" do
-      assert_nil Adapter.current
+    should "build an adapter using its config" do
       subject.init
 
-      assert_not_nil Adapter.current
-      exp = Adapter.send(subject.config.adapter)
-      assert_equal exp, Adapter.current
-      assert_same Adapter.current, subject.adapter
+      assert_not_nil @ardb_adapter
+      assert_equal subject.config, @ardb_adapter.config
+      assert_same @ardb_adapter, subject.adapter
     end
 
     should "optionally establish an AR connection" do
@@ -165,9 +168,10 @@ module Ardb
       assert_equal 'db/schema', subject::DEFAULT_SCHEMA_PATH
     end
 
-    should "know its default and valid schema formats" do
-      assert_equal :ruby, subject::DEFAULT_SCHEMA_FORMAT
-      exp = [:ruby, :sql]
+    should "know its schema formats" do
+      assert_equal :ruby, subject::RUBY_SCHEMA_FORMAT
+      assert_equal :sql,  subject::SQL_SCHEMA_FORMAT
+      exp = [subject::RUBY_SCHEMA_FORMAT, subject::SQL_SCHEMA_FORMAT]
       assert_equal exp, subject::VALID_SCHEMA_FORMATS
     end
 
@@ -193,7 +197,7 @@ module Ardb
       assert_equal exp, subject.migrations_path
       exp = File.expand_path(@config_class::DEFAULT_SCHEMA_PATH, subject.root_path)
       assert_equal exp, subject.schema_path
-      assert_equal @config_class::DEFAULT_SCHEMA_FORMAT, subject.schema_format
+      assert_equal @config_class::RUBY_SCHEMA_FORMAT, subject.schema_format
     end
 
     should "allow reading/writing its paths" do
@@ -256,6 +260,77 @@ module Ardb
 
       subject.schema_format = @config_class::VALID_SCHEMA_FORMATS.choice
       assert_nothing_raised{ subject.validate! }
+    end
+
+  end
+
+  class AdapterTests < UnitTests
+    desc "Adapter"
+    setup do
+      @config = Factory.ardb_config
+
+      @adapter_module = Ardb::Adapter
+    end
+    subject{ @adapter_module }
+
+    should have_imeths :new
+    should have_imeths :sqlite, :sqlite3
+    should have_imeths :postgresql, :postgres
+    should have_imeths :mysql, :mysql2
+
+    should "know its valid adapters" do
+      exp = [
+        'sqlite',
+        'sqlite3',
+        'postgresql',
+        'postgres',
+        'mysql',
+        'mysql2'
+      ]
+      assert_equal exp, subject::VALID_ADAPTERS
+    end
+
+    should "build an adapter specific class using the passed config" do
+      adapter_key, exp_adapter_class = [
+        ['sqlite',     Ardb::Adapter::Sqlite],
+        ['postgresql', Ardb::Adapter::Postgresql],
+        ['mysql',      Ardb::Adapter::Mysql]
+      ].choice
+      @config.adapter = adapter_key
+
+      adapter = subject.new(@config)
+      assert_instance_of exp_adapter_class, adapter
+      assert_equal @config, adapter.config
+    end
+
+    should "know how to build a sqlite adapter" do
+      adapter = subject.sqlite(@config)
+      assert_instance_of Ardb::Adapter::Sqlite, adapter
+      assert_equal @config, adapter.config
+
+      adapter = subject.sqlite3(@config)
+      assert_instance_of Ardb::Adapter::Sqlite, adapter
+      assert_equal @config, adapter.config
+    end
+
+    should "know how to build a postgresql adapter" do
+      adapter = subject.postgresql(@config)
+      assert_instance_of Ardb::Adapter::Postgresql, adapter
+      assert_equal @config, adapter.config
+
+      adapter = subject.postgres(@config)
+      assert_instance_of Ardb::Adapter::Postgresql, adapter
+      assert_equal @config, adapter.config
+    end
+
+    should "know how to build a mysql adapter" do
+      adapter = subject.mysql(@config)
+      assert_instance_of Ardb::Adapter::Mysql, adapter
+      assert_equal @config, adapter.config
+
+      adapter = subject.mysql2(@config)
+      assert_instance_of Ardb::Adapter::Mysql, adapter
+      assert_equal @config, adapter.config
     end
 
   end

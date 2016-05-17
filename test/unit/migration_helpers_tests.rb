@@ -17,8 +17,8 @@ module Ardb::MigrationHelpers
     desc "ForeignKey handler"
     setup do
       @adapter_spy = nil
-      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym) do
-        @adapter_spy = Ardb::AdapterSpy.new
+      Assert.stub(Ardb::Adapter, :new) do |*args|
+        @adapter_spy = Ardb::AdapterSpy.new(*args)
       end
 
       @fk = ForeignKey.new('fromtbl', 'fromcol', 'totbl')
@@ -46,6 +46,7 @@ module Ardb::MigrationHelpers
 
     should "know its adapter" do
       assert_not_nil @adapter_spy
+      assert_equal Ardb.config, @adapter_spy.config
       assert_equal @adapter_spy, subject.adapter
     end
 

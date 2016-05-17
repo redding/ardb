@@ -1,16 +1,21 @@
+require 'ardb'
+
 module Ardb; end
-class Ardb::Adapter
+module Ardb::Adapter
 
   class Base
 
-    attr_reader :ar_connect_hash, :database
+    attr_reader :config, :connect_hash, :database
     attr_reader :schema_format, :ruby_schema_path, :sql_schema_path
 
-    def initialize
-      @ar_connect_hash = Ardb.config.activerecord_connect_hash
-      @database = Ardb.config.database
-      @schema_format = Ardb.config.schema_format
-      schema_path = Ardb.config.schema_path
+    def initialize(config)
+      @config = config
+
+      @connect_hash  = @config.activerecord_connect_hash
+      @database      = @config.database
+      @schema_format = @config.schema_format
+
+      schema_path = @config.schema_path
       @ruby_schema_path = "#{schema_path}.rb"
       @sql_schema_path  = "#{schema_path}.sql"
     end
@@ -36,7 +41,7 @@ class Ardb::Adapter
     def migrate_db
       verbose = ENV["MIGRATE_QUIET"].nil?
       version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
-      migrations_path = Ardb.config.migrations_path
+      migrations_path = self.config.migrations_path
 
       if defined?(ActiveRecord::Migration::CommandRecorder)
         require 'ardb/migration_helpers'
@@ -58,8 +63,8 @@ class Ardb::Adapter
       # silence STDOUT
       current_stdout = $stdout.dup
       $stdout = File.new('/dev/null', 'w')
-      load_ruby_schema if @schema_format == :ruby
-      load_sql_schema  if @schema_format == :sql
+      load_ruby_schema if @schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
+      load_sql_schema  if @schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
@@ -76,7 +81,7 @@ class Ardb::Adapter
       current_stdout = $stdout.dup
       $stdout = File.new('/dev/null', 'w')
       dump_ruby_schema
-      dump_sql_schema if @schema_format == :sql
+      dump_sql_schema if @schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 

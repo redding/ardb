@@ -1,26 +1,26 @@
 require 'ardb'
 require 'ardb/adapter/base'
 
-class Ardb::Adapter
+module Ardb::Adapter
 
   class Postgresql < Base
 
-    def public_ar_connect_hash
-      self.ar_connect_hash.merge({
+    def public_connect_hash
+      self.connect_hash.merge({
         'database'           => 'postgres',
         'schema_search_path' => 'public'
       })
     end
 
     def create_db
-      ActiveRecord::Base.establish_connection(self.public_ar_connect_hash)
-      ActiveRecord::Base.connection.create_database(self.database, self.ar_connect_hash)
-      ActiveRecord::Base.establish_connection(self.ar_connect_hash)
+      ActiveRecord::Base.establish_connection(self.public_connect_hash)
+      ActiveRecord::Base.connection.create_database(self.database, self.connect_hash)
+      ActiveRecord::Base.establish_connection(self.connect_hash)
     end
 
     def drop_db
       begin
-        ActiveRecord::Base.establish_connection(self.public_ar_connect_hash)
+        ActiveRecord::Base.establish_connection(self.public_connect_hash)
         ActiveRecord::Base.connection.tap do |conn|
           conn.execute "UPDATE pg_catalog.pg_database"\
                        " SET datallowconn=false WHERE datname='#{self.database}'"
@@ -74,10 +74,10 @@ class Ardb::Adapter
 
     def env_var_hash
       @env_var_hash ||= {
-        'PGHOST'     => self.ar_connect_hash['host'],
-        'PGPORT'     => self.ar_connect_hash['port'],
-        'PGUSER'     => self.ar_connect_hash['username'],
-        'PGPASSWORD' => self.ar_connect_hash['password']
+        'PGHOST'     => self.connect_hash['host'],
+        'PGPORT'     => self.connect_hash['port'],
+        'PGUSER'     => self.connect_hash['username'],
+        'PGPASSWORD' => self.connect_hash['password']
       }
     end
 

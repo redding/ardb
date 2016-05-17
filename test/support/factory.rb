@@ -8,4 +8,18 @@ module Factory
     "#{Factory.string}_things"
   end
 
+  def self.ardb_config
+    Ardb::Config.new.tap do |c|
+      c.adapter          = Factory.string
+      c.database         = Factory.string
+      c.encoding         = Factory.string
+      c.host             = Factory.string
+      c.port             = Factory.integer
+      c.username         = Factory.string
+      c.password         = Factory.string
+      c.pool             = Factory.integer
+      c.checkout_timeout = Factory.integer
+    end
+  end
+
 end

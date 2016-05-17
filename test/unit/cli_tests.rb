@@ -256,11 +256,11 @@ class Ardb::CLI
   class ConnectCommandTests < UnitTests
     desc "ConnectCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new
-      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
-
       @ardb_init_called = false
       Assert.stub(Ardb, :init){ @ardb_init_called = true }
+
+      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
+      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
 
       @command_class = ConnectCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -312,8 +312,8 @@ class Ardb::CLI
   class CreateCommandTests < UnitTests
     desc "CreateCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new
-      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
+      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
+      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
 
       @command_class = CreateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -359,8 +359,8 @@ class Ardb::CLI
   class DropCommandTests < UnitTests
     desc "DropCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new
-      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
+      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
+      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
 
       @command_class = DropCommand
       @cmd = @command_class.new([], @stdout, @stderr)
@@ -406,11 +406,10 @@ class Ardb::CLI
   class MigrateCommandTests < UnitTests
     desc "MigrateCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new
-      Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
-
-      @ardb_init_called = false
       Assert.stub(Ardb, :init){ @ardb_init_called = true }
+
+      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
+      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
 
       @command_class = MigrateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
