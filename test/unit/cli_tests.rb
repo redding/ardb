@@ -256,7 +256,7 @@ class Ardb::CLI
   class ConnectCommandTests < UnitTests
     desc "ConnectCommand"
     setup do
-      @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
+      @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @ardb_init_called = false
@@ -312,7 +312,7 @@ class Ardb::CLI
   class CreateCommandTests < UnitTests
     desc "CreateCommand"
     setup do
-      @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
+      @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @command_class = CreateCommand
@@ -359,7 +359,7 @@ class Ardb::CLI
   class DropCommandTests < UnitTests
     desc "DropCommand"
     setup do
-      @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
+      @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @command_class = DropCommand
@@ -406,7 +406,7 @@ class Ardb::CLI
   class MigrateCommandTests < UnitTests
     desc "MigrateCommand"
     setup do
-      @adapter_spy = Class.new{ include Ardb::AdapterSpy }.new
+      @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb::Adapter, Ardb.config.adapter.to_sym){ @adapter_spy }
 
       @ardb_init_called = false
