@@ -1,7 +1,7 @@
 require 'ardb'
 require 'ardb/adapter/base'
 
-class Ardb::Adapter
+module Ardb::Adapter
 
   class Mysql < Base
 

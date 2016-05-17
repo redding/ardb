@@ -18,11 +18,8 @@ module Ardb::TestHelpers
 
   class UsageTests < UnitTests
     setup do
-      @orig_ardb_adapter = Ardb.adapter
-      Ardb::Adapter.current = @adapter_spy = Ardb::AdapterSpy.new
-    end
-    teardown do
-      Ardb::Adapter.current = @orig_ardb_adapter
+      @adapter_spy = Ardb::AdapterSpy.new
+      Assert.stub(Ardb, :adapter){ @adapter_spy }
     end
 
   end

@@ -1,5 +1,5 @@
-require 'singleton'
 require 'active_record'
+require 'logger'
 
 require 'ardb/version'
 
@@ -15,14 +15,14 @@ module Ardb
     self.config.tap(&block)
   end
 
-  def self.adapter; Adapter.current; end
+  def self.adapter; @adapter; end
 
   def self.init(establish_connection = true)
     require 'ardb/require_autoloaded_active_record_files'
     require_db_file
 
     self.config.validate!
-    Adapter.init
+    @adapter = Adapter.new(self.config)
 
     # setup AR
     ActiveRecord::Base.logger = self.config.logger
@@ -64,8 +64,9 @@ module Ardb
     ].freeze
     DEFAULT_MIGRATIONS_PATH = 'db/migrations'.freeze
     DEFAULT_SCHEMA_PATH     = 'db/schema'.freeze
-    DEFAULT_SCHEMA_FORMAT   = :ruby
-    VALID_SCHEMA_FORMATS    = [DEFAULT_SCHEMA_FORMAT, :sql].freeze
+    RUBY_SCHEMA_FORMAT      = :ruby.freeze
+    SQL_SCHEMA_FORMAT       = :sql.freeze
+    VALID_SCHEMA_FORMATS    = [RUBY_SCHEMA_FORMAT, SQL_SCHEMA_FORMAT].freeze
 
     attr_accessor *ACTIVERECORD_ATTRS
     attr_accessor :logger, :root_path
@@ -77,7 +78,7 @@ module Ardb
       @root_path       = ENV['PWD']
       @migrations_path = DEFAULT_MIGRATIONS_PATH
       @schema_path     = DEFAULT_SCHEMA_PATH
-      @schema_format   = DEFAULT_SCHEMA_FORMAT
+      @schema_format   = RUBY_SCHEMA_FORMAT
     end
 
     def migrations_path
@@ -115,48 +116,48 @@ module Ardb
 
   end
 
-  class Adapter
-    include Singleton
+  module Adapter
 
-    attr_accessor :current
+    VALID_ADAPTERS = [
+      'sqlite',
+      'sqlite3',
+      'postgresql',
+      'postgres',
+      'mysql',
+      'mysql2'
+    ].freeze
 
-    def init
-      @current = Adapter.send(Ardb.config.adapter)
+    def self.new(config)
+      if !VALID_ADAPTERS.include?(config.adapter)
+        raise InvalidAdapterError, "invalid adapter: `#{config.adapter}`"
+      end
+      self.send(config.adapter, config)
     end
 
-    def reset
-      @current = nil
-    end
-
-    def sqlite
+    def self.sqlite(config)
       require 'ardb/adapter/sqlite'
-      Adapter::Sqlite.new
+      Adapter::Sqlite.new(config)
     end
-    alias_method :sqlite3, :sqlite
 
-    def postgresql
+    def self.sqlite3(config); self.sqlite(config); end
+
+    def self.postgresql(config)
       require 'ardb/adapter/postgresql'
-      Adapter::Postgresql.new
+      Adapter::Postgresql.new(config)
     end
 
-    def mysql
+    def self.postgres(config); self.postgresql(config); end
+
+    def self.mysql(config)
       require 'ardb/adapter/mysql'
-      Adapter::Mysql.new
-    end
-    alias_method :mysql2, :mysql
-
-    # nice singleton api
-
-    def self.method_missing(method, *args, &block)
-      self.instance.send(method, *args, &block)
+      Adapter::Mysql.new(config)
     end
 
-    def self.respond_to?(method)
-      super || self.instance.respond_to?(method)
-    end
+    def self.mysql2(config); self.mysql(config); end
 
   end
 
-  ConfigurationError = Class.new(ArgumentError)
+  ConfigurationError  = Class.new(ArgumentError)
+  InvalidAdapterError = Class.new(RuntimeError)
 
 end

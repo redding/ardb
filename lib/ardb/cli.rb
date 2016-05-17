@@ -107,7 +107,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
@@ -142,7 +142,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
@@ -174,7 +174,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
@@ -206,7 +206,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
