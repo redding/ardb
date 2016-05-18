@@ -1,5 +1,10 @@
-require "assert"
-require "ardb/migration"
+require 'assert'
+require 'ardb/migration'
+
+# This is needed to call `classify` on a string; if this isn't manually required
+# these tests can fail if activesupport hasn't been loaded by activerecord; the
+# `Migration` class will error saying `classify` is not a method on `String`
+require 'active_support/core_ext/string/inflections'
 
 class Ardb::Migration
 

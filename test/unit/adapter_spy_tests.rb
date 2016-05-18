@@ -19,7 +19,8 @@ class Ardb::AdapterSpy
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @adapter_spy = @adapter_spy_class.new
+      @config      = Factory.ardb_config
+      @adapter_spy = @adapter_spy_class.new(@config)
     end
     subject{ @adapter_spy }
 
