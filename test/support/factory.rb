@@ -19,6 +19,7 @@ module Factory
       c.password         = Factory.string
       c.pool             = Factory.integer
       c.checkout_timeout = Factory.integer
+      c.min_messages     = Factory.string
     end
   end
 

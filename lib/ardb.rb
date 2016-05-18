@@ -60,7 +60,8 @@ module Ardb
       :username,
       :password,
       :pool,
-      :checkout_timeout
+      :checkout_timeout,
+      :min_messages
     ].freeze
     DEFAULT_MIGRATIONS_PATH = 'db/migrations'.freeze
     DEFAULT_SCHEMA_PATH     = 'db/schema'.freeze

@@ -155,7 +155,8 @@ module Ardb
         :username,
         :password,
         :pool,
-        :checkout_timeout
+        :checkout_timeout,
+        :min_messages
       ]
       assert_equal exp, subject::ACTIVERECORD_ATTRS
     end
