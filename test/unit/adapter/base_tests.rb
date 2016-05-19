@@ -102,6 +102,9 @@ class Ardb::Adapter::Base
   class MigrateDbTests < UnitTests
     desc "`migrate_db`"
     setup do
+      @orig_migrate_version_env_var = ENV['MIGRATE_VERSION']
+      @orig_migrate_query_env_var   = ENV['MIGRATE_QUIET']
+
       ENV["MIGRATE_VERSION"] = Factory.integer.to_s if Factory.boolean
       ENV["MIGRATE_QUIET"]   = Factory.boolean.to_s if Factory.boolean
 
@@ -111,6 +114,10 @@ class Ardb::Adapter::Base
       end
 
       @adapter.migrate_db
+    end
+    teardown do
+      ENV['MIGRATE_VERSION'] = @orig_migrate_version_env_var
+      ENV['MIGRATE_QUIET']   = @orig_migrate_query_env_var
     end
 
     should "add the ardb migration helper recorder to activerecord's command recorder" do

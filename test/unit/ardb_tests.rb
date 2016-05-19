@@ -54,7 +54,7 @@ module Ardb
         @ardb_adapter = Ardb::AdapterSpy.new(*args)
       end
 
-      ENV['ARDB_DB_FILE'] = 'test/support/require_test_db_file'
+      ENV['ARDB_DB_FILE']   = 'test/support/require_test_db_file'
       @ardb_config.adapter  = Adapter::VALID_ADAPTERS.choice
       @ardb_config.database = Factory.string
 
