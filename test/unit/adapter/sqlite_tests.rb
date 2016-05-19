@@ -6,7 +6,8 @@ class Ardb::Adapter::Sqlite
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Sqlite"
     setup do
-      @adapter = Ardb::Adapter::Sqlite.new
+      @config  = Factory.ardb_config
+      @adapter = Ardb::Adapter::Sqlite.new(@config)
     end
     subject{ @adapter }
 
@@ -20,8 +21,12 @@ class Ardb::Adapter::Sqlite
     end
 
     should "know its db file path" do
-      exp_path = Ardb.config.root_path.join(Ardb.config.db.database).to_s
-      assert_equal exp_path, subject.db_file_path
+      exp = File.expand_path(@config.database, @config.root_path)
+      assert_equal exp, subject.db_file_path
+
+      @config.database = File.join(TMP_PATH, 'abs_sqlite_db_test')
+      adapter = Ardb::Adapter::Sqlite.new(@config)
+      assert_equal @config.database, adapter.db_file_path
     end
 
     should "not implement the foreign key sql meths" do

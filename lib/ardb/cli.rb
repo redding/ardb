@@ -107,7 +107,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
@@ -115,12 +115,12 @@ module Ardb
         begin
           Ardb.init
           @adapter.connect_db
-          @stdout.puts "connected to #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+          @stdout.puts "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
           @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error connecting to #{Ardb.config.db.database.inspect} database " \
-                       "with #{Ardb.config.db_settings.inspect}"
+          @stderr.puts "error connecting to #{Ardb.config.database.inspect} database " \
+                       "with #{Ardb.config.activerecord_connect_hash.inspect}"
           raise CommandExitError
         end
       end
@@ -142,17 +142,17 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
         @clirb.parse!(@argv)
         begin
           @adapter.create_db
-          @stdout.puts "created #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+          @stdout.puts "created #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
-          @stderr.puts "error creating #{Ardb.config.db.database.inspect} database"
+          @stderr.puts "error creating #{Ardb.config.database.inspect} database"
           raise CommandExitError
         end
       end
@@ -174,17 +174,17 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
         @clirb.parse!(@argv)
         begin
           @adapter.drop_db
-          @stdout.puts "dropped #{Ardb.config.db.adapter} db `#{Ardb.config.db.database}`"
+          @stdout.puts "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
-          @stderr.puts "error dropping #{Ardb.config.db.database.inspect} database"
+          @stderr.puts "error dropping #{Ardb.config.database.inspect} database"
           raise CommandExitError
         end
       end
@@ -206,7 +206,7 @@ module Ardb
         @stderr = stderr || $stderr
 
         @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
+        @adapter = Ardb::Adapter.new(Ardb.config)
       end
 
       def run
@@ -218,7 +218,7 @@ module Ardb
         rescue StandardError => e
           @stderr.puts e
           @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error migrating #{Ardb.config.db.database.inspect} database"
+          @stderr.puts "error migrating #{Ardb.config.database.inspect} database"
           raise CommandExitError
         end
       end

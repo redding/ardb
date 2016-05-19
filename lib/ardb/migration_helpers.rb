@@ -32,7 +32,7 @@ module Ardb
         @to_table    = to_table.to_s
         @to_column   = (options[:to_column] || 'id').to_s
         @name        = (options[:name] || "fk_#{@from_table}_#{@from_column}").to_s
-        @adapter     = Ardb::Adapter.send(Ardb.config.db.adapter)
+        @adapter     = Ardb::Adapter.new(Ardb.config)
       end
 
       def add_sql

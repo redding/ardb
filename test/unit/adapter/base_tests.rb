@@ -1,16 +1,19 @@
 require 'assert'
 require 'ardb/adapter/base'
 
+require 'ardb'
+
 class Ardb::Adapter::Base
 
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Base"
     setup do
-      @adapter = Ardb::Adapter::Base.new
+      @config = Factory.ardb_config
+      @adapter = Ardb::Adapter::Base.new(@config)
     end
     subject{ @adapter }
 
-    should have_readers :config_settings, :database
+    should have_readers :config, :connect_hash, :database
     should have_readers :ruby_schema_path, :sql_schema_path
     should have_imeths :escape_like_pattern
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
@@ -18,17 +21,21 @@ class Ardb::Adapter::Base
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
     should have_imeths :dump_schema, :dump_ruby_schema, :dump_sql_schema
 
+    should "know its config" do
+      assert_equal @config, subject.config
+    end
+
     should "know its config settings " do
-      assert_equal Ardb.config.db_settings, subject.config_settings
+      assert_equal @config.activerecord_connect_hash, subject.connect_hash
     end
 
     should "know its database" do
-      assert_equal Ardb.config.db.database, subject.database
+      assert_equal @config.database, subject.database
     end
 
     should "know its schema paths" do
-      assert_equal "#{Ardb.config.schema_path}.rb",  subject.ruby_schema_path
-      assert_equal "#{Ardb.config.schema_path}.sql", subject.sql_schema_path
+      assert_equal "#{@config.schema_path}.rb",  subject.ruby_schema_path
+      assert_equal "#{@config.schema_path}.sql", subject.sql_schema_path
     end
 
     should "know how to escape like patterns" do
@@ -112,7 +119,7 @@ class Ardb::Adapter::Base
     end
 
     should "set the activerecord migrator's migrations path" do
-      exp = Ardb.config.migrations_path
+      exp = subject.config.migrations_path
       assert_equal exp, ActiveRecord::Migrator.migrations_path
     end
 
@@ -123,7 +130,7 @@ class Ardb::Adapter::Base
 
     should "call the activerecord migrator's migrate method" do
       version = ENV.key?("MIGRATE_VERSION") ? ENV["MIGRATE_VERSION"].to_i : nil
-      exp = [Ardb.config.migrations_path, version]
+      exp = [subject.config.migrations_path, version]
       assert_equal exp, @migrator_called_with
     end
 
@@ -135,18 +142,15 @@ class Ardb::Adapter::Base
       @captured_stdout = ""
       $stdout = StringIO.new(@captured_stdout)
 
-      @orig_schema_format = Ardb.config.schema_format
-
-      @adapter = SchemaSpyAdapter.new
+      @adapter = SchemaSpyAdapter.new(@config)
     end
     teardown do
-      Ardb.config.schema_format = @orig_schema_format
       $stdout = @orig_stdout
     end
 
     should "load a ruby schema using `load_schema` when the format is ruby" do
-      Ardb.config.schema_format = :ruby
-      adapter = SchemaSpyAdapter.new
+      @config.schema_format = Ardb::Config::RUBY_SCHEMA_FORMAT
+      adapter = SchemaSpyAdapter.new(@config)
 
       assert_false adapter.load_ruby_schema_called
       assert_false adapter.load_sql_schema_called
@@ -156,8 +160,8 @@ class Ardb::Adapter::Base
     end
 
     should "load a SQL schema using `load_schema` when the format is sql" do
-      Ardb.config.schema_format = :sql
-      adapter = SchemaSpyAdapter.new
+      @config.schema_format = Ardb::Config::SQL_SCHEMA_FORMAT
+      adapter = SchemaSpyAdapter.new(@config)
 
       assert_false adapter.load_ruby_schema_called
       assert_false adapter.load_sql_schema_called
@@ -172,8 +176,8 @@ class Ardb::Adapter::Base
     end
 
     should "always dump a ruby schema using `dump_schema`" do
-      Ardb.config.schema_format = :ruby
-      adapter = SchemaSpyAdapter.new
+      @config.schema_format = Ardb::Config::RUBY_SCHEMA_FORMAT
+      adapter = SchemaSpyAdapter.new(@config)
 
       assert_false adapter.dump_ruby_schema_called
       assert_false adapter.dump_sql_schema_called
@@ -181,8 +185,8 @@ class Ardb::Adapter::Base
       assert_true adapter.dump_ruby_schema_called
       assert_false adapter.dump_sql_schema_called
 
-      Ardb.config.schema_format = :sql
-      adapter = SchemaSpyAdapter.new
+      @config.schema_format = Ardb::Config::SQL_SCHEMA_FORMAT
+      adapter = SchemaSpyAdapter.new(@config)
 
       assert_false adapter.dump_ruby_schema_called
       adapter.dump_schema
@@ -190,8 +194,8 @@ class Ardb::Adapter::Base
     end
 
     should "dump a SQL schema using `dump_schema` when the format is sql" do
-      Ardb.config.schema_format = :sql
-      adapter = SchemaSpyAdapter.new
+      @config.schema_format = Ardb::Config::SQL_SCHEMA_FORMAT
+      adapter = SchemaSpyAdapter.new(@config)
 
       assert_false adapter.dump_ruby_schema_called
       adapter.dump_schema
@@ -207,10 +211,8 @@ class Ardb::Adapter::Base
 
   class LoadRubySchemaTests < UnitTests
     setup do
-      @orig_schema_path = Ardb.config.schema_path
-      Ardb.config.schema_path = 'fake_schema'
-
-      @adapter = Ardb::Adapter::Base.new
+      @config.schema_path = File.join(TMP_PATH, 'testdb', 'fake_schema')
+      @adapter = Ardb::Adapter::Base.new(@config)
     end
     teardown do
       Ardb.config.schema_path = @orig_schema_path

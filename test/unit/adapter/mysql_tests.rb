@@ -6,7 +6,8 @@ class Ardb::Adapter::Mysql
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Mysql"
     setup do
-      @adapter = Ardb::Adapter::Mysql.new
+      @config  = Factory.ardb_config
+      @adapter = Ardb::Adapter::Mysql.new(@config)
     end
     subject{ @adapter }
 

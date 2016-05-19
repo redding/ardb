@@ -1,6 +1,8 @@
 require 'assert'
 require 'ardb/migration_helpers'
 
+require 'ardb/adapter_spy'
+
 module Ardb::MigrationHelpers
 
   class UnitTests < Assert::Context
@@ -14,6 +16,11 @@ module Ardb::MigrationHelpers
   class ForeignKeyTests < UnitTests
     desc "ForeignKey handler"
     setup do
+      @adapter_spy = nil
+      Assert.stub(Ardb::Adapter, :new) do |*args|
+        @adapter_spy = Ardb::AdapterSpy.new(*args)
+      end
+
       @fk = ForeignKey.new('fromtbl', 'fromcol', 'totbl')
     end
     subject{ @fk }
@@ -37,21 +44,20 @@ module Ardb::MigrationHelpers
       assert_equal exp_name, subject.name
     end
 
-    should "use Ardb's config db adapter" do
-      exp_adapter = Ardb::Adapter.send(Ardb.config.db.adapter)
-      assert_equal exp_adapter, subject.adapter
+    should "know its adapter" do
+      assert_not_nil @adapter_spy
+      assert_equal Ardb.config, @adapter_spy.config
+      assert_equal @adapter_spy, subject.adapter
     end
 
     should "generate appropriate foreign key sql" do
-      exp_add_sql = "ALTER TABLE fromtbl"\
-                    " ADD CONSTRAINT fk_fromtbl_fromcol"\
-                    " FOREIGN KEY (fromcol)"\
-                    " REFERENCES totbl (id)"
-      assert_equal exp_add_sql, subject.add_sql
+      exp = "FAKE ADD FOREIGN KEY SQL fromtbl fromcol " \
+            "totbl id fk_fromtbl_fromcol"
+      assert_equal exp, subject.add_sql
 
-      exp_drop_sql = "ALTER TABLE fromtbl"\
-                     " DROP CONSTRAINT fk_fromtbl_fromcol"
-      assert_equal exp_drop_sql, subject.drop_sql
+      exp = "FAKE DROP FOREIGN KEY SQL fromtbl fromcol " \
+            "totbl id fk_fromtbl_fromcol"
+      assert_equal exp, subject.drop_sql
     end
 
   end
