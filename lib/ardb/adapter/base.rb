@@ -41,7 +41,10 @@ module Ardb::Adapter
     def drop_tables(*args); raise NotImplementedError; end
 
     def connect_db
-      ActiveRecord::Base.connection
+      ActiveRecord::Base.establish_connection(self.connect_hash)
+      # checkout a connection to ensure we can connect to the DB, we don't do
+      # anything with the connection and immediately check it back in
+      ActiveRecord::Base.connection_pool.with_connection{ }
     end
 
     def migrate_db

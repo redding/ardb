@@ -64,9 +64,6 @@ class Ardb::CLI
       @command_spy = CommandSpy.new
       Assert.stub(@command_class, :new).with(@argv){ @command_spy }
 
-      @ardb_init_called_with = nil
-      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
-
       @invalid_command = InvalidCommand.new(@command_name)
     end
     teardown do
@@ -83,10 +80,6 @@ class Ardb::CLI
 
     should "push the pwd onto the load path" do
       assert_includes Dir.pwd, $LOAD_PATH
-    end
-
-    should "init Ardb without establishing a connection" do
-      assert_equal [false], @ardb_init_called_with
     end
 
     should "have run the command" do
@@ -253,15 +246,20 @@ class Ardb::CLI
 
   end
 
-  class ConnectCommandTests < UnitTests
+  class CommandSetupTests < UnitTests
+    setup do
+      @ardb_init_called_with = nil
+      Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
+
+      @adapter_spy = Ardb::AdapterSpy.new
+      Assert.stub(Ardb, :adapter){ @adapter_spy }
+    end
+
+  end
+
+  class ConnectCommandTests < CommandSetupTests
     desc "ConnectCommand"
     setup do
-      @ardb_init_called = false
-      Assert.stub(Ardb, :init){ @ardb_init_called = true }
-
-      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
-      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
-
       @command_class = ConnectCommand
       @cmd = @command_class.new([], @stdout, @stderr)
     end
@@ -284,7 +282,7 @@ class Ardb::CLI
 
       assert_equal [], subject.clirb.args
 
-      assert_true @ardb_init_called
+      assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.connect_db_called?
 
       exp = "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
@@ -309,12 +307,9 @@ class Ardb::CLI
 
   end
 
-  class CreateCommandTests < UnitTests
+  class CreateCommandTests < CommandSetupTests
     desc "CreateCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
-      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
-
       @command_class = CreateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
     end
@@ -332,10 +327,12 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args and create the db on run" do
+    should "parse its args, init ardb and create the db on run" do
       subject.run
 
       assert_equal [], subject.clirb.args
+
+      assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
 
       exp = "created #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
@@ -356,12 +353,9 @@ class Ardb::CLI
 
   end
 
-  class DropCommandTests < UnitTests
+  class DropCommandTests < CommandSetupTests
     desc "DropCommand"
     setup do
-      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
-      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
-
       @command_class = DropCommand
       @cmd = @command_class.new([], @stdout, @stderr)
     end
@@ -379,10 +373,12 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args and drop the db on run" do
+    should "parse its args, init ardb and drop the db on run" do
       subject.run
 
       assert_equal [], subject.clirb.args
+
+      assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
 
       exp = "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
@@ -403,14 +399,9 @@ class Ardb::CLI
 
   end
 
-  class MigrateCommandTests < UnitTests
+  class MigrateCommandTests < CommandSetupTests
     desc "MigrateCommand"
     setup do
-      Assert.stub(Ardb, :init){ @ardb_init_called = true }
-
-      @adapter_spy = Ardb::AdapterSpy.new(Ardb.config)
-      Assert.stub(Ardb::Adapter, :new){ @adapter_spy }
-
       @command_class = MigrateCommand
       @cmd = @command_class.new([], @stdout, @stderr)
     end
@@ -433,7 +424,7 @@ class Ardb::CLI
 
       assert_equal [], subject.clirb.args
 
-      assert_true @ardb_init_called
+      assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.migrate_db_called?
       assert_true @adapter_spy.dump_schema_called?
     end
@@ -444,7 +435,7 @@ class Ardb::CLI
       subject.run
       ENV['ARDB_MIGRATE_NO_SCHEMA'] = current_no_schema
 
-      assert_true @ardb_init_called
+      assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.migrate_db_called?
       assert_false @adapter_spy.dump_schema_called?
     end
@@ -466,7 +457,7 @@ class Ardb::CLI
 
   end
 
-  class GenerateMigrationCommandTests < UnitTests
+  class GenerateMigrationCommandTests < CommandSetupTests
     desc "GenerateMigrationCommand"
     setup do
       @migration_spy   = nil
@@ -493,10 +484,11 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "parse its args and save a migration for the identifier on run" do
+    should "parse its args, init ardb and save a migration for the identifier on run" do
       subject.run
 
       assert_equal [@identifier], subject.clirb.args
+      assert_equal [false],       @ardb_init_called_with
       assert_equal @identifier,   @migration_spy.identifier
       assert_true @migration_spy.save_called
 

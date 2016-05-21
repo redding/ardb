@@ -51,17 +51,12 @@ module Ardb
 
       @ardb_adapter = nil
       Assert.stub(Ardb::Adapter, :new) do |*args|
-        @ardb_adapter = Ardb::AdapterSpy.new(*args)
+        @ardb_adapter ||= Ardb::AdapterSpy.new(*args)
       end
 
       ENV['ARDB_DB_FILE']   = 'test/support/require_test_db_file'
       @ardb_config.adapter  = Adapter::VALID_ADAPTERS.sample
       @ardb_config.database = Factory.string
-
-      @ar_establish_connection_called_with = nil
-      Assert.stub(ActiveRecord::Base, :establish_connection) do |options|
-        @ar_establish_connection_called_with = options
-      end
     end
     teardown do
       ActiveRecord::Base.logger = @orig_ar_logger
@@ -108,18 +103,15 @@ module Ardb
     end
 
     should "optionally establish an AR connection" do
+      assert_nil @ardb_adapter
       subject.init
-      exp = Ardb.config.activerecord_connect_hash
-      assert_equal exp, @ar_establish_connection_called_with
+      assert_equal 1, @ardb_adapter.connect_db_called_count
 
-      @ar_establish_connection_called_with = nil
       subject.init(true)
-      exp = Ardb.config.activerecord_connect_hash
-      assert_equal exp, @ar_establish_connection_called_with
+      assert_equal 2, @ardb_adapter.connect_db_called_count
 
-      @ar_establish_connection_called_with = nil
       subject.init(false)
-      assert_nil @ar_establish_connection_called_with
+      assert_equal 2, @ardb_adapter.connect_db_called_count
     end
 
   end

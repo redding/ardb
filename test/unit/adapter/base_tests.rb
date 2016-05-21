@@ -98,16 +98,25 @@ class Ardb::Adapter::Base
   class ConnectDbTests < UnitTests
     desc "`connect_db`"
     setup do
-      @ar_base_conn_called = false
-      Assert.stub(ActiveRecord::Base, :connection) do |*args|
-        @ar_base_conn_called = true
+      @ar_establish_connection_called_with = nil
+      Assert.stub(ActiveRecord::Base, :establish_connection) do |options|
+        @ar_establish_connection_called_with = options
+      end
+
+      @ar_connection_pool = FakeConnectionPool.new
+      Assert.stub(ActiveRecord::Base, :connection_pool){ @ar_connection_pool }
+
+      @ar_with_connection_called = false
+      Assert.stub(@ar_connection_pool, :with_connection) do
+        @ar_with_connection_called = true
       end
 
       @adapter.connect_db
     end
 
-    should "call activerecord base's connection method" do
-      assert_true @ar_base_conn_called
+    should "use activerecord to establish and then checkout a connection" do
+      assert_equal subject.connect_hash, @ar_establish_connection_called_with
+      assert_true @ar_with_connection_called
     end
 
   end
@@ -310,6 +319,10 @@ class Ardb::Adapter::Base
       puts "[dump_sql_schema] This should be suppressed!"
       @dump_sql_schema_called = true
     end
+  end
+
+  class FakeConnectionPool
+    def with_connection(&block); end
   end
 
 end

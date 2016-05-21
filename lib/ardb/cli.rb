@@ -32,7 +32,6 @@ module Ardb
     def run(args)
       begin
         $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
-        Ardb.init(false) # don't establish a connection
 
         cmd_name = args.shift
         cmd = COMMANDS[cmd_name].new(args)
@@ -106,15 +105,14 @@ module Ardb
         @stdout = stdout || $stdout
         @stderr = stderr || $stderr
 
-        @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.new(Ardb.config)
+        @clirb = Ardb::CLIRB.new
       end
 
       def run
         @clirb.parse!(@argv)
         begin
-          Ardb.init
-          @adapter.connect_db
+          Ardb.init(false)
+          Ardb.adapter.connect_db
           @stdout.puts "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
@@ -141,14 +139,14 @@ module Ardb
         @stdout = stdout || $stdout
         @stderr = stderr || $stderr
 
-        @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.new(Ardb.config)
+        @clirb = Ardb::CLIRB.new
       end
 
       def run
         @clirb.parse!(@argv)
         begin
-          @adapter.create_db
+          Ardb.init(false)
+          Ardb.adapter.create_db
           @stdout.puts "created #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
@@ -173,14 +171,14 @@ module Ardb
         @stdout = stdout || $stdout
         @stderr = stderr || $stderr
 
-        @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.new(Ardb.config)
+        @clirb = Ardb::CLIRB.new
       end
 
       def run
         @clirb.parse!(@argv)
         begin
-          @adapter.drop_db
+          Ardb.init(true)
+          Ardb.adapter.drop_db
           @stdout.puts "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`"
         rescue StandardError => e
           @stderr.puts e
@@ -205,16 +203,15 @@ module Ardb
         @stdout = stdout || $stdout
         @stderr = stderr || $stderr
 
-        @clirb   = Ardb::CLIRB.new
-        @adapter = Ardb::Adapter.new(Ardb.config)
+        @clirb = Ardb::CLIRB.new
       end
 
       def run
         @clirb.parse!(@argv)
         begin
-          Ardb.init
-          @adapter.migrate_db
-          @adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
+          Ardb.init(true)
+          Ardb.adapter.migrate_db
+          Ardb.adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
         rescue StandardError => e
           @stderr.puts e
           @stderr.puts e.backtrace.join("\n")
@@ -245,6 +242,7 @@ module Ardb
       def run
         @clirb.parse!(@argv)
         begin
+          Ardb.init(false)
           require "ardb/migration"
           path = Ardb::Migration.new(@clirb.args.first).save!.file_path
           @stdout.puts "generated #{path}"
