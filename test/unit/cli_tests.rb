@@ -9,10 +9,6 @@ class Ardb::CLI
   class UnitTests < Assert::Context
     desc "Ardb::CLI"
     setup do
-      @kernel_spy = KernelSpy.new
-      @stdout = IOSpy.new
-      @stderr = IOSpy.new
-
       @cli_class = Ardb::CLI
     end
     subject{ @cli_class }
@@ -32,12 +28,11 @@ class Ardb::CLI
       assert_equal 5, COMMANDS.size
 
       assert_instance_of InvalidCommand, COMMANDS[Factory.string]
-
-      assert_equal ConnectCommand,           COMMANDS['connect']
-      assert_equal CreateCommand,            COMMANDS['create']
-      assert_equal DropCommand,              COMMANDS['drop']
-      assert_equal MigrateCommand,           COMMANDS['migrate']
-      assert_equal GenerateMigrationCommand, COMMANDS['generate-migration']
+      assert_instance_of ConnectCommand,           COMMANDS['connect']
+      assert_instance_of CreateCommand,            COMMANDS['create']
+      assert_instance_of DropCommand,              COMMANDS['drop']
+      assert_instance_of MigrateCommand,           COMMANDS['migrate']
+      assert_instance_of GenerateMigrationCommand, COMMANDS['generate-migration']
     end
 
   end
@@ -45,6 +40,10 @@ class Ardb::CLI
   class InitTests < UnitTests
     desc "when init"
     setup do
+      @kernel_spy = KernelSpy.new
+      @stdout     = IOSpy.new
+      @stderr     = IOSpy.new
+
       @cli = @cli_class.new(@kernel_spy, @stdout, @stderr)
     end
     subject{ @cli }
@@ -59,15 +58,14 @@ class Ardb::CLI
       @argv = [@command_name, Factory.string]
 
       @command_class = Class.new
-      COMMANDS[@command_name] = @command_class
-
-      @command_spy = CommandSpy.new
-      Assert.stub(@command_class, :new).with(@argv){ @command_spy }
+      @command_spy  = CommandSpy.new
+      Assert.stub(@command_class, :new){ @command_spy }
+      COMMANDS.add(@command_class, @command_name)
 
       @invalid_command = InvalidCommand.new(@command_name)
     end
     teardown do
-      COMMANDS.delete(@command_name)
+      COMMANDS.remove(@command_name)
     end
 
   end
@@ -180,7 +178,7 @@ class Ardb::CLI
   class RunWithErrorTests < RunSetupTests
     setup do
       @exception = RuntimeError.new(Factory.string)
-      Assert.stub(@command_class, :new).with(@argv){ raise @exception }
+      Assert.stub(@command_spy, :run){ raise @exception }
       @cli.run(@argv)
     end
 
@@ -206,41 +204,38 @@ class Ardb::CLI
     end
     subject{ @cmd }
 
-    should have_readers :name, :argv, :clirb
+    should have_readers :name, :clirb
     should have_imeths :new, :run, :help
 
     should "know its attrs" do
       assert_equal @name, subject.name
-      assert_equal [],    subject.argv
-
-      assert_instance_of Ardb::CLIRB, subject.clirb
+      assert_instance_of CLIRB, subject.clirb
     end
 
     should "set its argv and return itself using `new`" do
-      args = [Factory.string, Factory.string]
-      result = subject.new(args)
-      assert_same subject, result
-      assert_equal [@name, args].flatten, subject.argv
+      assert_same subject, subject.new
     end
 
-    should "parse its argv on run`" do
-      assert_raises(Ardb::CLIRB::HelpExit){ subject.new(['--help']).run }
-      assert_raises(Ardb::CLIRB::VersionExit){ subject.new(['--version']).run }
+    should "parse its argv on run" do
+      assert_raises(CLIRB::HelpExit){ subject.new.run([ '--help' ]) }
+      assert_raises(CLIRB::VersionExit){ subject.new.run([ '--version' ]) }
     end
 
-    should "raise a help exit if its argv is empty" do
+    should "raise a help exit if its name is empty" do
       cmd = @command_class.new([nil, ''].sample)
-      assert_raises(Ardb::CLIRB::HelpExit){ cmd.new([]).run }
+      argv = [Factory.string, Factory.string]
+      assert_raises(CLIRB::HelpExit){ cmd.new.run(argv) }
     end
 
     should "raise an invalid command error when run" do
-      assert_raises(InvalidCommandError){ subject.new([Factory.string]).run }
+      assert_raises(InvalidCommandError){ subject.new.run([Factory.string]) }
     end
 
     should "know its help" do
       exp = "Usage: ardb [COMMAND] [options]\n\n" \
-            "Commands: #{COMMANDS.keys.sort.join(', ')}\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Commands:\n" \
+            "#{COMMANDS.to_s.split("\n").map{ |l| "  #{l}" }.join("\n")}\n"
       assert_equal exp, subject.help
     end
 
@@ -248,11 +243,39 @@ class Ardb::CLI
 
   class CommandSetupTests < UnitTests
     setup do
+      @stdout, @stderr = IOSpy.new, IOSpy.new
+
       @ardb_init_called_with = nil
       Assert.stub(Ardb, :init){ |*args| @ardb_init_called_with = args }
 
       @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb, :adapter){ @adapter_spy }
+    end
+    subject{ @cmd }
+
+  end
+
+  class ValidCommandTests < CommandSetupTests
+    desc "ValidCommand"
+    setup do
+      @command_class = Class.new{ include ValidCommand }
+      @cmd = @command_class.new
+    end
+
+    should have_imeths :clirb, :run, :summary
+
+    should "know its CLI.RB" do
+      assert_instance_of CLIRB, subject.clirb
+    end
+
+    should "parse its args when run" do
+      argv = Factory.integer(3).times.map{ Factory.string }
+      subject.run(argv, @stdout, @stderr)
+      assert_equal argv, subject.clirb.args
+    end
+
+    should "default its summary" do
+      assert_equal '', subject.summary
     end
 
   end
@@ -261,26 +284,28 @@ class Ardb::CLI
     desc "ConnectCommand"
     setup do
       @command_class = ConnectCommand
-      @cmd = @command_class.new([], @stdout, @stderr)
+      @cmd = @command_class.new
     end
-    subject{ @cmd }
 
-    should have_readers :clirb
+    should "be a valid command" do
+      assert_kind_of ValidCommand, subject
+    end
 
-    should "know its CLI.RB" do
-      assert_instance_of Ardb::CLIRB, subject.clirb
+    should "know its summary" do
+      exp = "Connect to the configured DB"
+      assert_equal exp, subject.summary
     end
 
     should "know its help" do
       exp = "Usage: ardb connect [options]\n\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.summary}"
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and connect to the db on run" do
-      subject.run
-
-      assert_equal [], subject.clirb.args
+    should "init ardb and connect to the db when run" do
+      subject.run([], @stdout, @stderr)
 
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.connect_db_called?
@@ -289,12 +314,12 @@ class Ardb::CLI
       assert_equal exp, @stdout.read
     end
 
-    should "output any errors and raise an exit error on run" do
+    should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
       Assert.stub(Ardb, :init){ raise err }
 
-      assert_raises(CommandExitError){ subject.run }
+      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read
 
       assert_includes err.to_s,                 err_output
@@ -311,26 +336,28 @@ class Ardb::CLI
     desc "CreateCommand"
     setup do
       @command_class = CreateCommand
-      @cmd = @command_class.new([], @stdout, @stderr)
+      @cmd = @command_class.new
     end
-    subject{ @cmd }
 
-    should have_readers :clirb
+    should "be a valid command" do
+      assert_kind_of ValidCommand, subject
+    end
 
-    should "know its CLI.RB" do
-      assert_instance_of Ardb::CLIRB, subject.clirb
+    should "know its summary" do
+      exp = "Create the configured DB"
+      assert_equal exp, subject.summary
     end
 
     should "know its help" do
       exp = "Usage: ardb create [options]\n\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.summary}"
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and create the db on run" do
-      subject.run
-
-      assert_equal [], subject.clirb.args
+    should "init ardb and create the db when run" do
+      subject.run([], @stdout, @stderr)
 
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
@@ -339,11 +366,11 @@ class Ardb::CLI
       assert_equal exp, @stdout.read
     end
 
-    should "output any errors and raise an exit error on run" do
+    should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       Assert.stub(@adapter_spy, :create_db){ raise err }
 
-      assert_raises(CommandExitError){ subject.run }
+      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read
 
       assert_includes err.to_s, err_output
@@ -357,26 +384,28 @@ class Ardb::CLI
     desc "DropCommand"
     setup do
       @command_class = DropCommand
-      @cmd = @command_class.new([], @stdout, @stderr)
+      @cmd = @command_class.new
     end
-    subject{ @cmd }
 
-    should have_readers :clirb
+    should "be a valid command" do
+      assert_kind_of ValidCommand, subject
+    end
 
-    should "know its CLI.RB" do
-      assert_instance_of Ardb::CLIRB, subject.clirb
+    should "know its summary" do
+      exp = "Drop the configured DB"
+      assert_equal exp, subject.summary
     end
 
     should "know its help" do
       exp = "Usage: ardb drop [options]\n\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.summary}"
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and drop the db on run" do
-      subject.run
-
-      assert_equal [], subject.clirb.args
+    should "init ardb and drop the db when run" do
+      subject.run([], @stdout, @stderr)
 
       assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
@@ -385,11 +414,11 @@ class Ardb::CLI
       assert_equal exp, @stdout.read
     end
 
-    should "output any errors and raise an exit error on run" do
+    should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       Assert.stub(@adapter_spy, :drop_db){ raise err }
 
-      assert_raises(CommandExitError){ subject.run }
+      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read
 
       assert_includes err.to_s, err_output
@@ -402,50 +431,54 @@ class Ardb::CLI
   class MigrateCommandTests < CommandSetupTests
     desc "MigrateCommand"
     setup do
+      @orig_env_var_migrate_no_schema = ENV['ARDB_MIGRATE_NO_SCHEMA']
       @command_class = MigrateCommand
-      @cmd = @command_class.new([], @stdout, @stderr)
+      @cmd = @command_class.new
     end
-    subject{ @cmd }
+    teardown do
+      ENV['ARDB_MIGRATE_NO_SCHEMA'] = @orig_env_var_migrate_no_schema
+    end
 
-    should have_readers :clirb
+    should "be a valid command" do
+      assert_kind_of ValidCommand, subject
+    end
 
-    should "know its CLI.RB" do
-      assert_instance_of Ardb::CLIRB, subject.clirb
+    should "know its summary" do
+      exp = "Migrate the configured DB"
+      assert_equal exp, subject.summary
     end
 
     should "know its help" do
       exp = "Usage: ardb migrate [options]\n\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.summary}"
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and migrate the db, dump schema on run" do
-      subject.run
-
-      assert_equal [], subject.clirb.args
+    should "init ardb and migrate the db, dump schema when run" do
+      subject.run([], @stdout, @stderr)
 
       assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.migrate_db_called?
       assert_true @adapter_spy.dump_schema_called?
     end
 
-    should "init ardb and only migrate on run with no schema dump env var set" do
-      current_no_schema = ENV['ARDB_MIGRATE_NO_SCHEMA']
+    should "init ardb and only migrate when run with no schema dump env var set" do
       ENV['ARDB_MIGRATE_NO_SCHEMA'] = 'yes'
-      subject.run
-      ENV['ARDB_MIGRATE_NO_SCHEMA'] = current_no_schema
+      subject.run([], @stdout, @stderr)
 
       assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.migrate_db_called?
       assert_false @adapter_spy.dump_schema_called?
     end
 
-    should "output any errors and raise an exit error on run" do
+    should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
       Assert.stub(Ardb, :init){ raise err }
 
-      assert_raises(CommandExitError){ subject.run }
+      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read
 
       assert_includes err.to_s,                 err_output
@@ -460,6 +493,8 @@ class Ardb::CLI
   class GenerateMigrationCommandTests < CommandSetupTests
     desc "GenerateMigrationCommand"
     setup do
+      @identifier = Factory.migration_id
+
       @migration_spy   = nil
       @migration_class = Ardb::Migration
       Assert.stub(@migration_class, :new) do |*args|
@@ -467,29 +502,31 @@ class Ardb::CLI
       end
 
       @command_class = GenerateMigrationCommand
-      @identifier    = Factory.migration_id
-      @cmd = @command_class.new([@identifier], @stdout, @stderr)
+      @cmd = @command_class.new
     end
-    subject{ @cmd }
 
-    should have_readers :clirb
+    should "be a valid command" do
+      assert_kind_of ValidCommand, subject
+    end
 
-    should "know its CLI.RB" do
-      assert_instance_of Ardb::CLIRB, subject.clirb
+    should "know its summary" do
+      exp = "Generate a migration file given a MIGRATION-NAME"
+      assert_equal exp, subject.summary
     end
 
     should "know its help" do
       exp = "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
-            "Options: #{subject.clirb}"
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.summary}"
       assert_equal exp, subject.help
     end
 
-    should "parse its args, init ardb and save a migration for the identifier on run" do
-      subject.run
+    should "init ardb and save a migration for the identifier when run" do
+      subject.run([@identifier], @stdout, @stderr)
 
-      assert_equal [@identifier], subject.clirb.args
-      assert_equal [false],       @ardb_init_called_with
-      assert_equal @identifier,   @migration_spy.identifier
+      assert_equal [false],     @ardb_init_called_with
+      assert_equal @identifier, @migration_spy.identifier
       assert_true @migration_spy.save_called
 
       exp = "generated #{@migration_spy.file_path}\n"
@@ -497,11 +534,11 @@ class Ardb::CLI
     end
 
     should "re-raise a specific argument error on migration 'no identifer' errors" do
-      Assert.stub(@migration_class, :new) { raise Ardb::Migration::NoIdentifierError }
+      Assert.stub(@migration_class, :new){ raise Ardb::Migration::NoIdentifierError }
       err = nil
       begin
-        cmd = @command_class.new([])
-        cmd.run
+        cmd = @command_class.new
+        cmd.run([])
       rescue ArgumentError => err
       end
 
@@ -511,12 +548,12 @@ class Ardb::CLI
       assert_not_empty err.backtrace
     end
 
-    should "output any errors and raise an exit error on run" do
+    should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
       Assert.stub(@migration_class, :new){ raise err }
 
-      assert_raises(CommandExitError){ subject.run }
+      assert_raises(CommandExitError){ subject.run([@identifier], @stdout, @stderr) }
       err_output = @stderr.read
 
       assert_includes err.to_s,                 err_output
@@ -541,18 +578,26 @@ class Ardb::CLI
   end
 
   class CommandSpy
-    attr_reader :run_called
+    attr_reader :argv, :stdout, :stderr, :run_called
 
     def initialize
+      @argv = nil
+      @stdout, @stderr = nil, nil
       @run_called = false
     end
 
-    def run
+    def run(argv, stdout = nil, stderr = nil)
+      @argv = argv
+      @stdout, @stderr = stdout, stderr
       @run_called = true
     end
 
+    def summary
+      @summary ||= Factory.string
+    end
+
     def help
-      Factory.text
+      @help ||= Factory.text
     end
   end
 
