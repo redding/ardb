@@ -2,22 +2,28 @@ require 'assert'
 require 'ardb/adapter/base'
 
 require 'ardb'
+# This is needed by the schema dumper but it doesn't handle requiring it so we
+# have to manually, otherwise this errors when you try to run the adapter base
+# tests by themselves
+require 'active_support/core_ext/class/attribute_accessors'
 
 class Ardb::Adapter::Base
 
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Base"
     setup do
-      @config = Factory.ardb_config
+      @config  = Factory.ardb_config
       @adapter = Ardb::Adapter::Base.new(@config)
     end
     subject{ @adapter }
 
-    should have_readers :config, :connect_hash, :database
-    should have_readers :ruby_schema_path, :sql_schema_path
+    should have_readers :config
+    should have_imeths :connect_hash, :database, :migrations_path
+    should have_imeths :schema_format, :ruby_schema_path, :sql_schema_path
     should have_imeths :escape_like_pattern
     should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
-    should have_imeths :create_db, :drop_db, :connect_db, :migrate_db
+    should have_imeths :create_db, :drop_db, :drop_tables
+    should have_imeths :connect_db, :migrate_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
     should have_imeths :dump_schema, :dump_ruby_schema, :dump_sql_schema
 
@@ -25,15 +31,14 @@ class Ardb::Adapter::Base
       assert_equal @config, subject.config
     end
 
-    should "know its config settings " do
+    should "demeter its config" do
       assert_equal @config.activerecord_connect_hash, subject.connect_hash
+      assert_equal @config.database,                  subject.database
+      assert_equal @config.migrations_path,           subject.migrations_path
+      assert_equal @config.schema_format,             subject.schema_format
     end
 
-    should "know its database" do
-      assert_equal @config.database, subject.database
-    end
-
-    should "know its schema paths" do
+    should "know its ruby and sql schema paths" do
       assert_equal "#{@config.schema_path}.rb",  subject.ruby_schema_path
       assert_equal "#{@config.schema_path}.sql", subject.sql_schema_path
     end
@@ -78,6 +83,14 @@ class Ardb::Adapter::Base
     should "not implement the load and dump sql schema methods" do
       assert_raises(NotImplementedError){ subject.load_sql_schema }
       assert_raises(NotImplementedError){ subject.dump_sql_schema }
+    end
+
+    should "know if its equal to another adapter" do
+      matching_adapter = Ardb::Adapter::Base.new(@config)
+      assert_equal matching_adapter, subject
+
+      non_matching_adapter = Ardb::Adapter::Base.new(Factory.ardb_config)
+      assert_not_equal non_matching_adapter, subject
     end
 
   end
@@ -126,7 +139,7 @@ class Ardb::Adapter::Base
     end
 
     should "set the activerecord migrator's migrations path" do
-      exp = subject.config.migrations_path
+      exp = subject.migrations_path
       assert_equal exp, ActiveRecord::Migrator.migrations_path
     end
 
@@ -137,7 +150,7 @@ class Ardb::Adapter::Base
 
     should "call the activerecord migrator's migrate method" do
       version = ENV.key?("MIGRATE_VERSION") ? ENV["MIGRATE_VERSION"].to_i : nil
-      exp = [subject.config.migrations_path, version]
+      exp = [subject.migrations_path, version]
       assert_equal exp, @migrator_called_with
     end
 
@@ -218,11 +231,8 @@ class Ardb::Adapter::Base
 
   class LoadRubySchemaTests < UnitTests
     setup do
-      @config.schema_path = File.join(TMP_PATH, 'testdb', 'fake_schema')
+      @config.schema_path = File.join(TEST_SUPPORT_PATH, 'fake_schema')
       @adapter = Ardb::Adapter::Base.new(@config)
-    end
-    teardown do
-      Ardb.config.schema_path = @orig_schema_path
     end
 
     should "load a ruby schema file using `load_ruby_schema`" do
@@ -235,6 +245,39 @@ class Ardb::Adapter::Base
     end
 
   end
+
+  class DumpRubySchemaTests < UnitTests
+    setup do
+      @config.schema_path = File.join(TMP_PATH, 'testdb', 'test_dump_ruby_schema')
+      FileUtils.rm_rf(File.dirname(@config.schema_path))
+
+      @schema_dumper_connection, @schema_dumper_file = [nil, nil]
+      Assert.stub(ActiveRecord::SchemaDumper, :dump) do |connection, file|
+        @schema_dumper_connection = connection
+        @schema_dumper_file       = file
+      end
+
+      @fake_connection = FakeConnection.new
+      Assert.stub(ActiveRecord::Base, :connection){ @fake_connection }
+
+      @adapter = Ardb::Adapter::Base.new(@config)
+    end
+    teardown do
+      FileUtils.rm_rf(File.dirname(@config.schema_path))
+    end
+
+    should "dump a ruby schema file using `dump_ruby_schema`" do
+      assert_false File.exists?(subject.ruby_schema_path)
+      subject.dump_ruby_schema
+      assert_true File.exists?(subject.ruby_schema_path)
+      assert_equal @fake_connection, @schema_dumper_connection
+      assert_instance_of File, @schema_dumper_file
+      assert_equal subject.ruby_schema_path, @schema_dumper_file.path
+    end
+
+  end
+
+  class FakeConnection; end
 
   class SchemaSpyAdapter < Ardb::Adapter::Base
     attr_reader :load_ruby_schema_called, :dump_ruby_schema_called

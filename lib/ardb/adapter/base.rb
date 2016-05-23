@@ -5,19 +5,23 @@ module Ardb::Adapter
 
   class Base
 
-    attr_reader :config, :connect_hash, :database
-    attr_reader :schema_format, :ruby_schema_path, :sql_schema_path
+    attr_reader :config
 
     def initialize(config)
       @config = config
+    end
 
-      @connect_hash  = @config.activerecord_connect_hash
-      @database      = @config.database
-      @schema_format = @config.schema_format
+    def connect_hash;    self.config.activerecord_connect_hash; end
+    def database;        self.config.database;                  end
+    def migrations_path; self.config.migrations_path;           end
+    def schema_format;   self.config.schema_format;             end
 
-      schema_path = @config.schema_path
-      @ruby_schema_path = "#{schema_path}.rb"
-      @sql_schema_path  = "#{schema_path}.sql"
+    def ruby_schema_path
+      @ruby_schema_path ||= "#{self.config.schema_path}.rb"
+    end
+
+    def sql_schema_path
+      @sql_schema_path ||= "#{self.config.schema_path}.sql"
     end
 
     def escape_like_pattern(pattern, escape_char = nil)
@@ -34,6 +38,8 @@ module Ardb::Adapter
     def create_db(*args); raise NotImplementedError; end
     def drop_db(*args);   raise NotImplementedError; end
 
+    def drop_tables(*args); raise NotImplementedError; end
+
     def connect_db
       ActiveRecord::Base.connection
     end
@@ -41,7 +47,6 @@ module Ardb::Adapter
     def migrate_db
       verbose = ENV["MIGRATE_QUIET"].nil?
       version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
-      migrations_path = self.config.migrations_path
 
       if defined?(ActiveRecord::Migration::CommandRecorder)
         require 'ardb/migration_helpers'
@@ -50,26 +55,24 @@ module Ardb::Adapter
         end
       end
 
-      ActiveRecord::Migrator.migrations_path = migrations_path
+      ActiveRecord::Migrator.migrations_path = self.migrations_path
       ActiveRecord::Migration.verbose = verbose
-      ActiveRecord::Migrator.migrate(migrations_path, version) do |migration|
+      ActiveRecord::Migrator.migrate(self.migrations_path, version) do |migration|
         ENV["MIGRATE_SCOPE"].blank? || (ENV["MIGRATE_SCOPE"] == migration.scope)
       end
     end
-
-    def drop_tables(*args); raise NotImplementedError; end
 
     def load_schema
       # silence STDOUT
       current_stdout = $stdout.dup
       $stdout = File.new('/dev/null', 'w')
-      load_ruby_schema if @schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
-      load_sql_schema  if @schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
+      load_ruby_schema if self.schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
+      load_sql_schema  if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
     def load_ruby_schema
-      load @ruby_schema_path
+      load self.ruby_schema_path
     end
 
     def load_sql_schema
@@ -81,14 +84,14 @@ module Ardb::Adapter
       current_stdout = $stdout.dup
       $stdout = File.new('/dev/null', 'w')
       dump_ruby_schema
-      dump_sql_schema if @schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
+      dump_sql_schema if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
     def dump_ruby_schema
       require 'active_record/schema_dumper'
-      FileUtils.mkdir_p File.dirname(@ruby_schema_path)
-      File.open(@ruby_schema_path, 'w:utf-8') do |file|
+      FileUtils.mkdir_p File.dirname(self.ruby_schema_path)
+      File.open(self.ruby_schema_path, 'w:utf-8') do |file|
         ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
       end
     end
@@ -97,8 +100,12 @@ module Ardb::Adapter
       raise NotImplementedError
     end
 
-    def ==(other_adapter)
-      self.class == other_adapter.class
+    def ==(other)
+      if other.kind_of?(self.class)
+        self.config == other.config
+      else
+        super
+      end
     end
 
   end

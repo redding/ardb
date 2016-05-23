@@ -263,6 +263,29 @@ module Ardb
       assert_nothing_raised{ subject.validate! }
     end
 
+    should "know if its equal to another config" do
+      attrs = @config_class::ACTIVERECORD_ATTRS + [
+        :logger,
+        :root_path,
+        :schema_format,
+        :migrations_path,
+        :schema_path
+      ]
+      attrs.each do |attr_name|
+        subject.send("#{attr_name}=", Factory.string)
+      end
+
+      other_config = @config_class.new
+      attrs.each do |attr_name|
+        other_config.send("#{attr_name}=", subject.send(attr_name))
+      end
+      assert_equal other_config, subject
+
+      attr_name = attrs.sample
+      other_config.send("#{attr_name}=", Factory.string)
+      assert_not_equal other_config, subject
+    end
+
   end
 
   class AdapterTests < UnitTests

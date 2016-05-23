@@ -115,6 +115,19 @@ module Ardb
       true
     end
 
+    def ==(other)
+      if other.kind_of?(self.class)
+        self.activerecord_connect_hash == other.activerecord_connect_hash &&
+        self.logger                    == other.logger           &&
+        self.root_path                 == other.root_path        &&
+        self.schema_format             == other.schema_format    &&
+        self.migrations_path           == other.migrations_path  &&
+        self.schema_path               == other.schema_path
+      else
+        super
+      end
+    end
+
   end
 
   module Adapter
