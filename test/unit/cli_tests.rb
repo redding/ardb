@@ -236,7 +236,7 @@ class Ardb::CLI
     end
 
     should "raise a help exit if its argv is empty" do
-      cmd = @command_class.new([nil, ''].choice)
+      cmd = @command_class.new([nil, ''].sample)
       assert_raises(Ardb::CLIRB::HelpExit){ cmd.new([]).run }
     end
 

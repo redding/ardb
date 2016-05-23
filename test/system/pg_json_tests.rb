@@ -54,7 +54,7 @@ module Ardb::PgJson
       assert_nil record.jsonb_attribute
 
       hash = Factory.integer(3).times.inject({}) do |h, n|
-        h.merge!(Factory.string => values.choice)
+        h.merge!(Factory.string => values.sample)
       end
       record.json_attribute  = JSON.dump(hash)
       record.jsonb_attribute = JSON.dump(hash)
@@ -63,7 +63,7 @@ module Ardb::PgJson
       assert_equal hash, JSON.load(record.json_attribute)
       assert_equal hash, JSON.load(record.jsonb_attribute)
 
-      array = Factory.integer(3).times.map{ values.choice }
+      array = Factory.integer(3).times.map{ values.sample }
       record.json_attribute  = JSON.dump(array)
       record.jsonb_attribute = JSON.dump(array)
       assert_nothing_raised{ record.save! }
@@ -71,7 +71,7 @@ module Ardb::PgJson
       assert_equal array, JSON.load(record.json_attribute)
       assert_equal array, JSON.load(record.jsonb_attribute)
 
-      value = values.choice
+      value = values.sample
       record.json_attribute  = JSON.dump(value)
       record.jsonb_attribute = JSON.dump(value)
       assert_nothing_raised{ record.save! }

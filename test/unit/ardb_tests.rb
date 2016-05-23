@@ -55,7 +55,7 @@ module Ardb
       end
 
       ENV['ARDB_DB_FILE']   = 'test/support/require_test_db_file'
-      @ardb_config.adapter  = Adapter::VALID_ADAPTERS.choice
+      @ardb_config.adapter  = Adapter::VALID_ADAPTERS.sample
       @ardb_config.database = Factory.string
 
       @ar_establish_connection_called_with = nil
@@ -220,7 +220,7 @@ module Ardb
       new_migrations_path = "/#{Factory.path}"
       new_schema_path     = "/#{Factory.path}"
 
-      subject.root_path       = [Factory.path, nil].choice
+      subject.root_path       = [Factory.path, nil].sample
       subject.migrations_path = new_migrations_path
       subject.schema_path     = new_schema_path
       assert_equal new_migrations_path, subject.migrations_path
@@ -236,7 +236,7 @@ module Ardb
 
     should "know its activerecord connection hash" do
       attrs_and_values = @config_class::ACTIVERECORD_ATTRS.map do |attr_name|
-        value = [Factory.string,  nil].choice
+        value = [Factory.string,  nil].sample
         subject.send("#{attr_name}=", value)
         [attr_name.to_s, value] if !value.nil?
       end.compact
@@ -259,7 +259,7 @@ module Ardb
       subject.schema_format = Factory.string
       assert_raises(ConfigurationError){ subject.validate! }
 
-      subject.schema_format = @config_class::VALID_SCHEMA_FORMATS.choice
+      subject.schema_format = @config_class::VALID_SCHEMA_FORMATS.sample
       assert_nothing_raised{ subject.validate! }
     end
 
@@ -296,7 +296,7 @@ module Ardb
         ['sqlite',     Ardb::Adapter::Sqlite],
         ['postgresql', Ardb::Adapter::Postgresql],
         ['mysql',      Ardb::Adapter::Mysql]
-      ].choice
+      ].sample
       @config.adapter = adapter_key
 
       adapter = subject.new(@config)

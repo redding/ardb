@@ -177,7 +177,7 @@ module Ardb::RecordSpy
       assert_respond_to "around_#{name}", subject
       assert_respond_to "after_#{name}",  subject
 
-      callback_name = ["before_#{name}", "around_#{name}", "after_#{name}"].choice
+      callback_name = ["before_#{name}", "around_#{name}", "after_#{name}"].sample
       method_name = Factory.string
       subject.send(callback_name, method_name)
       callback = subject.callbacks.last

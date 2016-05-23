@@ -64,7 +64,7 @@ class Ardb::Migration
 
     should "complain if no identifier is provided" do
       assert_raises(NoIdentifierError) do
-        @migration_class.new([nil, ''].choice)
+        @migration_class.new([nil, ''].sample)
       end
     end
 

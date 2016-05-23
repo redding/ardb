@@ -71,13 +71,13 @@ module Ardb::UseDbDefault
 
       # simulate activerecords `@attributes` hash
       @original_attrs = @attr_names.inject({}) do |h, n|
-        h.merge!(n => [nil, Factory.string, Factory.integer].choice)
+        h.merge!(n => [nil, Factory.string, Factory.integer].sample)
       end
       @original_attrs.merge!(Factory.string => Factory.string)
       @record.attributes = @original_attrs.dup
 
       # randomly pick a use-db-default attribute to be changed
-      @record.changed_use_db_default_attrs = [@attr_names.choice]
+      @record.changed_use_db_default_attrs = [@attr_names.sample]
       @unchanged_attr_names = @attr_names - @record.changed_use_db_default_attrs
 
       # we should always get the record we just inserted back

@@ -66,7 +66,7 @@ module Ardb::HasSlug
     end
 
     should "allow customizing the has slug config using `has_slug`" do
-      separator        = NON_WORD_CHARS.choice
+      separator        = NON_WORD_CHARS.sample
       allow_underscore = Factory.boolean
       subject.has_slug({
         :attribute         => @slug_attribute,
@@ -145,8 +145,8 @@ module Ardb::HasSlug
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @preprocessor      = [:downcase, :upcase, :capitalize].choice
-      @separator         = NON_WORD_CHARS.choice
+      @preprocessor      = [:downcase, :upcase, :capitalize].sample
+      @separator         = NON_WORD_CHARS.sample
       @allow_underscores = Factory.boolean
 
       @record_class.has_slug(:source => @source_attribute)
@@ -272,8 +272,8 @@ module Ardb::HasSlug
 
     should "turn invalid chars into a separator" do
       string = Factory.integer(3).times.map do
-        "#{Factory.string(3)}#{NON_WORD_CHARS.choice}#{Factory.string(3)}"
-      end.join(NON_WORD_CHARS.choice)
+        "#{Factory.string(3)}#{NON_WORD_CHARS.sample}#{Factory.string(3)}"
+      end.join(NON_WORD_CHARS.sample)
       assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string, @args)
     end
 
@@ -288,9 +288,9 @@ module Ardb::HasSlug
     end
 
     should "allow passing a custom separator" do
-      separator = NON_WORD_CHARS.choice
+      separator = NON_WORD_CHARS.sample
 
-      invalid_char = (NON_WORD_CHARS - [separator]).choice
+      invalid_char = (NON_WORD_CHARS - [separator]).sample
       string = "#{Factory.string}#{invalid_char}#{Factory.string}"
       exp = string.gsub(/[^\w]+/, separator)
       assert_equal exp, subject.new(string, @args.merge(:separator => separator))
@@ -321,7 +321,7 @@ module Ardb::HasSlug
       assert_equal string.gsub(/-{2,}/, '-'), subject.new(string, @args)
 
       # remove separators that were added from changing invalid chars
-      invalid_chars = (Factory.integer(3) + 1).times.map{ NON_WORD_CHARS.choice }.join
+      invalid_chars = (Factory.integer(3) + 1).times.map{ NON_WORD_CHARS.sample }.join
       string = "#{Factory.string}#{invalid_chars}#{Factory.string}"
       assert_equal string.gsub(/[^\w]+/, '-'), subject.new(string, @args)
     end
@@ -331,7 +331,7 @@ module Ardb::HasSlug
       assert_equal string[1..-2], subject.new(string, @args)
 
       # remove separators that were added from changing invalid chars
-      invalid_char = NON_WORD_CHARS.choice
+      invalid_char = NON_WORD_CHARS.sample
       string = "#{invalid_char}#{Factory.string}-#{Factory.string}#{invalid_char}"
       assert_equal string[1..-2], subject.new(string, @args)
     end
