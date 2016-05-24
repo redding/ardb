@@ -26,11 +26,7 @@ module Ardb
 
     # setup AR
     ActiveRecord::Base.logger = self.config.logger
-    if establish_connection
-      ActiveRecord::Base.establish_connection(
-        self.config.activerecord_connect_hash
-      )
-    end
+    self.adapter.connect_db if establish_connection
   end
 
   def self.escape_like_pattern(pattern, escape_char = nil)
