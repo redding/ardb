@@ -1,22 +1,17 @@
-require 'ardb'
-require 'ardb/clirb'
+require 'ardb/cli/clirb'
+require 'ardb/cli/commands'
+require 'ardb/version'
 
 module Ardb
 
   class CLI
 
-    class InvalidCommand;           end
-    class ConnectCommand;           end
-    class CreateCommand;            end
-    class DropCommand;              end
-    class MigrateCommand;           end
-    class GenerateMigrationCommand; end
-    COMMANDS = Hash.new{ |h, k| InvalidCommand.new(k) }.tap do |h|
-      h['connect']            = ConnectCommand
-      h['create']             = CreateCommand
-      h['drop']               = DropCommand
-      h['migrate']            = MigrateCommand
-      h['generate-migration'] = GenerateMigrationCommand
+    COMMANDS = CommandSet.new{ |unknown| InvalidCommand.new(unknown) }.tap do |c|
+      c.add(ConnectCommand,           'connect')
+      c.add(CreateCommand,            'create')
+      c.add(DropCommand,              'drop')
+      c.add(MigrateCommand,           'migrate')
+      c.add(GenerateMigrationCommand, 'generate-migration')
     end
 
     def self.run(args)
@@ -34,8 +29,8 @@ module Ardb
         $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
 
         cmd_name = args.shift
-        cmd = COMMANDS[cmd_name].new(args)
-        cmd.run
+        cmd = COMMANDS[cmd_name]
+        cmd.run(args)
       rescue CLIRB::HelpExit
         @stdout.puts cmd.help
       rescue CLIRB::VersionExit
@@ -62,207 +57,6 @@ module Ardb
         @stderr.puts "#{exception.class}: #{exception.message}"
         @stderr.puts exception.backtrace.join("\n")
       end
-    end
-
-    InvalidCommandError = Class.new(ArgumentError)
-    CommandExitError    = Class.new(RuntimeError)
-
-    class InvalidCommand
-
-      attr_reader :name, :argv, :clirb
-
-      def initialize(name)
-        @name  = name
-        @argv  = []
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def new(args)
-        @argv = [@name, args].flatten.compact
-        self
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        raise CLIRB::HelpExit if @clirb.args.empty? || @name.to_s.empty?
-        raise InvalidCommandError, "'#{self.name}' is not a command."
-      end
-
-      def help
-        "Usage: ardb [COMMAND] [options]\n\n" \
-        "Commands: #{COMMANDS.keys.sort.join(', ')}\n" \
-        "Options: #{@clirb}"
-      end
-
-    end
-
-    class ConnectCommand
-
-      attr_reader :clirb
-
-      def initialize(argv, stdout = nil, stderr = nil)
-        @argv   = argv
-        @stdout = stdout || $stdout
-        @stderr = stderr || $stderr
-
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        begin
-          Ardb.init(false)
-          Ardb.adapter.connect_db
-          @stdout.puts "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`"
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error connecting to #{Ardb.config.database.inspect} database " \
-                       "with #{Ardb.config.activerecord_connect_hash.inspect}"
-          raise CommandExitError
-        end
-      end
-
-      def help
-        "Usage: ardb connect [options]\n\n" \
-        "Options: #{@clirb}"
-      end
-
-    end
-
-    class CreateCommand
-
-      attr_reader :clirb
-
-      def initialize(argv, stdout = nil, stderr = nil)
-        @argv   = argv
-        @stdout = stdout || $stdout
-        @stderr = stderr || $stderr
-
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        begin
-          Ardb.init(false)
-          Ardb.adapter.create_db
-          @stdout.puts "created #{Ardb.config.adapter} db `#{Ardb.config.database}`"
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts "error creating #{Ardb.config.database.inspect} database"
-          raise CommandExitError
-        end
-      end
-
-      def help
-        "Usage: ardb create [options]\n\n" \
-        "Options: #{@clirb}"
-      end
-
-    end
-
-    class DropCommand
-
-      attr_reader :clirb
-
-      def initialize(argv, stdout = nil, stderr = nil)
-        @argv   = argv
-        @stdout = stdout || $stdout
-        @stderr = stderr || $stderr
-
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        begin
-          Ardb.init(true)
-          Ardb.adapter.drop_db
-          @stdout.puts "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`"
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts "error dropping #{Ardb.config.database.inspect} database"
-          raise CommandExitError
-        end
-      end
-
-      def help
-        "Usage: ardb drop [options]\n\n" \
-        "Options: #{@clirb}"
-      end
-
-    end
-
-    class MigrateCommand
-
-      attr_reader :clirb
-
-      def initialize(argv, stdout = nil, stderr = nil)
-        @argv   = argv
-        @stdout = stdout || $stdout
-        @stderr = stderr || $stderr
-
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        begin
-          Ardb.init(true)
-          Ardb.adapter.migrate_db
-          Ardb.adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error migrating #{Ardb.config.database.inspect} database"
-          raise CommandExitError
-        end
-      end
-
-      def help
-        "Usage: ardb migrate [options]\n\n" \
-        "Options: #{@clirb}"
-      end
-
-    end
-
-    class GenerateMigrationCommand
-
-      attr_reader :clirb
-
-      def initialize(argv, stdout = nil, stderr = nil)
-        @argv   = argv
-        @stdout = stdout || $stdout
-        @stderr = stderr || $stderr
-
-        @clirb = Ardb::CLIRB.new
-      end
-
-      def run
-        @clirb.parse!(@argv)
-        begin
-          Ardb.init(false)
-          require "ardb/migration"
-          path = Ardb::Migration.new(@clirb.args.first).save!.file_path
-          @stdout.puts "generated #{path}"
-        rescue Ardb::Migration::NoIdentifierError => exception
-          error = ArgumentError.new("MIGRATION-NAME must be provided")
-          error.set_backtrace(exception.backtrace)
-          raise error
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error generating migration"
-          raise CommandExitError
-        end
-      end
-
-      def help
-        "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
-        "Options: #{@clirb}"
-      end
-
     end
 
   end
