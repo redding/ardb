@@ -23,11 +23,12 @@ class PostgresqlDbTests < Assert::Context
     end
     Assert.stub(Ardb, :config){ @ardb_config }
 
-    Ardb.init
+    Ardb.init(false)
 
     Ardb.adapter.drop_db
     Ardb.adapter.create_db
     Ardb.adapter.load_schema
+    Ardb.adapter.connect_db
   end
   teardown do
     ActiveRecord::Base.logger = @orig_ar_logger
