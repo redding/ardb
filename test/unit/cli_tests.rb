@@ -526,6 +526,7 @@ class Ardb::CLI
       subject.run([@identifier], @stdout, @stderr)
 
       assert_equal [false],     @ardb_init_called_with
+      assert_equal Ardb.config, @migration_spy.ardb_config
       assert_equal @identifier, @migration_spy.identifier
       assert_true @migration_spy.save_called
 
@@ -629,10 +630,11 @@ class Ardb::CLI
   end
 
   class MigrationSpy
-    attr_reader :identifier, :file_path, :save_called
+    attr_reader :ardb_config, :identifier, :file_path, :save_called
 
-    def initialize(*args)
-      @identifier  = args.first
+    def initialize(ardb_config, identifier)
+      @ardb_config = ardb_config
+      @identifier  = identifier
       @file_path   = Factory.path
       @save_called = false
     end

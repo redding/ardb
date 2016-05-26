@@ -32,16 +32,18 @@ class Ardb::Migration
         block.call(@file_spy)
       end
 
-      @id = Factory.migration_id
-      @migration = @migration_class.new(@id)
+      @ardb_config = Factory.ardb_config
+      @id          = Factory.migration_id
+      @migration   = @migration_class.new(@ardb_config, @id)
     end
     subject{ @migration }
 
-    should have_readers :identifier, :class_name, :file_name, :file_path
-    should have_readers :source
+    should have_readers  :migrations_path, :identifier
+    should have_readers :class_name, :file_name, :file_path, :source
     should have_imeths :save!
 
     should "know its attrs" do
+      assert_equal @ardb_config.migrations_path, subject.migrations_path
       assert_equal @id, subject.identifier
 
       exp = @id.classify.pluralize
@@ -50,7 +52,7 @@ class Ardb::Migration
       exp = "#{@time_now.strftime("%Y%m%d%H%M%S")}_#{@id.underscore}"
       assert_equal exp, subject.file_name
 
-      exp = File.join(Ardb.config.migrations_path, "#{subject.file_name}.rb")
+      exp = File.join(subject.migrations_path, "#{subject.file_name}.rb")
       assert_equal exp, subject.file_path
 
       exp = "require 'ardb/migration_helpers'\n\n" \
@@ -64,16 +66,16 @@ class Ardb::Migration
 
     should "complain if no identifier is provided" do
       assert_raises(NoIdentifierError) do
-        @migration_class.new([nil, ''].sample)
+        @migration_class.new(@ardb_config, [nil, ''].sample)
       end
     end
 
     should "write the migration source to the migrations path on save" do
       subject.save!
 
-      assert_equal [Ardb.config.migrations_path], @mkdir_called_with
-      assert_equal [subject.file_path, 'w'],      @file_open_called_with
-      assert_equal [subject.source],              @file_spy.write_called_with
+      assert_equal [subject.migrations_path], @mkdir_called_with
+      assert_equal [subject.file_path, 'w'],  @file_open_called_with
+      assert_equal [subject.source],          @file_spy.write_called_with
     end
 
   end
