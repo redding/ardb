@@ -4,16 +4,18 @@ module Ardb
 
   class Migration
 
-    attr_reader :identifier, :class_name, :file_name, :file_path
-    attr_reader :source
+    attr_reader :migrations_path, :identifier
+    attr_reader :class_name, :file_name, :file_path, :source
 
-    def initialize(identifier)
+    def initialize(ardb_config, identifier)
       raise NoIdentifierError if identifier.to_s.empty?
 
-      @identifier = identifier
+      @migrations_path = ardb_config.migrations_path
+      @identifier      = identifier
+
       @class_name = @identifier.classify.pluralize
       @file_name  = get_file_name(@identifier)
-      @file_path  = File.join(Ardb.config.migrations_path, "#{@file_name}.rb")
+      @file_path  = File.join(self.migrations_path, "#{@file_name}.rb")
 
       @source = "require 'ardb/migration_helpers'\n\n" \
                 "class #{@class_name} < ActiveRecord::Migration\n" \
@@ -24,7 +26,7 @@ module Ardb
     end
 
     def save!
-      FileUtils.mkdir_p Ardb.config.migrations_path
+      FileUtils.mkdir_p self.migrations_path
       File.open(self.file_path, 'w'){ |f| f.write(self.source) }
       self
     end

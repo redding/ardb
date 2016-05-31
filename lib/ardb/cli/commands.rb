@@ -191,12 +191,12 @@ class Ardb::CLI
 
     def run(argv, *args)
       super
-
       begin
         Ardb.init(false)
         require 'ardb/migration'
-        path = Ardb::Migration.new(@clirb.args.first).save!.file_path
-        @stdout.puts "generated #{path}"
+        migration = Ardb::Migration.new(Ardb.config, @clirb.args.first)
+        migration.save!
+        @stdout.puts "generated #{migration.file_path}"
       rescue Ardb::Migration::NoIdentifierError => exception
         error = ArgumentError.new("MIGRATION-NAME must be provided")
         error.set_backtrace(exception.backtrace)
