@@ -86,6 +86,14 @@ module Ardb
       assert_false require(File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD']))
     end
 
+    should "raise an invalid db file error when it can't require it" do
+      ENV['ARDB_DB_FILE'] = Factory.file_path
+      error = assert_raises(InvalidDBFileError){ subject.init }
+      exp = "can't require `#{ENV['ARDB_DB_FILE']}`, check that the " \
+            "ARDB_DB_FILE env var is set to the file path of your db file"
+      assert_equal exp, error.message
+    end
+
     should "validate its config" do
       validate_called = false
       Assert.stub(@ardb_config, :validate!){ validate_called = true }
