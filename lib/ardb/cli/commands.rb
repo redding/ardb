@@ -43,8 +43,8 @@ class Ardb::CLI
 
     module InstanceMethods
 
-      def initialize
-        @clirb = CLIRB.new
+      def initialize(&clirb_build)
+        @clirb = CLIRB.new(&clirb_build)
       end
 
       def clirb; @clirb; end

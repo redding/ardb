@@ -274,6 +274,14 @@ class Ardb::CLI
       assert_equal argv, subject.clirb.args
     end
 
+    should "take custom CLIRB build procs" do
+      cmd = @command_class.new do
+        option 'test', 'testing', :abbrev => 't'
+      end
+      cmd.run(['-t'], @stdout, @stderr)
+      assert_true cmd.clirb.opts['test']
+    end
+
     should "default its summary" do
       assert_equal '', subject.summary
     end
