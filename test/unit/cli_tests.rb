@@ -1,6 +1,7 @@
 require 'assert'
 require 'ardb/cli'
 
+require 'ardb'
 require 'ardb/adapter_spy'
 require 'ardb/migration'
 
@@ -325,7 +326,7 @@ class Ardb::CLI
     should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
-      Assert.stub(Ardb, :init){ raise err }
+      Assert.stub(@adapter_spy, :connect_db){ raise err }
 
       assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read
@@ -464,7 +465,7 @@ class Ardb::CLI
       assert_equal exp, subject.help
     end
 
-    should "init ardb and migrate the db, dump schema when run" do
+    should "init ardb, migrate the db and dump the schema when run" do
       subject.run([], @stdout, @stderr)
 
       assert_equal [true], @ardb_init_called_with
@@ -472,7 +473,7 @@ class Ardb::CLI
       assert_true @adapter_spy.dump_schema_called?
     end
 
-    should "init ardb and only migrate when run with no schema dump env var set" do
+    should "only init ardb and migrate when run with no schema dump env var set" do
       ENV['ARDB_MIGRATE_NO_SCHEMA'] = 'yes'
       subject.run([], @stdout, @stderr)
 
@@ -484,7 +485,7 @@ class Ardb::CLI
     should "output any errors and raise an exit error when run" do
       err = StandardError.new(Factory.string)
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
-      Assert.stub(Ardb, :init){ raise err }
+      Assert.stub(@adapter_spy, :migrate_db){ raise err }
 
       assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
       err_output = @stderr.read

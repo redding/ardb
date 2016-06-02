@@ -19,7 +19,11 @@ module Ardb
 
   def self.init(establish_connection = true)
     require 'ardb/require_autoloaded_active_record_files'
-    require_db_file
+    begin
+      require_db_file
+    rescue InvalidDBFileError => exception
+      raise exception.tap{ |e| e.set_backtrace(caller) }
+    end
 
     self.config.validate!
     @adapter = Adapter.new(self.config)
@@ -43,6 +47,10 @@ module Ardb
     rescue LoadError
       require File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD'])
     end
+  rescue LoadError
+    raise InvalidDBFileError, "can't require `#{ENV['ARDB_DB_FILE']}`, " \
+                              "check that the ARDB_DB_FILE env var is set to " \
+                              "the file path of your db file"
   end
 
   class Config
@@ -167,6 +175,7 @@ module Ardb
 
   end
 
+  InvalidDBFileError  = Class.new(ArgumentError)
   ConfigurationError  = Class.new(ArgumentError)
   InvalidAdapterError = Class.new(RuntimeError)
 
