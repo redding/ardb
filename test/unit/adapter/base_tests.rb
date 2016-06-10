@@ -51,6 +51,9 @@ class Ardb::Adapter::Base
                 "#{Factory.string}"
       exp = pattern.gsub("\\"){ "\\\\" }.gsub('%', "\\%").gsub('_', "\\_")
       assert_equal exp, subject.escape_like_pattern(pattern)
+
+      pattern = Factory.string
+      assert_equal pattern, subject.escape_like_pattern(pattern)
     end
 
     should "allow using a custom escape char when escaping like patterns" do
