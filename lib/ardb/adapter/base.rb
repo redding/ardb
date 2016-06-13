@@ -30,6 +30,7 @@ module Ardb::Adapter
       pattern.gsub!(escape_char){ escape_char * 2 }
       # don't allow custom wildcards
       pattern.gsub!(/%|_/){ |wildcard_char| "#{escape_char}#{wildcard_char}" }
+      pattern
     end
 
     def foreign_key_add_sql(*args);  raise NotImplementedError; end
