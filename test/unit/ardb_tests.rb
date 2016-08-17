@@ -14,10 +14,13 @@ module Ardb
     setup do
       @module = Ardb
     end
+    teardown do
+      @module.reset_adapter
+    end
     subject{ @module }
 
-    should have_imeths :config, :configure, :adapter, :init
-    should have_imeths :escape_like_pattern
+    should have_imeths :config, :configure, :adapter, :reset_adapter
+    should have_imeths :init, :escape_like_pattern
 
     should "default the db file env var" do
       assert_equal 'config/db', ENV['ARDB_DB_FILE']
@@ -120,6 +123,16 @@ module Ardb
 
       subject.init(false)
       assert_equal 2, @ardb_adapter.connect_db_called_count
+    end
+
+    should "raise a not initialized error using its adapter before init" do
+      subject.reset_adapter
+      assert_raises(NotInitializedError){ subject.adapter }
+      assert_raises(NotInitializedError){ subject.escape_like_pattern(Factory.string) }
+
+      subject.init
+      assert_nothing_raised{ subject.adapter }
+      assert_nothing_raised{ subject.escape_like_pattern(Factory.string) }
     end
 
   end

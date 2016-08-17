@@ -31,6 +31,7 @@ class PostgresqlDbTests < Assert::Context
     Ardb.adapter.connect_db
   end
   teardown do
+    Ardb.reset_adapter
     ActiveRecord::Base.logger = @orig_ar_logger
     ENV['ARDB_DB_FILE']       = @orig_env_ardb_db_file
   end
