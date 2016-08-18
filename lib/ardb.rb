@@ -15,14 +15,19 @@ module Ardb
     self.config.tap(&block)
   end
 
-  def self.adapter; @adapter; end
+  def self.adapter
+    @adapter || raise(NotInitializedError.new(caller))
+  end
+
+  def self.reset_adapter; @adapter = nil; end
 
   def self.init(establish_connection = true)
     require 'ardb/require_autoloaded_active_record_files'
     begin
       require_db_file
     rescue InvalidDBFileError => exception
-      raise exception.tap{ |e| e.set_backtrace(caller) }
+      exception.set_backtrace(caller)
+      raise exception
     end
 
     self.config.validate!
@@ -35,6 +40,9 @@ module Ardb
 
   def self.escape_like_pattern(pattern, escape_char = nil)
     self.adapter.escape_like_pattern(pattern, escape_char)
+  rescue NotInitializedError => exception
+    exception.set_backtrace(caller)
+    raise exception
   end
 
   private
@@ -122,10 +130,10 @@ module Ardb
     def ==(other)
       if other.kind_of?(self.class)
         self.activerecord_connect_hash == other.activerecord_connect_hash &&
-        self.logger                    == other.logger           &&
-        self.root_path                 == other.root_path        &&
-        self.schema_format             == other.schema_format    &&
-        self.migrations_path           == other.migrations_path  &&
+        self.logger                    == other.logger                    &&
+        self.root_path                 == other.root_path                 &&
+        self.schema_format             == other.schema_format             &&
+        self.migrations_path           == other.migrations_path           &&
         self.schema_path               == other.schema_path
       else
         super
@@ -178,5 +186,12 @@ module Ardb
   InvalidDBFileError  = Class.new(ArgumentError)
   ConfigurationError  = Class.new(ArgumentError)
   InvalidAdapterError = Class.new(RuntimeError)
+
+  class NotInitializedError < RuntimeError
+    def initialize(backtrace)
+      super("ardb hasn't been initialized yet, run `Ardb.init`")
+      set_backtrace(backtrace)
+    end
+  end
 
 end
