@@ -1,16 +1,14 @@
-require 'assert'
-require 'ardb/migration_helpers'
+require "assert"
+require "ardb/migration_helpers"
 
-require 'ardb/adapter_spy'
+require "ardb/adapter_spy"
 
 module Ardb::MigrationHelpers
-
   class UnitTests < Assert::Context
     desc "Ardb migration helpers"
     subject{ Ardb::MigrationHelpers }
 
     should have_imeths :foreign_key, :drop_foreign_key, :remove_column_with_fk
-
   end
 
   class ForeignKeyTests < UnitTests
@@ -21,7 +19,7 @@ module Ardb::MigrationHelpers
         @adapter_spy = Ardb::AdapterSpy.new(*args)
       end
 
-      @fk = ForeignKey.new('fromtbl', 'fromcol', 'totbl')
+      @fk = ForeignKey.new("fromtbl", "fromcol", "totbl")
     end
     subject{ @fk }
 
@@ -30,13 +28,13 @@ module Ardb::MigrationHelpers
     should have_imeths :add_sql, :drop_sql
 
     should "know its from table/column and to table" do
-      assert_equal 'fromtbl', subject.from_table
-      assert_equal 'fromcol', subject.from_column
-      assert_equal 'totbl',   subject.to_table
+      assert_equal "fromtbl", subject.from_table
+      assert_equal "fromcol", subject.from_column
+      assert_equal "totbl",   subject.to_table
     end
 
     should "default its to column" do
-      assert_equal 'id', subject.to_column
+      assert_equal "id", subject.to_column
     end
 
     should "default its name" do
@@ -59,7 +57,5 @@ module Ardb::MigrationHelpers
             "totbl id fk_fromtbl_fromcol"
       assert_equal exp, subject.drop_sql
     end
-
   end
-
 end

@@ -1,8 +1,7 @@
-require 'assert'
-require 'ardb/adapter/mysql'
+require "assert"
+require "ardb/adapter/mysql"
 
 class Ardb::Adapter::Mysql
-
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Mysql"
     setup do
@@ -35,7 +34,5 @@ class Ardb::Adapter::Mysql
     should "not implement the drop tables method" do
       assert_raises(NotImplementedError){ subject.drop_tables }
     end
-
   end
-
 end

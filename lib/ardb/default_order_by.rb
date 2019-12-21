@@ -1,7 +1,6 @@
-require 'much-plugin'
+require "much-plugin"
 
 module Ardb
-
   module DefaultOrderBy
     include MuchPlugin
 
@@ -9,15 +8,10 @@ module Ardb
     DEFAULT_SCOPE_PROC = proc{ self.class.scoped }
 
     plugin_included do
-      extend ClassMethods
-      include InstanceMethods
-
       @ardb_default_order_by_config = {}
-
     end
 
-    module ClassMethods
-
+    plugin_class_methods do
       def default_order_by(options = nil)
         options ||= {}
 
@@ -32,11 +26,9 @@ module Ardb
       def ardb_default_order_by_config
         @ardb_default_order_by_config
       end
-
     end
 
-    module InstanceMethods
-
+    plugin_instance_methods do
       private
 
       def reset_order_by
@@ -52,8 +44,6 @@ module Ardb
         reset_order_by if self.send(attr_name).to_s.empty?
         true
       end
-
     end
-
   end
 end

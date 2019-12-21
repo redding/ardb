@@ -1,11 +1,9 @@
-require 'fileutils'
-require 'ardb'
-require 'ardb/adapter/base'
+require "fileutils"
+require "ardb"
+require "ardb/adapter/base"
 
 module Ardb::Adapter
-
-  class Sqlite < Base
-
+  class Sqlite < Ardb::Adapter::Base
     def db_file_path
       File.expand_path(self.database, self.config.root_path)
     end
@@ -25,7 +23,5 @@ module Ardb::Adapter
     def drop_db
       FileUtils.rm(self.db_file_path) if File.exist?(self.db_file_path)
     end
-
   end
-
 end

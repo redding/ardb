@@ -1,14 +1,13 @@
-require 'assert'
-require 'ardb'
+require "assert"
+require "ardb"
 
-require 'logger'
-require 'ardb/adapter_spy'
-require 'ardb/adapter/mysql'
-require 'ardb/adapter/postgresql'
-require 'ardb/adapter/sqlite'
+require "logger"
+require "ardb/adapter_spy"
+require "ardb/adapter/mysql"
+require "ardb/adapter/postgresql"
+require "ardb/adapter/sqlite"
 
 module Ardb
-
   class UnitTests < Assert::Context
     desc "Ardb"
     setup do
@@ -23,7 +22,7 @@ module Ardb
     should have_imeths :init, :escape_like_pattern
 
     should "default the db file env var" do
-      assert_equal 'config/db', ENV['ARDB_DB_FILE']
+      assert_equal "config/db", ENV["ARDB_DB_FILE"]
     end
 
     should "know its config" do
@@ -37,17 +36,16 @@ module Ardb
       subject.configure{ |c| yielded = c }
       assert_same subject.config, yielded
     end
-
   end
 
   class InitMethodSetupTests < UnitTests
     setup do
-      @orig_env_pwd          = ENV['PWD']
-      @orig_env_ardb_db_file = ENV['ARDB_DB_FILE']
+      @orig_env_pwd          = ENV["PWD"]
+      @orig_env_ardb_db_file = ENV["ARDB_DB_FILE"]
       @orig_ar_logger        = ActiveRecord::Base.logger
 
       # stub in a temporary config, this allows us to modify it and not worry
-      # about affecting Ardb's global config which could cause issues on other
+      # about affecting Ardb"s global config which could cause issues on other
       # tests
       @ardb_config = Config.new
       Assert.stub(Ardb, :config){ @ardb_config }
@@ -57,16 +55,15 @@ module Ardb
         @ardb_adapter ||= Ardb::AdapterSpy.new(*args)
       end
 
-      ENV['ARDB_DB_FILE']   = 'test/support/require_test_db_file'
+      ENV["ARDB_DB_FILE"]   = "test/support/require_test_db_file"
       @ardb_config.adapter  = Adapter::VALID_ADAPTERS.sample
       @ardb_config.database = Factory.string
     end
     teardown do
       ActiveRecord::Base.logger = @orig_ar_logger
-      ENV['ARDB_DB_FILE']       = @orig_env_ardb_db_file
-      ENV['PWD']                = @orig_env_pwd
+      ENV["ARDB_DB_FILE"]       = @orig_env_ardb_db_file
+      ENV["PWD"]                = @orig_env_pwd
     end
-
   end
 
   class InitMethodTests < InitMethodSetupTests
@@ -74,25 +71,25 @@ module Ardb
 
     should "require the autoloaded active record files" do
       subject.init
-      assert_false require('ardb/require_autoloaded_active_record_files')
+      assert_false require("ardb/require_autoloaded_active_record_files")
     end
 
     should "require the db file" do
       subject.init
-      assert_false require(ENV['ARDB_DB_FILE'])
+      assert_false require(ENV["ARDB_DB_FILE"])
     end
 
     should "require the db file relative to the working directory if needed" do
-      ENV['PWD']          = 'test/support'
-      ENV['ARDB_DB_FILE'] = 'relative_require_test_db_file'
+      ENV["PWD"]          = "test/support"
+      ENV["ARDB_DB_FILE"] = "relative_require_test_db_file"
       subject.init
-      assert_false require(File.expand_path(ENV['ARDB_DB_FILE'], ENV['PWD']))
+      assert_false require(File.expand_path(ENV["ARDB_DB_FILE"], ENV["PWD"]))
     end
 
     should "raise an invalid db file error when it can't require it" do
-      ENV['ARDB_DB_FILE'] = Factory.file_path
+      ENV["ARDB_DB_FILE"] = Factory.file_path
       error = assert_raises(InvalidDBFileError){ subject.init }
-      exp = "can't require `#{ENV['ARDB_DB_FILE']}`, check that the " \
+      exp = "can't require `#{ENV["ARDB_DB_FILE"]}`, check that the " \
             "ARDB_DB_FILE env var is set to the file path of your db file"
       assert_equal exp, error.message
     end
@@ -134,7 +131,6 @@ module Ardb
       assert_nothing_raised{ subject.adapter }
       assert_nothing_raised{ subject.escape_like_pattern(Factory.string) }
     end
-
   end
 
   class InitTests < InitMethodSetupTests
@@ -148,7 +144,6 @@ module Ardb
       exp = subject.adapter.escape_like_pattern(pattern)
       assert_equal exp, subject.escape_like_pattern(pattern)
     end
-
   end
 
   class ConfigTests < UnitTests
@@ -175,11 +170,11 @@ module Ardb
     end
 
     should "know its default migrations path" do
-      assert_equal 'db/migrations', subject::DEFAULT_MIGRATIONS_PATH
+      assert_equal "db/migrations", subject::DEFAULT_MIGRATIONS_PATH
     end
 
     should "know its default schema path" do
-      assert_equal 'db/schema', subject::DEFAULT_SCHEMA_PATH
+      assert_equal "db/schema", subject::DEFAULT_SCHEMA_PATH
     end
 
     should "know its schema formats" do
@@ -188,7 +183,6 @@ module Ardb
       exp = [subject::RUBY_SCHEMA_FORMAT, subject::SQL_SCHEMA_FORMAT]
       assert_equal exp, subject::VALID_SCHEMA_FORMATS
     end
-
   end
 
   class ConfigInitTests < ConfigTests
@@ -206,7 +200,7 @@ module Ardb
 
     should "default its attributs" do
       assert_instance_of Logger, subject.logger
-      assert_equal ENV['PWD'], subject.root_path
+      assert_equal ENV["PWD"], subject.root_path
       exp = File.expand_path(@config_class::DEFAULT_MIGRATIONS_PATH, subject.root_path)
       assert_equal exp, subject.migrations_path
       exp = File.expand_path(@config_class::DEFAULT_SCHEMA_PATH, subject.root_path)
@@ -298,7 +292,6 @@ module Ardb
       other_config.send("#{attr_name}=", Factory.string)
       assert_not_equal other_config, subject
     end
-
   end
 
   class AdapterTests < UnitTests
@@ -317,21 +310,21 @@ module Ardb
 
     should "know its valid adapters" do
       exp = [
-        'sqlite',
-        'sqlite3',
-        'postgresql',
-        'postgres',
-        'mysql',
-        'mysql2'
+        "sqlite",
+        "sqlite3",
+        "postgresql",
+        "postgres",
+        "mysql",
+        "mysql2"
       ]
       assert_equal exp, subject::VALID_ADAPTERS
     end
 
     should "build an adapter specific class using the passed config" do
       adapter_key, exp_adapter_class = [
-        ['sqlite',     Ardb::Adapter::Sqlite],
-        ['postgresql', Ardb::Adapter::Postgresql],
-        ['mysql',      Ardb::Adapter::Mysql]
+        ["sqlite",     Ardb::Adapter::Sqlite],
+        ["postgresql", Ardb::Adapter::Postgresql],
+        ["mysql",      Ardb::Adapter::Mysql]
       ].sample
       @config.adapter = adapter_key
 
@@ -369,7 +362,5 @@ module Ardb
       assert_instance_of Ardb::Adapter::Mysql, adapter
       assert_equal @config, adapter.config
     end
-
   end
-
 end
