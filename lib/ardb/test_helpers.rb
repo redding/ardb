@@ -1,11 +1,10 @@
-require 'active_record'
-require 'ardb'
+require "active_record"
+require "ardb"
 
 # Use theses helpers in your test suite.  They all generally assume Ardb has
 # already been initialized by calling `Ardb.init`.
 
 module Ardb
-
   module TestHelpers
     module_function
 
@@ -73,7 +72,5 @@ module Ardb
         true
       end
     end
-
   end
-
 end

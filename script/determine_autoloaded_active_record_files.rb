@@ -1,8 +1,8 @@
-require 'active_record'
+require "active_record"
 
-# this can be slow, this is one of the reasons this shouldn't be done during
+# this can be slow, this is one of the reasons this shouldn"t be done during
 # the startup of our apps
-gemspec = Gem.loaded_specs['activerecord']
+gemspec = Gem.loaded_specs["activerecord"]
 
 puts "Looking at files in: "
 puts "  #{gemspec.lib_dirs_glob.inspect}"
@@ -11,7 +11,7 @@ paths = Dir["#{gemspec.lib_dirs_glob}/**/*.rb"]
 
 # these are regexs for files we want to ignore requiring. for example,
 # generators fail when we try to require them. the others are pieces of active
-# record we don't use in a production environment
+# record we don"t use in a production environment
 ignored_regexes = [
   /rails\/generators/,
   /active_record\/railtie/,
@@ -31,12 +31,12 @@ ignored              = []
 errored              = []
 
 paths.sort.each do |full_path|
-  relative_path_with_rb = full_path.gsub("#{gemspec.lib_dirs_glob}/", '')
-  relative_path = relative_path_with_rb.gsub(/\.rb\z/, '')
+  relative_path_with_rb = full_path.gsub("#{gemspec.lib_dirs_glob}/", "")
+  relative_path = relative_path_with_rb.gsub(/\.rb\z/, "")
 
   result = Result.new(relative_path)
 
-  # see if it's ignored
+  # see if it"s ignored
   ignored_regexes.each do |regex|
     if relative_path =~ regex
       result.state  = :ignored
@@ -87,5 +87,5 @@ puts "\n"
 
 puts "Needs To Be Required:\n"
 needs_to_be_required.each do |result|
-  puts "require '#{result.file}'"
+  puts "require \"#{result.file}\""
 end

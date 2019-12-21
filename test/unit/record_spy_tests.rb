@@ -1,10 +1,9 @@
-require 'assert'
-require 'ardb/record_spy'
+require "assert"
+require "ardb/record_spy"
 
-require 'much-plugin'
+require "much-plugin"
 
 module Ardb::RecordSpy
-
   class UnitTests < Assert::Context
     desc "Ardb::RecordSpy"
     setup do
@@ -46,8 +45,8 @@ module Ardb::RecordSpy
     end
 
     should "allow reading and writing the record's table name" do
-      subject.table_name = 'my_records'
-      assert_equal 'my_records', subject.table_name
+      subject.table_name = "my_records"
+      assert_equal "my_records", subject.table_name
     end
 
     should "default its associations" do
@@ -71,18 +70,18 @@ module Ardb::RecordSpy
     end
 
     should "add an association config with #has_one" do
-      subject.has_one :linking, :class_name => 'Linking'
+      subject.has_one :linking, :class_name => "Linking"
       association = subject.associations.last
       assert_equal :has_one,  association.type
       assert_equal :linking,  association.name
-      assert_equal 'Linking', association.options[:class_name]
+      assert_equal "Linking", association.options[:class_name]
     end
 
     should "default its validations" do
       assert_equal [], subject.validations
     end
 
-    should "add a validation config for '*_of' validations" do
+    should "add a validation config for \"*_of\" validations" do
       subject.validates_presence_of :name, :email, :on => :create
       validation = subject.validations.last
       assert_equal :presence, validation.type
@@ -145,14 +144,14 @@ module Ardb::RecordSpy
 
     should "add a callback config with a block" do
       subject.before_validation(:on => :create) do
-        self.name = 'test'
+        self.name = "test"
       end
       callback = subject.callbacks.last
       assert_equal :before_validation, callback.type
       assert_equal :create, callback.options[:on]
       record_spy = subject.new
       record_spy.instance_eval(&callback.block)
-      assert_equal 'test', record_spy.name
+      assert_equal "test", record_spy.name
     end
 
     should "default its custom callback types" do
@@ -286,7 +285,6 @@ module Ardb::RecordSpy
       subject.only(*only_args)
       assert_equal only_args, only_called_with
     end
-
   end
 
   class GeneratorTests < UnitTests
@@ -305,7 +303,6 @@ module Ardb::RecordSpy
       assert @instance.respond_to? :name
       assert @instance.respond_to? :name=
     end
-
   end
 
   class InstanceTests < UnitTests
@@ -319,20 +316,20 @@ module Ardb::RecordSpy
     should have_imeths :manually_run_callbacks, :run_callbacks
 
     should "allow spying the update_column method by just writing the value" do
-      assert_not_equal 'updated', subject.name
+      assert_not_equal "updated", subject.name
 
-      subject.update_column(:name, 'updated')
-      assert_equal 'updated', subject.name
+      subject.update_column(:name, "updated")
+      assert_equal "updated", subject.name
     end
 
     should "have accessors for each association defined" do
       assert_nil subject.bt_thing
-      subject.bt_thing = 'something'
-      assert_equal 'something', subject.bt_thing
+      subject.bt_thing = "something"
+      assert_equal "something", subject.bt_thing
 
       assert_nil subject.ho_thing
-      subject.ho_thing = 'other thing'
-      assert_equal 'other thing', subject.ho_thing
+      subject.ho_thing = "other thing"
+      assert_equal "other thing", subject.ho_thing
 
       assert_empty subject.hm_things
       subject.hm_things = [1,2,3]
@@ -355,7 +352,6 @@ module Ardb::RecordSpy
       assert_includes name, subject.manually_run_callbacks
       assert_true block_called
     end
-
   end
 
   class MyRecord
@@ -366,5 +362,4 @@ module Ardb::RecordSpy
     has_one    :ho_thing
     has_many   :hm_things
   end
-
 end

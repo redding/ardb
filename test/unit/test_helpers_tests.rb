@@ -1,10 +1,9 @@
-require 'assert'
-require 'ardb/test_helpers'
+require "assert"
+require "ardb/test_helpers"
 
-require 'ardb/adapter_spy'
+require "ardb/adapter_spy"
 
 module Ardb::TestHelpers
-
   class UnitTests < Assert::Context
     desc "Ardb::TestHelpers"
     subject{ Ardb::TestHelpers }
@@ -13,7 +12,6 @@ module Ardb::TestHelpers
     should have_imeths :create_db!, :create_db, :drop_db!, :drop_db
     should have_imeths :connect_db!, :connect_db, :migrate_db!, :migrate_db
     should have_imeths :reset_db, :reset_db!
-
   end
 
   class UsageTests < UnitTests
@@ -21,7 +19,6 @@ module Ardb::TestHelpers
       @adapter_spy = Ardb::AdapterSpy.new
       Assert.stub(Ardb, :adapter){ @adapter_spy }
     end
-
   end
 
   class DropTablesTests < UsageTests
@@ -32,7 +29,6 @@ module Ardb::TestHelpers
       subject.drop_tables
       assert_equal 1, @adapter_spy.drop_tables_called_count
     end
-
   end
 
   class LoadSchemaTests < UsageTests
@@ -43,7 +39,6 @@ module Ardb::TestHelpers
       subject.load_schema
       assert_equal 1, @adapter_spy.load_schema_called_count
     end
-
   end
 
   class CreateDbTests < UsageTests
@@ -64,7 +59,6 @@ module Ardb::TestHelpers
       subject.create_db!
       assert_equal 2, @adapter_spy.create_db_called_count
     end
-
   end
 
   class DropDbTests < UsageTests
@@ -85,7 +79,6 @@ module Ardb::TestHelpers
       subject.drop_db!
       assert_equal 2, @adapter_spy.drop_db_called_count
     end
-
   end
 
   class ConnectDbTests < UsageTests
@@ -106,7 +99,6 @@ module Ardb::TestHelpers
       subject.connect_db!
       assert_equal 2, @adapter_spy.connect_db_called_count
     end
-
   end
 
   class MigrateDbTests < UsageTests
@@ -127,7 +119,6 @@ module Ardb::TestHelpers
       subject.migrate_db!
       assert_equal 2, @adapter_spy.migrate_db_called_count
     end
-
   end
 
   class ResetDbTests < UsageTests
@@ -168,7 +159,5 @@ module Ardb::TestHelpers
       assert_equal 2, @adapter_spy.create_db_called_count
       assert_equal 2, @adapter_spy.load_schema_called_count
     end
-
   end
-
 end

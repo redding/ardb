@@ -1,7 +1,5 @@
 module Ardb
-
   class RelationSpy
-
     attr_reader :applied
     attr_accessor :limit_value, :offset_value
     attr_accessor :pluck_values, :maximum_values, :minimum_values
@@ -50,12 +48,10 @@ module Ardb
       :reverse_order,
       :readonly
     ].each do |type|
-
       define_method(type) do |*args|
         @applied << AppliedExpression.new(type, args)
         self
       end
-
     end
 
     def limit(value)
@@ -152,7 +148,5 @@ module Ardb
     end
 
     NotFoundError = Class.new(RuntimeError)
-
   end
-
 end

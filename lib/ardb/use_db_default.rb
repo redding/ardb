@@ -1,22 +1,16 @@
-require 'much-plugin'
+require "much-plugin"
 
 module Ardb
-
   module UseDbDefault
     include MuchPlugin
 
     plugin_included do
-      extend ClassMethods
-      include InstanceMethods
-
       @ardb_use_db_default_attrs = []
 
       around_create :ardb_allow_db_to_default_attrs
-
     end
 
-    module ClassMethods
-
+    plugin_class_methods do
       def ardb_use_db_default_attrs
         @ardb_use_db_default_attrs
       end
@@ -25,11 +19,9 @@ module Ardb
         @ardb_use_db_default_attrs += attrs.map(&:to_s)
         @ardb_use_db_default_attrs.uniq!
       end
-
     end
 
-    module InstanceMethods
-
+    plugin_instance_methods do
       private
 
       def ardb_allow_db_to_default_attrs
@@ -42,15 +34,12 @@ module Ardb
         unchanged_names.each{ |name| @attributes.delete(name) }
         yield
         # we have to go and fetch the attr value from the DB, otherwise
-        # activerecord doesn't know the value that the DB used
+        # activerecord doesn"t know the value that the DB used
         scope = self.class.where(:id => self.id)
         unchanged_names.each do |name|
           @attributes[name] = scope.pluck(name).first
         end
       end
-
     end
-
   end
-
 end

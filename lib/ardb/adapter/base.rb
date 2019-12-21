@@ -1,10 +1,8 @@
-require 'ardb'
+require "ardb"
 
 module Ardb; end
 module Ardb::Adapter
-
   class Base
-
     attr_reader :config
 
     def initialize(config)
@@ -43,7 +41,7 @@ module Ardb::Adapter
 
     def connect_db
       ActiveRecord::Base.establish_connection(self.connect_hash)
-      # checkout a connection to ensure we can connect to the DB, we don't do
+      # checkout a connection to ensure we can connect to the DB, we don"t do
       # anything with the connection and immediately check it back in
       ActiveRecord::Base.connection_pool.with_connection{ }
     end
@@ -53,7 +51,7 @@ module Ardb::Adapter
       version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
 
       if defined?(ActiveRecord::Migration::CommandRecorder)
-        require 'ardb/migration_helpers'
+        require "ardb/migration_helpers"
         ActiveRecord::Migration::CommandRecorder.class_eval do
           include Ardb::MigrationHelpers::RecorderMixin
         end
@@ -69,7 +67,7 @@ module Ardb::Adapter
     def load_schema
       # silence STDOUT
       current_stdout = $stdout.dup
-      $stdout = File.new('/dev/null', 'w')
+      $stdout = File.new("/dev/null", "w")
       load_ruby_schema if self.schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
       load_sql_schema  if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
@@ -86,16 +84,16 @@ module Ardb::Adapter
     def dump_schema
       # silence STDOUT
       current_stdout = $stdout.dup
-      $stdout = File.new('/dev/null', 'w')
+      $stdout = File.new("/dev/null", "w")
       dump_ruby_schema
       dump_sql_schema if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
     def dump_ruby_schema
-      require 'active_record/schema_dumper'
+      require "active_record/schema_dumper"
       FileUtils.mkdir_p File.dirname(self.ruby_schema_path)
-      File.open(self.ruby_schema_path, 'w:utf-8') do |file|
+      File.open(self.ruby_schema_path, "w:utf-8") do |file|
         ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
       end
     end
@@ -111,7 +109,5 @@ module Ardb::Adapter
         super
       end
     end
-
   end
-
 end

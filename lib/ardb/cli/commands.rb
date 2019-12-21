@@ -1,15 +1,13 @@
-require 'ardb'
-require 'ardb/cli/clirb'
-require 'much-plugin'
+require "ardb"
+require "ardb/cli/clirb"
+require "much-plugin"
 
 module Ardb; end
 class Ardb::CLI
-
   InvalidCommandError = Class.new(ArgumentError)
   CommandExitError    = Class.new(RuntimeError)
 
   class InvalidCommand
-
     attr_reader :name, :clirb
 
     def initialize(name)
@@ -22,7 +20,7 @@ class Ardb::CLI
     def run(argv)
       @clirb.parse!([@name, argv].flatten.compact)
       raise CLIRB::HelpExit if @name.to_s.empty?
-      raise InvalidCommandError, "'#{self.name}' is not a command."
+      raise InvalidCommandError, "\"#{self.name}\" is not a command."
     end
 
     def help
@@ -31,18 +29,12 @@ class Ardb::CLI
       "Commands:\n" \
       "#{COMMANDS.to_s.split("\n").map{ |l| "  #{l}" }.join("\n")}\n"
     end
-
   end
 
   module ValidCommand
     include MuchPlugin
 
-    plugin_included do
-      include InstanceMethods
-    end
-
-    module InstanceMethods
-
+    plugin_instance_methods do
       def initialize(&clirb_build)
         @clirb = CLIRB.new(&clirb_build)
       end
@@ -56,11 +48,9 @@ class Ardb::CLI
       end
 
       def summary
-        ''
+        ""
       end
-
     end
-
   end
 
   class ConnectCommand
@@ -92,7 +82,6 @@ class Ardb::CLI
       "Description:\n" \
       "  #{self.summary}"
     end
-
   end
 
   class CreateCommand
@@ -122,7 +111,6 @@ class Ardb::CLI
       "Description:\n" \
       "  #{self.summary}"
     end
-
   end
 
   class DropCommand
@@ -152,7 +140,6 @@ class Ardb::CLI
       "Description:\n" \
       "  #{self.summary}"
     end
-
   end
 
   class MigrateCommand
@@ -164,7 +151,7 @@ class Ardb::CLI
       Ardb.init(true)
       begin
         Ardb.adapter.migrate_db
-        Ardb.adapter.dump_schema unless ENV['ARDB_MIGRATE_NO_SCHEMA']
+        Ardb.adapter.dump_schema unless ENV["ARDB_MIGRATE_NO_SCHEMA"]
       rescue StandardError => e
         @stderr.puts e
         @stderr.puts e.backtrace.join("\n")
@@ -183,7 +170,6 @@ class Ardb::CLI
       "Description:\n" \
       "  #{self.summary}"
     end
-
   end
 
   class GenerateMigrationCommand
@@ -194,7 +180,7 @@ class Ardb::CLI
 
       Ardb.init(false)
       begin
-        require 'ardb/migration'
+        require "ardb/migration"
         migration = Ardb::Migration.new(Ardb.config, @clirb.args.first)
         migration.save!
         @stdout.puts "generated #{migration.file_path}"
@@ -220,7 +206,6 @@ class Ardb::CLI
       "Description:\n" \
       "  #{self.summary}"
     end
-
   end
 
   class CommandSet
@@ -236,13 +221,13 @@ class Ardb::CLI
       begin
         cmd = klass.new
       rescue StandardError => err
-        # don't add any commands you can't init
+        # don"t add any commands you can"t init
       else
         ([name] + aliases).each{ |n| @lookup[n] = cmd }
         @to_s = nil
         @names << name
-        @aliases[name] = aliases.empty? ? '' : "(#{aliases.join(', ')})"
-        @summaries[name] = cmd.summary.to_s.empty? ? '' : "# #{cmd.summary}"
+        @aliases[name] = aliases.empty? ? "" : "(#{aliases.join(", ")})"
+        @summaries[name] = cmd.summary.to_s.empty? ? "" : "# #{cmd.summary}"
       end
     end
 
@@ -269,7 +254,5 @@ class Ardb::CLI
         "#{n.ljust(max_name_size)} #{@aliases[n].ljust(max_alias_size)} #{@summaries[n]}"
       end.join("\n")
     end
-
   end
-
 end

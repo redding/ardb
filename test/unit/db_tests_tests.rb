@@ -1,10 +1,9 @@
-require 'assert'
-require 'ardb/db_tests'
+require "assert"
+require "ardb/db_tests"
 
-require 'active_record'
+require "active_record"
 
 class Ardb::DbTests
-
   class UnitTests < Assert::Context
     desc "Ardb::DbTests"
     setup do
@@ -31,7 +30,5 @@ class Ardb::DbTests
       assert_true @transaction_called
       assert_true block_yielded_to
     end
-
   end
-
 end

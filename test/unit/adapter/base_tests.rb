@@ -1,14 +1,13 @@
-require 'assert'
-require 'ardb/adapter/base'
+require "assert"
+require "ardb/adapter/base"
 
-require 'ardb'
-# This is needed by the schema dumper but it doesn't handle requiring it so we
+require "ardb"
+# This is needed by the schema dumper but it doesn"t handle requiring it so we
 # have to manually, otherwise this errors when you try to run the adapter base
 # tests by themselves
-require 'active_support/core_ext/class/attribute_accessors'
+require "active_support/core_ext/class/attribute_accessors"
 
 class Ardb::Adapter::Base
-
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Base"
     setup do
@@ -49,7 +48,7 @@ class Ardb::Adapter::Base
                 "#{Factory.string}\\" \
                 "#{Factory.string} " \
                 "#{Factory.string}"
-      exp = pattern.gsub("\\"){ "\\\\" }.gsub('%', "\\%").gsub('_', "\\_")
+      exp = pattern.gsub("\\"){ "\\\\" }.gsub("%", "\\%").gsub("_", "\\_")
       assert_equal exp, subject.escape_like_pattern(pattern)
 
       pattern = Factory.string
@@ -57,7 +56,7 @@ class Ardb::Adapter::Base
     end
 
     should "allow using a custom escape char when escaping like patterns" do
-      escape_char = '#'
+      escape_char = "#"
       pattern = "#{Factory.string}%" \
                 "#{Factory.string}_" \
                 "#{Factory.string}\\" \
@@ -65,7 +64,7 @@ class Ardb::Adapter::Base
                 "#{Factory.string} " \
                 "#{Factory.string}"
       exp = pattern.gsub(escape_char, "#{escape_char}#{escape_char}")
-      exp = exp.gsub('%', "#{escape_char}%").gsub('_', "#{escape_char}_")
+      exp = exp.gsub("%", "#{escape_char}%").gsub("_", "#{escape_char}_")
       assert_equal exp, subject.escape_like_pattern(pattern, escape_char)
     end
 
@@ -95,7 +94,6 @@ class Ardb::Adapter::Base
       non_matching_adapter = Ardb::Adapter::Base.new(Factory.ardb_config)
       assert_not_equal non_matching_adapter, subject
     end
-
   end
 
   class ConnectDbTests < UnitTests
@@ -121,14 +119,13 @@ class Ardb::Adapter::Base
       assert_equal subject.connect_hash, @ar_establish_connection_called_with
       assert_true @ar_with_connection_called
     end
-
   end
 
   class MigrateDbTests < UnitTests
     desc "`migrate_db`"
     setup do
-      @orig_migrate_version_env_var = ENV['MIGRATE_VERSION']
-      @orig_migrate_query_env_var   = ENV['MIGRATE_QUIET']
+      @orig_migrate_version_env_var = ENV["MIGRATE_VERSION"]
+      @orig_migrate_query_env_var   = ENV["MIGRATE_QUIET"]
 
       ENV["MIGRATE_VERSION"] = Factory.integer.to_s if Factory.boolean
       ENV["MIGRATE_QUIET"]   = Factory.boolean.to_s if Factory.boolean
@@ -141,8 +138,8 @@ class Ardb::Adapter::Base
       @adapter.migrate_db
     end
     teardown do
-      ENV['MIGRATE_VERSION'] = @orig_migrate_version_env_var
-      ENV['MIGRATE_QUIET']   = @orig_migrate_query_env_var
+      ENV["MIGRATE_VERSION"] = @orig_migrate_version_env_var
+      ENV["MIGRATE_QUIET"]   = @orig_migrate_query_env_var
     end
 
     should "add the ardb migration helper recorder to activerecord's command recorder" do
@@ -165,7 +162,6 @@ class Ardb::Adapter::Base
       exp = [subject.migrations_path, version]
       assert_equal exp, @migrator_called_with
     end
-
   end
 
   class LoadAndDumpSchemaTests < UnitTests
@@ -238,12 +234,11 @@ class Ardb::Adapter::Base
       subject.load_schema
       assert_empty @captured_stdout
     end
-
   end
 
   class LoadRubySchemaTests < UnitTests
     setup do
-      @config.schema_path = File.join(TEST_SUPPORT_PATH, 'fake_schema')
+      @config.schema_path = File.join(TEST_SUPPORT_PATH, "fake_schema")
       @adapter = Ardb::Adapter::Base.new(@config)
     end
 
@@ -255,12 +250,11 @@ class Ardb::Adapter::Base
       subject.load_ruby_schema
       assert_equal 2, FAKE_SCHEMA.load_count
     end
-
   end
 
   class DumpRubySchemaTests < UnitTests
     setup do
-      @config.schema_path = File.join(TMP_PATH, 'testdb', 'test_dump_ruby_schema')
+      @config.schema_path = File.join(TMP_PATH, "testdb", "test_dump_ruby_schema")
       FileUtils.rm_rf(File.dirname(@config.schema_path))
 
       @schema_dumper_connection, @schema_dumper_file = [nil, nil]
@@ -286,7 +280,6 @@ class Ardb::Adapter::Base
       assert_instance_of File, @schema_dumper_file
       assert_equal subject.ruby_schema_path, @schema_dumper_file.path
     end
-
   end
 
   class FakeConnection; end
@@ -327,5 +320,4 @@ class Ardb::Adapter::Base
   class FakeConnectionPool
     def with_connection(&block); end
   end
-
 end

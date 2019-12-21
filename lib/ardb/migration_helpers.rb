@@ -1,7 +1,6 @@
-require 'ardb'
+require "ardb"
 
 module Ardb
-
   module MigrationHelpers
     module_function
 
@@ -30,7 +29,7 @@ module Ardb
         @from_table  = from_table.to_s
         @from_column = from_column.to_s
         @to_table    = to_table.to_s
-        @to_column   = (options[:to_column] || 'id').to_s
+        @to_column   = (options[:to_column] || "id").to_s
         @name        = (options[:name] || "fk_#{@from_table}_#{@from_column}").to_s
         @adapter     = Ardb::Adapter.new(Ardb.config)
       end
@@ -47,11 +46,11 @@ module Ardb
 
       def apply_data(template_sql)
         template_sql.
-          gsub(':from_table',  @from_table).
-          gsub(':from_column', @from_column).
-          gsub(':to_table',    @to_table).
-          gsub(':to_column',   @to_column).
-          gsub(':name',        @name)
+          gsub(":from_table",  @from_table).
+          gsub(":from_column", @from_column).
+          gsub(":to_table",    @to_table).
+          gsub(":to_column",   @to_column).
+          gsub(":name",        @name)
       end
     end
 
@@ -59,7 +58,6 @@ module Ardb
     # change our stuff, require it in an initializer
 
     module RecorderMixin
-
       def foreign_key(*args)
         record(:foreign_key, args)
       end
@@ -69,9 +67,6 @@ module Ardb
       def invert_foreign_key(args)
         [ :drop_foreign_key, args ]
       end
-
     end
-
   end
-
 end

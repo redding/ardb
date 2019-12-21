@@ -1,8 +1,7 @@
-require 'active_record'
-require 'assert'
+require "active_record"
+require "assert"
 
 module Ardb
-
   class DbTests < Assert::Context
     around do |block|
       ActiveRecord::Base.transaction do
@@ -11,5 +10,4 @@ module Ardb
       end
     end
   end
-
 end

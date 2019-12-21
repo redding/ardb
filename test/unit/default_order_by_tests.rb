@@ -1,11 +1,10 @@
-require 'assert'
-require 'ardb/default_order_by'
+require "assert"
+require "ardb/default_order_by"
 
-require 'much-plugin'
-require 'ardb/record_spy'
+require "much-plugin"
+require "ardb/record_spy"
 
 module Ardb::DefaultOrderBy
-
   class UnitTests < Assert::Context
     desc "Ardb::DefaultOrderBy"
     setup do
@@ -62,7 +61,6 @@ module Ardb::DefaultOrderBy
       assert_equal [:ardb_default_order_by], callback.args
       assert_equal({ :on => :create }, callback.options)
     end
-
   end
 
   class InitTests < UnitTests
@@ -116,7 +114,5 @@ module Ardb::DefaultOrderBy
 
       assert_equal current_order_by, subject.send(@order_by_attribute)
     end
-
   end
-
 end

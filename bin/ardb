@@ -3,5 +3,5 @@
 # Copyright (c) 2013-Present Kelly Redding and Collin Redding
 #
 
-require 'ardb/cli'
+require "ardb/cli"
 Ardb::CLI.run ARGV
