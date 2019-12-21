@@ -1,9 +1,8 @@
-require 'arel'
-require 'much-plugin'
-require 'ardb/relation_spy'
+require "arel"
+require "much-plugin"
+require "ardb/relation_spy"
 
 module Ardb
-
   module RecordSpy
     include MuchPlugin
 
@@ -14,13 +13,9 @@ module Ardb
       record_spy
     end
 
-    plugin_included do
-      extend ClassMethods
-      include InstanceMethods
-    end
+    CallbackType = Struct.new(:name, :options)
 
-    module ClassMethods
-
+    plugin_class_methods do
       attr_accessor :table_name
 
       # Associations
@@ -29,8 +24,7 @@ module Ardb
         @associations ||= []
       end
 
-      [ :belongs_to, :has_one, :has_many ].each do |method_name|
-
+      [:belongs_to, :has_one, :has_many].each do |method_name|
         define_method(method_name) do |assoc_name, *args|
           define_method(assoc_name) do
             instance_variable_get("@#{assoc_name}") || (method_name == :has_many ? [] : nil)
@@ -41,7 +35,6 @@ module Ardb
 
           self.associations << Association.new(method_name, assoc_name, *args)
         end
-
       end
 
       # Validations
@@ -66,7 +59,6 @@ module Ardb
         define_method(method_name) do |*args|
           self.validations << Validation.new(type, *args)
         end
-
       end
 
       def validates_associated(*args)
@@ -110,11 +102,9 @@ module Ardb
         :after_initialize,
         :after_find
       ].each do |method_name|
-
         define_method(method_name) do |*args, &block|
           self.callbacks << Callback.new(method_name, *args, &block)
         end
-
       end
 
       def custom_callback_types
@@ -136,8 +126,6 @@ module Ardb
           end
         end
       end
-
-      CallbackType = Struct.new(:name, :options)
 
       # Scopes
 
@@ -170,17 +158,13 @@ module Ardb
         :except,
         :only
       ].each do |method_name|
-
         define_method(method_name) do |*args|
           self.relation_spy.send(method_name, *args)
         end
-
       end
-
     end
 
-    module InstanceMethods
-
+    plugin_instance_methods do
       attr_accessor :id
 
       def update_column(col, value)
@@ -195,7 +179,6 @@ module Ardb
         self.manually_run_callbacks << name
         block.call if block
       end
-
     end
 
     class Association
@@ -235,7 +218,5 @@ module Ardb
         end
       end
     end
-
   end
-
 end

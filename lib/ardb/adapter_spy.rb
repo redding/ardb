@@ -1,10 +1,8 @@
-require 'ardb'
-require 'ardb/adapter/base'
+require "ardb"
+require "ardb/adapter/base"
 
 module Ardb
-
   class AdapterSpy < Ardb::Adapter::Base
-
     attr_accessor :drop_tables_called_count
     attr_accessor :dump_schema_called_count, :load_schema_called_count
     attr_accessor :drop_db_called_count, :create_db_called_count
@@ -88,7 +86,5 @@ module Ardb
     def dump_schema(*args, &block)
       self.dump_schema_called_count += 1
     end
-
   end
-
 end

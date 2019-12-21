@@ -1,12 +1,11 @@
-require 'assert'
-require 'ardb/cli'
+require "assert"
+require "ardb/cli"
 
-require 'ardb'
-require 'ardb/adapter_spy'
-require 'ardb/migration'
+require "ardb"
+require "ardb/adapter_spy"
+require "ardb/migration"
 
 class Ardb::CLI
-
   class UnitTests < Assert::Context
     desc "Ardb::CLI"
     setup do
@@ -28,14 +27,13 @@ class Ardb::CLI
     should "know its commands" do
       assert_equal 5, COMMANDS.size
 
-      assert_instance_of InvalidCommand, COMMANDS[Factory.string]
-      assert_instance_of ConnectCommand,           COMMANDS['connect']
-      assert_instance_of CreateCommand,            COMMANDS['create']
-      assert_instance_of DropCommand,              COMMANDS['drop']
-      assert_instance_of MigrateCommand,           COMMANDS['migrate']
-      assert_instance_of GenerateMigrationCommand, COMMANDS['generate-migration']
+      assert_instance_of InvalidCommand,           COMMANDS[Factory.string]
+      assert_instance_of ConnectCommand,           COMMANDS["connect"]
+      assert_instance_of CreateCommand,            COMMANDS["create"]
+      assert_instance_of DropCommand,              COMMANDS["drop"]
+      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
+      assert_instance_of GenerateMigrationCommand, COMMANDS["generate-migration"]
     end
-
   end
 
   class InitTests < UnitTests
@@ -50,7 +48,6 @@ class Ardb::CLI
     subject{ @cli }
 
     should have_imeths :run
-
   end
 
   class RunSetupTests < InitTests
@@ -68,7 +65,6 @@ class Ardb::CLI
     teardown do
       COMMANDS.remove(@command_name)
     end
-
   end
 
   class RunTests < RunSetupTests
@@ -88,7 +84,6 @@ class Ardb::CLI
     should "have successfully exited" do
       assert_equal 0, @kernel_spy.exit_status
     end
-
   end
 
   class RunWithNoArgsTests < RunSetupTests
@@ -105,7 +100,6 @@ class Ardb::CLI
     should "have successfully exited" do
       assert_equal 0, @kernel_spy.exit_status
     end
-
   end
 
   class RunWithInvalidCommandTests < RunSetupTests
@@ -117,7 +111,7 @@ class Ardb::CLI
     end
 
     should "output that it is invalid and output the invalid command's help" do
-      exp = "'#{@name}' is not a command.\n\n"
+      exp = "\"#{@name}\" is not a command.\n\n"
       assert_equal exp, @stderr.read
       assert_equal @invalid_command.help, @stdout.read
     end
@@ -125,7 +119,6 @@ class Ardb::CLI
     should "have unsuccessfully exited" do
       assert_equal 1, @kernel_spy.exit_status
     end
-
   end
 
   class RunWithCommandExitErrorTests < RunSetupTests
@@ -139,13 +132,12 @@ class Ardb::CLI
       assert_equal 1, @kernel_spy.exit_status
       assert_empty @stderr.read
     end
-
   end
 
   class RunWithHelpTests < RunSetupTests
     desc "and run with the help switch"
     setup do
-      @cli.run([ '--help' ])
+      @cli.run([ "--help" ])
     end
 
     should "output the invalid command's help" do
@@ -156,13 +148,12 @@ class Ardb::CLI
     should "have successfully exited" do
       assert_equal 0, @kernel_spy.exit_status
     end
-
   end
 
   class RunWithVersionTests < RunSetupTests
     desc "and run with the version switch"
     setup do
-      @cli.run([ '--version' ])
+      @cli.run([ "--version" ])
     end
 
     should "output its version" do
@@ -173,7 +164,6 @@ class Ardb::CLI
     should "have successfully exited" do
       assert_equal 0, @kernel_spy.exit_status
     end
-
   end
 
   class RunWithErrorTests < RunSetupTests
@@ -193,7 +183,6 @@ class Ardb::CLI
     should "have unsuccessfully exited" do
       assert_equal 1, @kernel_spy.exit_status
     end
-
   end
 
   class InvalidCommandTests < UnitTests
@@ -218,12 +207,12 @@ class Ardb::CLI
     end
 
     should "parse its argv on run" do
-      assert_raises(CLIRB::HelpExit){ subject.new.run([ '--help' ]) }
-      assert_raises(CLIRB::VersionExit){ subject.new.run([ '--version' ]) }
+      assert_raises(CLIRB::HelpExit){ subject.new.run([ "--help" ]) }
+      assert_raises(CLIRB::VersionExit){ subject.new.run([ "--version" ]) }
     end
 
     should "raise a help exit if its name is empty" do
-      cmd = @command_class.new([nil, ''].sample)
+      cmd = @command_class.new([nil, ""].sample)
       argv = [Factory.string, Factory.string]
       assert_raises(CLIRB::HelpExit){ cmd.new.run(argv) }
     end
@@ -239,7 +228,6 @@ class Ardb::CLI
             "#{COMMANDS.to_s.split("\n").map{ |l| "  #{l}" }.join("\n")}\n"
       assert_equal exp, subject.help
     end
-
   end
 
   class CommandSetupTests < UnitTests
@@ -253,7 +241,6 @@ class Ardb::CLI
       Assert.stub(Ardb, :adapter){ @adapter_spy }
     end
     subject{ @cmd }
-
   end
 
   class ValidCommandTests < CommandSetupTests
@@ -277,16 +264,15 @@ class Ardb::CLI
 
     should "take custom CLIRB build procs" do
       cmd = @command_class.new do
-        option 'test', 'testing', :abbrev => 't'
+        option "test", "testing", :abbrev => "t"
       end
-      cmd.run(['-t'], @stdout, @stderr)
-      assert_true cmd.clirb.opts['test']
+      cmd.run(["-t"], @stdout, @stderr)
+      assert_true cmd.clirb.opts["test"]
     end
 
     should "default its summary" do
-      assert_equal '', subject.summary
+      assert_equal "", subject.summary
     end
-
   end
 
   class ConnectCommandTests < CommandSetupTests
@@ -338,7 +324,6 @@ class Ardb::CLI
             "with #{Ardb.config.activerecord_connect_hash.inspect}"
       assert_includes exp, err_output
     end
-
   end
 
   class CreateCommandTests < CommandSetupTests
@@ -386,7 +371,6 @@ class Ardb::CLI
       exp = "error creating #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
-
   end
 
   class DropCommandTests < CommandSetupTests
@@ -434,18 +418,17 @@ class Ardb::CLI
       exp = "error dropping #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
-
   end
 
   class MigrateCommandTests < CommandSetupTests
     desc "MigrateCommand"
     setup do
-      @orig_env_var_migrate_no_schema = ENV['ARDB_MIGRATE_NO_SCHEMA']
+      @orig_env_var_migrate_no_schema = ENV["ARDB_MIGRATE_NO_SCHEMA"]
       @command_class = MigrateCommand
       @cmd = @command_class.new
     end
     teardown do
-      ENV['ARDB_MIGRATE_NO_SCHEMA'] = @orig_env_var_migrate_no_schema
+      ENV["ARDB_MIGRATE_NO_SCHEMA"] = @orig_env_var_migrate_no_schema
     end
 
     should "be a valid command" do
@@ -474,7 +457,7 @@ class Ardb::CLI
     end
 
     should "only init ardb and migrate when run with no schema dump env var set" do
-      ENV['ARDB_MIGRATE_NO_SCHEMA'] = 'yes'
+      ENV["ARDB_MIGRATE_NO_SCHEMA"] = "yes"
       subject.run([], @stdout, @stderr)
 
       assert_equal [true], @ardb_init_called_with
@@ -496,7 +479,6 @@ class Ardb::CLI
       exp = "error migrating #{Ardb.config.database.inspect} database"
       assert_includes exp, err_output
     end
-
   end
 
   class GenerateMigrationCommandTests < CommandSetupTests
@@ -543,7 +525,7 @@ class Ardb::CLI
       assert_equal exp, @stdout.read
     end
 
-    should "re-raise a specific argument error on migration 'no identifer' errors" do
+    should "re-raise a specific argument error on migration \"no identifer\" errors" do
       Assert.stub(@migration_class, :new){ raise Ardb::Migration::NoIdentifierError }
       err = nil
       begin
@@ -572,7 +554,6 @@ class Ardb::CLI
       exp = "error generating migration"
       assert_includes exp, err_output
     end
-
   end
 
   class CLISpy
@@ -653,5 +634,4 @@ class Ardb::CLI
       self
     end
   end
-
 end

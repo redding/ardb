@@ -10,7 +10,7 @@ TODO: Write code samples and usage instructions here
 
 Add this line to your application's Gemfile:
 
-    gem 'ardb'
+    gem "ardb"
 
 And then execute:
 

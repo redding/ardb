@@ -1,8 +1,7 @@
-require 'assert'
-require 'ardb/adapter_spy'
+require "assert"
+require "ardb/adapter_spy"
 
 class Ardb::AdapterSpy
-
   class UnitTests < Assert::Context
     desc "Ardb::AdapterSpy"
     setup do
@@ -13,7 +12,6 @@ class Ardb::AdapterSpy
     should "be a kind of ardb adapter" do
       assert subject < Ardb::Adapter::Base
     end
-
   end
 
   class InitTests < UnitTests
@@ -91,7 +89,5 @@ class Ardb::AdapterSpy
       assert_equal 1, subject.load_schema_called_count
       assert_equal true, subject.load_schema_called?
     end
-
   end
-
 end
