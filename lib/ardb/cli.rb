@@ -8,8 +8,12 @@ module Ardb
       c.add(ConnectCommand,           "connect")
       c.add(CreateCommand,            "create")
       c.add(DropCommand,              "drop")
-      c.add(MigrateCommand,           "migrate")
       c.add(GenerateMigrationCommand, "generate-migration")
+      c.add(MigrateCommand,           "migrate")
+      c.add(MigrateUpCommand,         "migrate-up")
+      c.add(MigrateDownCommand,       "migrate-down")
+      c.add(MigrateForwardCommand,    "migrate-forward")
+      c.add(MigrateBackwardCommand,   "migrate-backward")
     end
 
     def self.run(args)
