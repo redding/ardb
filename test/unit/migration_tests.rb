@@ -53,7 +53,9 @@ class Ardb::Migration
       exp = File.join(subject.migrations_path, "#{subject.file_name}.rb")
       assert_equal exp, subject.file_path
 
-      exp = "class #{subject.class_name} < ActiveRecord::Migration\n" \
+      exp_version = ActiveRecord::Migration.current_version
+      exp =
+        "class #{subject.class_name} < ActiveRecord::Migration[#{exp_version}]\n" \
             "  def change\n" \
             "  end\n" \
             "end\n"
