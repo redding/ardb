@@ -17,9 +17,7 @@ module Ardb
       @file_name  = get_file_name(@identifier)
       @file_path  = File.join(self.migrations_path, "#{@file_name}.rb")
 
-      @source = "require \"ardb/migration_helpers\"\n\n" \
-                "class #{@class_name} < ActiveRecord::Migration\n" \
-                "  include Ardb::MigrationHelpers\n\n" \
+      @source = "class #{@class_name} < ActiveRecord::Migration\n" \
                 "  def change\n" \
                 "  end\n" \
                 "end\n"

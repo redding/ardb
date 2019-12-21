@@ -20,7 +20,6 @@ class Ardb::Adapter::Base
     should have_imeths :connect_hash, :database, :migrations_path
     should have_imeths :schema_format, :ruby_schema_path, :sql_schema_path
     should have_imeths :escape_like_pattern
-    should have_imeths :foreign_key_add_sql, :foreign_key_drop_sql
     should have_imeths :create_db, :drop_db, :drop_tables
     should have_imeths :connect_db, :migrate_db
     should have_imeths :load_schema, :load_ruby_schema, :load_sql_schema
@@ -66,11 +65,6 @@ class Ardb::Adapter::Base
       exp = pattern.gsub(escape_char, "#{escape_char}#{escape_char}")
       exp = exp.gsub("%", "#{escape_char}%").gsub("_", "#{escape_char}_")
       assert_equal exp, subject.escape_like_pattern(pattern, escape_char)
-    end
-
-    should "not implement the foreign key sql meths" do
-      assert_raises(NotImplementedError){ subject.foreign_key_add_sql }
-      assert_raises(NotImplementedError){ subject.foreign_key_drop_sql }
     end
 
     should "not implement the create and drop db methods" do
@@ -140,11 +134,6 @@ class Ardb::Adapter::Base
     teardown do
       ENV["MIGRATE_VERSION"] = @orig_migrate_version_env_var
       ENV["MIGRATE_QUIET"]   = @orig_migrate_query_env_var
-    end
-
-    should "add the ardb migration helper recorder to activerecord's command recorder" do
-      exp = Ardb::MigrationHelpers::RecorderMixin
-      assert_includes exp, ActiveRecord::Migration::CommandRecorder
     end
 
     should "set the activerecord migrator's migrations path" do

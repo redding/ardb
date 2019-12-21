@@ -44,18 +44,6 @@ module Ardb::Adapter
       end
     end
 
-    def foreign_key_add_sql
-      "ALTER TABLE :from_table"\
-      " ADD CONSTRAINT :name"\
-      " FOREIGN KEY (:from_column)"\
-      " REFERENCES :to_table (:to_column)"
-    end
-
-    def foreign_key_drop_sql
-      "ALTER TABLE :from_table"\
-      " DROP CONSTRAINT :name"
-    end
-
     def load_sql_schema
       require "scmd"
       cmd_str = "psql -f \"#{self.sql_schema_path}\" #{self.database}"

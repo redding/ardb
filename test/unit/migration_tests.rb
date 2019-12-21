@@ -53,9 +53,7 @@ class Ardb::Migration
       exp = File.join(subject.migrations_path, "#{subject.file_name}.rb")
       assert_equal exp, subject.file_path
 
-      exp = "require \"ardb/migration_helpers\"\n\n" \
-            "class #{subject.class_name} < ActiveRecord::Migration\n" \
-            "  include Ardb::MigrationHelpers\n\n" \
+      exp = "class #{subject.class_name} < ActiveRecord::Migration\n" \
             "  def change\n" \
             "  end\n" \
             "end\n"

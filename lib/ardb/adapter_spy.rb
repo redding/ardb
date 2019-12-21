@@ -49,16 +49,6 @@ module Ardb
 
     # Overwritten `Adapter::Base` methods
 
-    def foreign_key_add_sql
-      "FAKE ADD FOREIGN KEY SQL :from_table :from_column " \
-      ":to_table :to_column :name"
-    end
-
-    def foreign_key_drop_sql
-      "FAKE DROP FOREIGN KEY SQL :from_table :from_column " \
-      ":to_table :to_column :name"
-    end
-
     def create_db(*args, &block)
       self.create_db_called_count += 1
     end

@@ -31,9 +31,6 @@ module Ardb::Adapter
       pattern
     end
 
-    def foreign_key_add_sql(*args);  raise NotImplementedError; end
-    def foreign_key_drop_sql(*args); raise NotImplementedError; end
-
     def create_db(*args); raise NotImplementedError; end
     def drop_db(*args);   raise NotImplementedError; end
 
@@ -49,13 +46,6 @@ module Ardb::Adapter
     def migrate_db
       verbose = ENV["MIGRATE_QUIET"].nil?
       version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
-
-      if defined?(ActiveRecord::Migration::CommandRecorder)
-        require "ardb/migration_helpers"
-        ActiveRecord::Migration::CommandRecorder.class_eval do
-          include Ardb::MigrationHelpers::RecorderMixin
-        end
-      end
 
       ActiveRecord::Migrator.migrations_path = self.migrations_path
       ActiveRecord::Migration.verbose = verbose
