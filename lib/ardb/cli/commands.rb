@@ -142,36 +142,6 @@ class Ardb::CLI
     end
   end
 
-  class MigrateCommand
-    include ValidCommand
-
-    def run(argv, *args)
-      super
-
-      Ardb.init(true)
-      begin
-        Ardb.adapter.migrate_db
-        Ardb.adapter.dump_schema unless ENV["ARDB_MIGRATE_NO_SCHEMA"]
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
-        @stderr.puts "error migrating #{Ardb.config.database.inspect} database"
-        raise CommandExitError
-      end
-    end
-
-    def summary
-      "Migrate the configured DB"
-    end
-
-    def help
-      "Usage: ardb migrate [options]\n\n" \
-      "Options: #{@clirb}\n" \
-      "Description:\n" \
-      "  #{self.summary}"
-    end
-  end
-
   class GenerateMigrationCommand
     include ValidCommand
 
@@ -208,8 +178,173 @@ class Ardb::CLI
     end
   end
 
-  class CommandSet
+  module MigrateCommandBehaviors
+    include MuchPlugin
 
+    plugin_included do
+      include ValidCommand
+    end
+
+    plugin_class_methods do
+      def command_name;    raise NotImplementedError; end
+      def command_summary; raise NotImplementedError; end
+    end
+
+    plugin_instance_methods do
+      def command_name;    self.class.command_name;    end
+      def command_summary; self.class.command_summary; end
+      def summary;         self.class.command_summary; end
+      def migrate;         raise NotImplementedError;  end
+
+      def run(argv, *args)
+        super
+
+        Ardb.init(true)
+        begin
+          self.migrate
+          Ardb.adapter.dump_schema unless ENV["ARDB_MIGRATE_NO_SCHEMA"]
+        rescue StandardError => e
+          @stderr.puts e
+          @stderr.puts e.backtrace.join("\n")
+          @stderr.puts "error migrating #{Ardb.config.database.inspect} database"
+          raise CommandExitError
+        end
+      end
+
+      def help
+        "Usage: ardb #{self.command_name} [options]\n\n" \
+        "Options: #{@clirb}\n" \
+        "Description:\n" \
+        "  #{self.command_summary}"
+      end
+    end
+  end
+
+  class MigrateCommand
+    include MigrateCommandBehaviors
+
+    def self.command_name
+      "migrate"
+    end
+
+    def self.command_summary
+      "Migrate the configured DB"
+    end
+
+    def migrate
+      Ardb.adapter.migrate_db
+    end
+  end
+
+  module MigrateStyleBehaviors
+    include MuchPlugin
+
+    plugin_included do
+      include MigrateCommandBehaviors
+    end
+
+    plugin_class_methods do
+      def command_style; raise NotImplementedError; end
+
+      def command_name
+        "migrate-#{self.command_style}"
+      end
+
+      def command_summary
+        "Migrate the configured DB #{self.command_style}"
+      end
+    end
+
+    plugin_instance_methods do
+      def migrate
+        Ardb.adapter.send("migrate_db_#{self.class.command_style}", *migrate_args)
+      end
+
+      private
+
+      def migrate_args; raise NotImplementedError; end
+    end
+  end
+
+  module MigrateDirectionBehaviors
+    include MuchPlugin
+
+    plugin_included do
+      include MigrateStyleBehaviors
+    end
+
+    plugin_class_methods do
+      def command_style;     self.command_direction;    end
+      def command_direction; raise NotImplementedError; end
+    end
+
+    plugin_instance_methods do
+      def initialize
+        super do
+          option(:target_version, "version to migrate to", value: String)
+        end
+      end
+
+      private
+
+      def migrate_args
+        [@clirb.opts[:target_version]]
+      end
+    end
+  end
+
+  module MigrateStepDirectionBehaviors
+    include MuchPlugin
+
+    plugin_included do
+      include MigrateStyleBehaviors
+    end
+
+    plugin_class_methods do
+      def command_style;     self.command_direction;    end
+      def command_direction; raise NotImplementedError; end
+    end
+
+    plugin_instance_methods do
+      def initialize
+        super do
+          option(:steps, "number of migrations to migrate", value: 1)
+        end
+      end
+
+      private
+
+      def migrate_args
+        [@clirb.opts[:steps]]
+      end
+    end
+  end
+
+  class MigrateUpCommand
+    include MigrateDirectionBehaviors
+
+    def self.command_direction; "up"; end
+  end
+
+  class MigrateDownCommand
+    include MigrateDirectionBehaviors
+
+    def self.command_direction; "down"; end
+  end
+
+  class MigrateForwardCommand
+    include MigrateStepDirectionBehaviors
+
+    def self.command_direction; "forward"; end
+  end
+
+  class MigrateBackwardCommand
+    include MigrateStepDirectionBehaviors
+
+    def self.command_direction; "backward"; end
+  end
+
+  class CommandSet
     def initialize(&unknown_cmd_block)
       @lookup    = Hash.new{ |h,k| unknown_cmd_block.call(k) }
       @names     = []
@@ -220,7 +355,7 @@ class Ardb::CLI
     def add(klass, name, *aliases)
       begin
         cmd = klass.new
-      rescue StandardError => err
+      rescue StandardError
         # don"t add any commands you can"t init
       else
         ([name] + aliases).each{ |n| @lookup[n] = cmd }

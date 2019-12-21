@@ -25,14 +25,18 @@ class Ardb::CLI
     end
 
     should "know its commands" do
-      assert_equal 5, COMMANDS.size
+      assert_equal 9, COMMANDS.size
 
       assert_instance_of InvalidCommand,           COMMANDS[Factory.string]
       assert_instance_of ConnectCommand,           COMMANDS["connect"]
       assert_instance_of CreateCommand,            COMMANDS["create"]
       assert_instance_of DropCommand,              COMMANDS["drop"]
-      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
       assert_instance_of GenerateMigrationCommand, COMMANDS["generate-migration"]
+      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
+      assert_instance_of MigrateUpCommand,         COMMANDS["migrate-up"]
+      assert_instance_of MigrateDownCommand,       COMMANDS["migrate-down"]
+      assert_instance_of MigrateForwardCommand,    COMMANDS["migrate-forward"]
+      assert_instance_of MigrateBackwardCommand,   COMMANDS["migrate-backward"]
     end
   end
 
