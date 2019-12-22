@@ -1,16 +1,14 @@
-require 'ardb/adapter/base'
+require "ardb/adapter/base"
 
 module Ardb::Adapter
-
-  class Postgresql < Base
-
-    # the 'postgres' db is a "public" (doesn't typically require auth/grants to
+  class Postgresql < Ardb::Adapter::Base
+    # the "postgres" db is a "public" (doesn"t typically require auth/grants to
     # connect to) db that typically exists for all postgres installations; the
     # adapter uses it to create/drop other databases
     def public_connect_hash
       @public_connect_hash ||= self.connect_hash.merge({
-        'database'           => 'postgres',
-        'schema_search_path' => 'public'
+        "database"           => "postgres",
+        "schema_search_path" => "public"
       })
     end
 
@@ -42,47 +40,33 @@ module Ardb::Adapter
         tables = conn.execute "SELECT table_name"\
                               " FROM information_schema.tables"\
                               " WHERE table_schema = 'public';"
-        tables.each{ |row| conn.execute "DROP TABLE #{row['table_name']} CASCADE" }
+        tables.each{ |row| conn.execute "DROP TABLE #{row["table_name"]} CASCADE" }
       end
     end
 
-    def foreign_key_add_sql
-      "ALTER TABLE :from_table"\
-      " ADD CONSTRAINT :name"\
-      " FOREIGN KEY (:from_column)"\
-      " REFERENCES :to_table (:to_column)"
-    end
-
-    def foreign_key_drop_sql
-      "ALTER TABLE :from_table"\
-      " DROP CONSTRAINT :name"
-    end
-
     def load_sql_schema
-      require 'scmd'
+      require "scmd"
       cmd_str = "psql -f \"#{self.sql_schema_path}\" #{self.database}"
       cmd = Scmd.new(cmd_str, :env => env_var_hash).tap(&:run)
-      raise 'Error loading database' unless cmd.success?
+      raise "Error loading database" unless cmd.success?
     end
 
     def dump_sql_schema
-      require 'scmd'
+      require "scmd"
       cmd_str = "pg_dump -i -s -x -O -f \"#{self.sql_schema_path}\" #{self.database}"
       cmd = Scmd.new(cmd_str, :env => env_var_hash).tap(&:run)
-      raise 'Error dumping database' unless cmd.success?
+      raise "Error dumping database" unless cmd.success?
     end
 
     private
 
     def env_var_hash
       @env_var_hash ||= {
-        'PGHOST'     => self.connect_hash['host'],
-        'PGPORT'     => self.connect_hash['port'],
-        'PGUSER'     => self.connect_hash['username'],
-        'PGPASSWORD' => self.connect_hash['password']
+        "PGHOST"     => self.connect_hash["host"],
+        "PGPORT"     => self.connect_hash["port"],
+        "PGUSER"     => self.connect_hash["username"],
+        "PGPASSWORD" => self.connect_hash["password"]
       }
     end
-
   end
-
 end

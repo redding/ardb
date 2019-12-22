@@ -1,10 +1,9 @@
-require 'assert'
-require 'ardb/adapter/postgresql'
+require "assert"
+require "ardb/adapter/postgresql"
 
-require 'scmd'
+require "scmd"
 
 class Ardb::Adapter::Postgresql
-
   class UnitTests < Assert::Context
     desc "Ardb::Adapter::Postgresql"
     setup do
@@ -17,35 +16,20 @@ class Ardb::Adapter::Postgresql
 
     should "know its public connect hash" do
       exp = subject.connect_hash.merge({
-        'database' => 'postgres',
-        'schema_search_path' => 'public'
+        "database" => "postgres",
+        "schema_search_path" => "public"
       })
       assert_equal exp, subject.public_connect_hash
     end
-
-    should "know its foreign key add sql" do
-      exp_add_sql = "ALTER TABLE :from_table"\
-                    " ADD CONSTRAINT :name"\
-                    " FOREIGN KEY (:from_column)"\
-                    " REFERENCES :to_table (:to_column)"
-      assert_equal exp_add_sql, subject.foreign_key_add_sql
-    end
-
-    should "know its foreign key drop sql" do
-      exp_drop_sql = "ALTER TABLE :from_table"\
-                     " DROP CONSTRAINT :name"
-      assert_equal exp_drop_sql, subject.foreign_key_drop_sql
-    end
-
   end
 
   class SQLSchemaTests < UnitTests
     setup do
       @env = {
-        'PGHOST'     => @adapter.connect_hash['host'],
-        'PGPORT'     => @adapter.connect_hash['port'],
-        'PGUSER'     => @adapter.connect_hash['username'],
-        'PGPASSWORD' => @adapter.connect_hash['password']
+        "PGHOST"     => @adapter.connect_hash["host"],
+        "PGPORT"     => @adapter.connect_hash["port"],
+        "PGUSER"     => @adapter.connect_hash["username"],
+        "PGPASSWORD" => @adapter.connect_hash["password"]
       }
     end
 

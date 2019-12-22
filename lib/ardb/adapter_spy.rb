@@ -1,10 +1,8 @@
-require 'ardb'
-require 'ardb/adapter/base'
+require "ardb"
+require "ardb/adapter/base"
 
 module Ardb
-
   class AdapterSpy < Ardb::Adapter::Base
-
     attr_accessor :drop_tables_called_count
     attr_accessor :dump_schema_called_count, :load_schema_called_count
     attr_accessor :drop_db_called_count, :create_db_called_count
@@ -51,16 +49,6 @@ module Ardb
 
     # Overwritten `Adapter::Base` methods
 
-    def foreign_key_add_sql
-      "FAKE ADD FOREIGN KEY SQL :from_table :from_column " \
-      ":to_table :to_column :name"
-    end
-
-    def foreign_key_drop_sql
-      "FAKE DROP FOREIGN KEY SQL :from_table :from_column " \
-      ":to_table :to_column :name"
-    end
-
     def create_db(*args, &block)
       self.create_db_called_count += 1
     end
@@ -88,7 +76,5 @@ module Ardb
     def dump_schema(*args, &block)
       self.dump_schema_called_count += 1
     end
-
   end
-
 end

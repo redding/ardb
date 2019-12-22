@@ -1,8 +1,7 @@
-require 'assert'
-require 'ardb/relation_spy'
+require "assert"
+require "ardb/relation_spy"
 
 class Ardb::RelationSpy
-
   class UnitTests < Assert::Context
     desc "Ardb::RelationSpy"
     setup do
@@ -51,11 +50,11 @@ class Ardb::RelationSpy
     end
 
     should "build a fake sql string for its applied expressions using `to_sql`" do
-      subject.select 'column'
-      subject.from 'table'
-      subject.joins 'my_table.my_column ON my_table.my_column = table.column'
+      subject.select "column"
+      subject.from "table"
+      subject.joins "my_table.my_column ON my_table.my_column = table.column"
 
-      expected = subject.applied.map(&:to_sql).join(', ')
+      expected = subject.applied.map(&:to_sql).join(", ")
       assert_equal expected, subject.to_sql
     end
 
@@ -70,7 +69,6 @@ class Ardb::RelationSpy
       assert_nil subject.limit_value
       assert_nil subject.offset_value
     end
-
   end
 
   class SelectTests < UnitTests
@@ -85,7 +83,6 @@ class Ardb::RelationSpy
       assert_equal :select, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
     end
-
   end
 
   class FromTests < UnitTests
@@ -100,7 +97,6 @@ class Ardb::RelationSpy
       assert_equal :from, @applied.type
       assert_equal [ "some SQL" ], @applied.args
     end
-
   end
 
   class IncludesTests < UnitTests
@@ -115,7 +111,6 @@ class Ardb::RelationSpy
       assert_equal :includes, @applied.type
       assert_equal [ :table_a, :table_b ], @applied.args
     end
-
   end
 
   class JoinsTests < UnitTests
@@ -130,22 +125,20 @@ class Ardb::RelationSpy
       assert_equal :joins, @applied.type
       assert_equal [ :table_a, :table_b ], @applied.args
     end
-
   end
 
   class WhereTests < UnitTests
     desc "where"
     setup do
-      @relation_spy.where :column_a => 'some value'
+      @relation_spy.where :column_a => "some value"
       @applied = subject.applied.first
     end
 
     should "add a where applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :where, @applied.type
-      assert_equal [ { :column_a => 'some value' } ], @applied.args
+      assert_equal [ { :column_a => "some value" } ], @applied.args
     end
-
   end
 
   class OrderTests < UnitTests
@@ -160,7 +153,6 @@ class Ardb::RelationSpy
       assert_equal :order, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
     end
-
   end
 
   class ReverseOrderTests < UnitTests
@@ -174,7 +166,6 @@ class Ardb::RelationSpy
       assert_instance_of AppliedExpression, @applied
       assert_equal :reverse_order, @applied.type
     end
-
   end
 
   class GroupTests < UnitTests
@@ -189,22 +180,20 @@ class Ardb::RelationSpy
       assert_equal :group, @applied.type
       assert_equal [ :column_a, :column_b ], @applied.args
     end
-
   end
 
   class HavingTests < UnitTests
     desc "having"
     setup do
-      @relation_spy.having 'COUNT(column_a) > 0'
+      @relation_spy.having "COUNT(column_a) > 0"
       @applied = subject.applied.first
     end
 
     should "add a having applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :having, @applied.type
-      assert_equal [ 'COUNT(column_a) > 0' ], @applied.args
+      assert_equal [ "COUNT(column_a) > 0" ], @applied.args
     end
-
   end
 
   class ReadonlyTests < UnitTests
@@ -219,7 +208,6 @@ class Ardb::RelationSpy
       assert_equal :readonly, @applied.type
       assert_equal [ true ], @applied.args
     end
-
   end
 
   class LimitTests < UnitTests
@@ -238,7 +226,6 @@ class Ardb::RelationSpy
     should "set it's limit value" do
       assert_equal 100, subject.limit_value
     end
-
   end
 
   class OffsetTests < UnitTests
@@ -257,13 +244,12 @@ class Ardb::RelationSpy
     should "set it's offset value" do
       assert_equal 100, subject.offset_value
     end
-
   end
 
   class MergeWithARelationSpyTests < UnitTests
     desc "merge with a relation spy"
     setup do
-      @other_relation_spy = Ardb::RelationSpy.new.select('column').joins('table')
+      @other_relation_spy = Ardb::RelationSpy.new.select("column").joins("table")
       @relation_spy.merge @other_relation_spy
     end
 
@@ -272,13 +258,12 @@ class Ardb::RelationSpy
         assert_includes applied, @relation_spy.applied
       end
     end
-
   end
 
   class MergeWithNonRelationSpyTests < UnitTests
     desc "merge without a relation spy"
     setup do
-      @fake_relation = 'relation'
+      @fake_relation = "relation"
       @relation_spy.merge @fake_relation
       @applied = subject.applied.first
     end
@@ -288,27 +273,25 @@ class Ardb::RelationSpy
       assert_equal :merge, @applied.type
       assert_equal [ @fake_relation ], @applied.args
     end
-
   end
 
   class MergeWithSelfTests < UnitTests
     desc "merge with itself"
     setup do
-      @fake_relation = 'relation'
+      @fake_relation = "relation"
       @relation_spy.merge @relation_spy
     end
 
     should "not alter the applied expressions" do
       assert_empty subject.applied
     end
-
   end
 
   class WithExpressionsTests < UnitTests
     setup do
-      @relation_spy.select('column').includes('table').joins('table')
-      @relation_spy.where(:column => 'value').order('column')
-      @relation_spy.group('column').having('count(*) > 1')
+      @relation_spy.select("column").includes("table").joins("table")
+      @relation_spy.where(:column => "value").order("column")
+      @relation_spy.group("column").having("count(*) > 1")
       @relation_spy.limit(1).offset(1)
     end
   end
@@ -345,7 +328,6 @@ class Ardb::RelationSpy
       relation_spy = subject.except(:offset)
       assert_nil relation_spy.offset_value
     end
-
   end
 
   class OnlyTests < WithExpressionsTests
@@ -380,7 +362,6 @@ class Ardb::RelationSpy
       relation_spy = subject.only(:select)
       assert_nil relation_spy.offset_value
     end
-
   end
 
   class WithResultsTests < UnitTests
@@ -401,11 +382,9 @@ class Ardb::RelationSpy
     should "raise a not found error if a result can't be found" do
       assert_raises(NotFoundError){ subject.find(1000) }
     end
-
   end
 
   class FirstTests < WithResultsTests
-
     should "return the first item from `all` using `first`" do
       assert_equal subject.all.first, subject.first
       subject.offset 2
@@ -418,11 +397,9 @@ class Ardb::RelationSpy
       subject.limit 0
       assert_raises(NotFoundError){ subject.first! }
     end
-
   end
 
   class LastTests < WithResultsTests
-
     should "return the last item from `all` using `last`" do
       assert_equal subject.all.last, subject.last
       subject.limit 2
@@ -435,7 +412,6 @@ class Ardb::RelationSpy
       subject.limit 0
       assert_raises(NotFoundError){ subject.last! }
     end
-
   end
 
   class AllTests < WithResultsTests
@@ -458,7 +434,6 @@ class Ardb::RelationSpy
       subject.offset 2
       assert_equal @results[2, 2], subject.all
     end
-
   end
 
   class CountTests < WithResultsTests
@@ -469,7 +444,6 @@ class Ardb::RelationSpy
       subject.limit 2
       assert_equal subject.all.size, subject.count
     end
-
   end
 
   class PluckTests < WithResultsTests
@@ -484,13 +458,12 @@ class Ardb::RelationSpy
       exp = [@column_value] * @results.size
       assert_equal exp, @relation_spy.pluck(@column_name)
     end
-
   end
 
   class AppliedExpressionTests < UnitTests
     desc "AppliedExpression"
     setup do
-      @applied_expression = AppliedExpression.new(:select, 'column')
+      @applied_expression = AppliedExpression.new(:select, "column")
     end
     subject{ @applied_expression }
 
@@ -501,9 +474,7 @@ class Ardb::RelationSpy
       expected = "#{subject.type}: #{subject.args.inspect}"
       assert_equal expected, subject.to_sql
     end
-
   end
 
   Result = Struct.new(:id)
-
 end

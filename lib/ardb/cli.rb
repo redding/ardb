@@ -1,17 +1,15 @@
-require 'ardb/cli/clirb'
-require 'ardb/cli/commands'
-require 'ardb/version'
+require "ardb/cli/clirb"
+require "ardb/cli/commands"
+require "ardb/version"
 
 module Ardb
-
   class CLI
-
     COMMANDS = CommandSet.new{ |unknown| InvalidCommand.new(unknown) }.tap do |c|
-      c.add(ConnectCommand,           'connect')
-      c.add(CreateCommand,            'create')
-      c.add(DropCommand,              'drop')
-      c.add(MigrateCommand,           'migrate')
-      c.add(GenerateMigrationCommand, 'generate-migration')
+      c.add(ConnectCommand,           "connect")
+      c.add(CreateCommand,            "create")
+      c.add(DropCommand,              "drop")
+      c.add(MigrateCommand,           "migrate")
+      c.add(GenerateMigrationCommand, "generate-migration")
     end
 
     def self.run(args)
@@ -53,12 +51,10 @@ module Ardb
     private
 
     def display_debug(exception)
-      if ENV['DEBUG']
+      if ENV["DEBUG"]
         @stderr.puts "#{exception.class}: #{exception.message}"
         @stderr.puts exception.backtrace.join("\n")
       end
     end
-
   end
-
 end

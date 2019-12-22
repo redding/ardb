@@ -1,8 +1,8 @@
-require 'fileutils'
+require "fileutils"
 
 module Ardb
-
   class Migration
+    NoIdentifierError = Class.new(ArgumentError)
 
     attr_reader :migrations_path, :identifier
     attr_reader :class_name, :file_name, :file_path, :source
@@ -17,17 +17,15 @@ module Ardb
       @file_name  = get_file_name(@identifier)
       @file_path  = File.join(self.migrations_path, "#{@file_name}.rb")
 
-      @source = "require 'ardb/migration_helpers'\n\n" \
-                "class #{@class_name} < ActiveRecord::Migration\n" \
-                "  include Ardb::MigrationHelpers\n\n" \
+      @source = "class #{@class_name} < ActiveRecord::Migration\n" \
                 "  def change\n" \
-                "  end\n\n" \
+                "  end\n" \
                 "end\n"
     end
 
     def save!
       FileUtils.mkdir_p self.migrations_path
-      File.open(self.file_path, 'w'){ |f| f.write(self.source) }
+      File.open(self.file_path, "w"){ |f| f.write(self.source) }
       self
     end
 
@@ -36,9 +34,5 @@ module Ardb
     def get_file_name(identifier)
       "#{Time.now.strftime("%Y%m%d%H%M%S")}_#{identifier.underscore}"
     end
-
-    NoIdentifierError = Class.new(ArgumentError)
-
   end
-
 end

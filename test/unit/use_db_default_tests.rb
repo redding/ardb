@@ -1,11 +1,10 @@
-require 'assert'
-require 'ardb/use_db_default'
+require "assert"
+require "ardb/use_db_default"
 
-require 'much-plugin'
-require 'ardb/record_spy'
+require "much-plugin"
+require "ardb/record_spy"
 
 module Ardb::UseDbDefault
-
   class UnitTests < Assert::Context
     desc "Ardb::UseDbDefault"
     setup do
@@ -27,9 +26,9 @@ module Ardb::UseDbDefault
     end
 
     should "add use db default attributes using `use_db_default`" do
-      attr_name = Factory.string
-      subject.use_db_default(attr_name)
-      assert_includes attr_name, subject.ardb_use_db_default_attrs
+      an_attr_name = Factory.string
+      subject.use_db_default(an_attr_name)
+      assert_includes an_attr_name, subject.ardb_use_db_default_attrs
 
       attr_names = [Factory.string, Factory.string.to_sym]
       subject.use_db_default(*attr_names)
@@ -58,7 +57,6 @@ module Ardb::UseDbDefault
       exp = [:ardb_allow_db_to_default_attrs]
       assert_equal exp, callback.args
     end
-
   end
 
   class InitTests < UnitTests
@@ -132,7 +130,6 @@ module Ardb::UseDbDefault
         assert_equal @original_attrs[name], subject.attributes[name]
       end
     end
-
   end
 
   module UseDbDefaultRecordSpy
@@ -156,5 +153,4 @@ module Ardb::UseDbDefault
       end
     end
   end
-
 end

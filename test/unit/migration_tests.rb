@@ -1,19 +1,17 @@
-require 'assert'
-require 'ardb/migration'
+require "assert"
+require "ardb/migration"
 
-# This is needed to call `classify` on a string; if this isn't manually required
-# these tests can fail if activesupport hasn't been loaded by activerecord; the
+# This is needed to call `classify` on a string; if this isn"t manually required
+# these tests can fail if activesupport hasn"t been loaded by activerecord; the
 # `Migration` class will error saying `classify` is not a method on `String`
-require 'active_support/core_ext/string/inflections'
+require "active_support/core_ext/string/inflections"
 
 class Ardb::Migration
-
   class UnitTests < Assert::Context
     desc "Ardb::Migration"
     setup do
       @migration_class = Ardb::Migration
     end
-
   end
 
   class InitTests < UnitTests
@@ -55,18 +53,16 @@ class Ardb::Migration
       exp = File.join(subject.migrations_path, "#{subject.file_name}.rb")
       assert_equal exp, subject.file_path
 
-      exp = "require 'ardb/migration_helpers'\n\n" \
-            "class #{subject.class_name} < ActiveRecord::Migration\n" \
-            "  include Ardb::MigrationHelpers\n\n" \
+      exp = "class #{subject.class_name} < ActiveRecord::Migration\n" \
             "  def change\n" \
-            "  end\n\n" \
+            "  end\n" \
             "end\n"
       assert_equal exp, subject.source
     end
 
     should "complain if no identifier is provided" do
       assert_raises(NoIdentifierError) do
-        @migration_class.new(@ardb_config, [nil, ''].sample)
+        @migration_class.new(@ardb_config, [nil, ""].sample)
       end
     end
 
@@ -74,10 +70,9 @@ class Ardb::Migration
       subject.save!
 
       assert_equal [subject.migrations_path], @mkdir_called_with
-      assert_equal [subject.file_path, 'w'],  @file_open_called_with
+      assert_equal [subject.file_path, "w"],  @file_open_called_with
       assert_equal [subject.source],          @file_spy.write_called_with
     end
-
   end
 
   class FileSpy
@@ -91,5 +86,4 @@ class Ardb::Migration
       @write_called_with = args
     end
   end
-
 end
