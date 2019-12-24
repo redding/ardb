@@ -262,6 +262,9 @@ module Ardb
       subject.database = nil
       assert_raises(ConfigurationError){ subject.validate! }
 
+      subject.database = "#{Factory.string}-#{Factory.string}"
+      assert_raises(ConfigurationError){ subject.validate! }
+
       subject.database      = Factory.string
       subject.schema_format = Factory.string
       assert_raises(ConfigurationError){ subject.validate! }
