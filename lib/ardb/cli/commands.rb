@@ -23,7 +23,7 @@ class Ardb::CLI
       raise InvalidCommandError, "\"#{self.name}\" is not a command."
     end
 
-    def help
+    def command_help
       "Usage: ardb [COMMAND] [options]\n\n" \
       "Options: #{@clirb}\n" \
       "Commands:\n" \
@@ -33,6 +33,11 @@ class Ardb::CLI
 
   module ValidCommand
     include MuchPlugin
+
+    plugin_class_methods do
+      def command_name;    raise NotImplementedError; end
+      def command_summary; "";                        end
+    end
 
     plugin_instance_methods do
       def initialize(&clirb_build)
@@ -47,14 +52,23 @@ class Ardb::CLI
         @stderr = stderr || $stderr
       end
 
-      def summary
-        ""
+      def command_name;    self.class.command_name;    end
+      def command_summary; self.class.command_summary; end
+
+      def command_help
+        "Usage: ardb #{self.command_name} [options]\n\n" \
+        "Options: #{self.clirb}\n" \
+        "Description:\n" \
+        "  #{self.command_summary}"
       end
     end
   end
 
   class ConnectCommand
     include ValidCommand
+
+    def self.command_name;    "connect";                      end
+    def self.command_summary; "Connect to the configured DB"; end
 
     def run(argv, *args)
       super
@@ -74,21 +88,13 @@ class Ardb::CLI
         raise CommandExitError
       end
     end
-
-    def summary
-      "Connect to the configured DB"
-    end
-
-    def help
-      "Usage: ardb connect [options]\n\n" \
-      "Options: #{@clirb}\n" \
-      "Description:\n" \
-      "  #{self.summary}"
-    end
   end
 
   class CreateCommand
     include ValidCommand
+
+    def self.command_name;    "create";                   end
+    def self.command_summary; "Create the configured DB"; end
 
     def run(argv, *args)
       super
@@ -106,21 +112,13 @@ class Ardb::CLI
         raise CommandExitError
       end
     end
-
-    def summary
-      "Create the configured DB"
-    end
-
-    def help
-      "Usage: ardb create [options]\n\n" \
-      "Options: #{@clirb}\n" \
-      "Description:\n" \
-      "  #{self.summary}"
-    end
   end
 
   class DropCommand
     include ValidCommand
+
+    def self.command_name;    "drop";                   end
+    def self.command_summary; "Drop the configured DB"; end
 
     def run(argv, *args)
       super
@@ -138,21 +136,13 @@ class Ardb::CLI
         raise CommandExitError
       end
     end
-
-    def summary
-      "Drop the configured DB"
-    end
-
-    def help
-      "Usage: ardb drop [options]\n\n" \
-      "Options: #{@clirb}\n" \
-      "Description:\n" \
-      "  #{self.summary}"
-    end
   end
 
   class GenerateMigrationCommand
     include ValidCommand
+
+    def self.command_name;    "generate-migration";                       end
+    def self.command_summary; "Generate a MIGRATION-NAME migration file"; end
 
     def run(argv, *args)
       super
@@ -175,17 +165,6 @@ class Ardb::CLI
         raise CommandExitError
       end
     end
-
-    def summary
-      "Generate a migration file given a MIGRATION-NAME"
-    end
-
-    def help
-      "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
-      "Options: #{@clirb}\n" \
-      "Description:\n" \
-      "  #{self.summary}"
-    end
   end
 
   module MigrateCommandBehaviors
@@ -195,16 +174,8 @@ class Ardb::CLI
       include ValidCommand
     end
 
-    plugin_class_methods do
-      def command_name;    raise NotImplementedError; end
-      def command_summary; raise NotImplementedError; end
-    end
-
     plugin_instance_methods do
-      def command_name;    self.class.command_name;    end
-      def command_summary; self.class.command_summary; end
-      def summary;         self.class.command_summary; end
-      def migrate;         raise NotImplementedError;  end
+      def migrate; raise NotImplementedError; end
 
       def run(argv, *args)
         super
@@ -223,26 +194,14 @@ class Ardb::CLI
           raise CommandExitError
         end
       end
-
-      def help
-        "Usage: ardb #{self.command_name} [options]\n\n" \
-        "Options: #{@clirb}\n" \
-        "Description:\n" \
-        "  #{self.command_summary}"
-      end
     end
   end
 
   class MigrateCommand
     include MigrateCommandBehaviors
 
-    def self.command_name
-      "migrate"
-    end
-
-    def self.command_summary
-      "Migrate the configured DB"
-    end
+    def self.command_name;    "migrate";                   end
+    def self.command_summary; "Migrate the configured DB"; end
 
     def migrate
       Ardb.adapter.migrate_db
@@ -259,13 +218,8 @@ class Ardb::CLI
     plugin_class_methods do
       def command_style; raise NotImplementedError; end
 
-      def command_name
-        "migrate-#{self.command_style}"
-      end
-
-      def command_summary
-        "Migrate the configured DB #{self.command_style}"
-      end
+      def command_name;    "migrate-#{self.command_style}";                   end
+      def command_summary; "Migrate the configured DB #{self.command_style}"; end
     end
 
     plugin_instance_methods do
@@ -365,29 +319,28 @@ class Ardb::CLI
       @summaries = {}
     end
 
-    def add(klass, name, *aliases)
+    def add(klass)
       begin
         cmd = klass.new
       rescue StandardError
-        # don"t add any commands you can"t init
+        # don"t add any commands you can"t initialize
       else
-        ([name] + aliases).each{ |n| @lookup[n] = cmd }
+        @lookup[cmd.command_name] = cmd
         @to_s = nil
-        @names << name
-        @aliases[name] = aliases.empty? ? "" : "(#{aliases.join(", ")})"
-        @summaries[name] = cmd.summary.to_s.empty? ? "" : "# #{cmd.summary}"
+        @names << cmd.command_name
+        @summaries[cmd.command_name] = cmd.command_summary.to_s
       end
     end
 
-    def remove(name)
-      @lookup.delete(name)
-      @names.delete(name)
-      @aliases.delete(name)
+    def remove(klass)
+      @lookup.delete(klass.command_name)
+      @names.delete(klass.command_name)
+      @summaries.delete(klass.command_name)
       @to_s = nil
     end
 
-    def [](name)
-      @lookup[name]
+    def [](cmd_name)
+      @lookup[cmd_name]
     end
 
     def size
@@ -396,10 +349,9 @@ class Ardb::CLI
 
     def to_s
       max_name_size  = @names.map{ |n| n.size }.max || 0
-      max_alias_size = @aliases.values.map{ |v| v.size }.max || 0
 
       @to_s ||= @names.map do |n|
-        "#{n.ljust(max_name_size)} #{@aliases[n].ljust(max_alias_size)} #{@summaries[n]}"
+        "#{n.ljust(max_name_size)} #{@summaries[n]}"
       end.join("\n")
     end
   end
