@@ -25,14 +25,18 @@ class Ardb::CLI
     end
 
     should "know its commands" do
-      assert_equal 5, COMMANDS.size
+      assert_equal 9, COMMANDS.size
 
       assert_instance_of InvalidCommand,           COMMANDS[Factory.string]
       assert_instance_of ConnectCommand,           COMMANDS["connect"]
       assert_instance_of CreateCommand,            COMMANDS["create"]
       assert_instance_of DropCommand,              COMMANDS["drop"]
-      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
       assert_instance_of GenerateMigrationCommand, COMMANDS["generate-migration"]
+      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
+      assert_instance_of MigrateUpCommand,         COMMANDS["migrate-up"]
+      assert_instance_of MigrateDownCommand,       COMMANDS["migrate-down"]
+      assert_instance_of MigrateForwardCommand,    COMMANDS["migrate-forward"]
+      assert_instance_of MigrateBackwardCommand,   COMMANDS["migrate-backward"]
     end
   end
 
@@ -53,17 +57,19 @@ class Ardb::CLI
   class RunSetupTests < InitTests
     setup do
       @command_name = Factory.string
-      @argv = [@command_name, Factory.string]
+      @command_class = Class.new{ include ValidCommand }
+      Assert.stub(@command_class, :command_name) { @command_name }
 
-      @command_class = Class.new
-      @command_spy  = CommandSpy.new
+      @command_spy  = CommandSpy.new(@command_name)
       Assert.stub(@command_class, :new){ @command_spy }
-      COMMANDS.add(@command_class, @command_name)
+      COMMANDS.add(@command_class)
 
       @invalid_command = InvalidCommand.new(@command_name)
+
+      @argv = [@command_name, Factory.string]
     end
     teardown do
-      COMMANDS.remove(@command_name)
+      COMMANDS.remove(@command_class)
     end
   end
 
@@ -93,7 +99,7 @@ class Ardb::CLI
     end
 
     should "output the invalid command's help" do
-      assert_equal @invalid_command.help, @stdout.read
+      assert_equal @invalid_command.command_help, @stdout.read
       assert_empty @stderr.read
     end
 
@@ -113,7 +119,7 @@ class Ardb::CLI
     should "output that it is invalid and output the invalid command's help" do
       exp = "\"#{@name}\" is not a command.\n\n"
       assert_equal exp, @stderr.read
-      assert_equal @invalid_command.help, @stdout.read
+      assert_equal @invalid_command.command_help, @stdout.read
     end
 
     should "have unsuccessfully exited" do
@@ -141,7 +147,7 @@ class Ardb::CLI
     end
 
     should "output the invalid command's help" do
-      assert_equal @invalid_command.help, @stdout.read
+      assert_equal @invalid_command.command_help, @stdout.read
       assert_empty @stderr.read
     end
 
@@ -195,7 +201,7 @@ class Ardb::CLI
     subject{ @cmd }
 
     should have_readers :name, :clirb
-    should have_imeths :new, :run, :help
+    should have_imeths :new, :run, :command_help
 
     should "know its attrs" do
       assert_equal @name, subject.name
@@ -226,7 +232,7 @@ class Ardb::CLI
             "Options: #{subject.clirb}\n" \
             "Commands:\n" \
             "#{COMMANDS.to_s.split("\n").map{ |l| "  #{l}" }.join("\n")}\n"
-      assert_equal exp, subject.help
+      assert_equal exp, subject.command_help
     end
   end
 
@@ -250,7 +256,10 @@ class Ardb::CLI
       @cmd = @command_class.new
     end
 
-    should have_imeths :clirb, :run, :summary
+    should have_cmeths :command_name, :command_summary
+
+    should have_imeths :clirb, :run
+    should have_imeths :command_name, :command_summary, :command_help
 
     should "know its CLI.RB" do
       assert_instance_of CLIRB, subject.clirb
@@ -270,8 +279,25 @@ class Ardb::CLI
       assert_true cmd.clirb.opts["test"]
     end
 
-    should "default its summary" do
-      assert_equal "", subject.summary
+    should "not implement its command name" do
+      assert_raises NotImplementedError do
+        subject.command_name
+      end
+    end
+
+    should "default its command summary" do
+      assert_equal "", subject.command_summary
+    end
+
+    should "know its command help" do
+      Assert.stub(subject, :command_name)    { "some-command" }
+      Assert.stub(subject, :command_summary) { "some-summary" }
+
+      exp = "Usage: ardb #{subject.command_name} [options]\n\n" \
+            "Options: #{subject.clirb}\n" \
+            "Description:\n" \
+            "  #{subject.command_summary}"
+      assert_equal exp, subject.command_help
     end
   end
 
@@ -286,17 +312,12 @@ class Ardb::CLI
       assert_kind_of ValidCommand, subject
     end
 
-    should "know its summary" do
-      exp = "Connect to the configured DB"
-      assert_equal exp, subject.summary
-    end
+    should "know its command name and summary" do
+      exp = "connect"
+      assert_equal exp, subject.command_name
 
-    should "know its help" do
-      exp = "Usage: ardb connect [options]\n\n" \
-            "Options: #{subject.clirb}\n" \
-            "Description:\n" \
-            "  #{subject.summary}"
-      assert_equal exp, subject.help
+      exp = "Connect to the configured DB"
+      assert_equal exp, subject.command_summary
     end
 
     should "init ardb and connect to the db when run" do
@@ -337,17 +358,12 @@ class Ardb::CLI
       assert_kind_of ValidCommand, subject
     end
 
-    should "know its summary" do
-      exp = "Create the configured DB"
-      assert_equal exp, subject.summary
-    end
+    should "know its command name and summary" do
+      exp = "create"
+      assert_equal exp, subject.command_name
 
-    should "know its help" do
-      exp = "Usage: ardb create [options]\n\n" \
-            "Options: #{subject.clirb}\n" \
-            "Description:\n" \
-            "  #{subject.summary}"
-      assert_equal exp, subject.help
+      exp = "Create the configured DB"
+      assert_equal exp, subject.command_summary
     end
 
     should "init ardb and create the db when run" do
@@ -384,17 +400,12 @@ class Ardb::CLI
       assert_kind_of ValidCommand, subject
     end
 
-    should "know its summary" do
-      exp = "Drop the configured DB"
-      assert_equal exp, subject.summary
-    end
+    should "know its command name and summary" do
+      exp = "drop"
+      assert_equal exp, subject.command_name
 
-    should "know its help" do
-      exp = "Usage: ardb drop [options]\n\n" \
-            "Options: #{subject.clirb}\n" \
-            "Description:\n" \
-            "  #{subject.summary}"
-      assert_equal exp, subject.help
+      exp = "Drop the configured DB"
+      assert_equal exp, subject.command_summary
     end
 
     should "init ardb and drop the db when run" do
@@ -420,67 +431,6 @@ class Ardb::CLI
     end
   end
 
-  class MigrateCommandTests < CommandSetupTests
-    desc "MigrateCommand"
-    setup do
-      @orig_env_var_migrate_no_schema = ENV["ARDB_MIGRATE_NO_SCHEMA"]
-      @command_class = MigrateCommand
-      @cmd = @command_class.new
-    end
-    teardown do
-      ENV["ARDB_MIGRATE_NO_SCHEMA"] = @orig_env_var_migrate_no_schema
-    end
-
-    should "be a valid command" do
-      assert_kind_of ValidCommand, subject
-    end
-
-    should "know its summary" do
-      exp = "Migrate the configured DB"
-      assert_equal exp, subject.summary
-    end
-
-    should "know its help" do
-      exp = "Usage: ardb migrate [options]\n\n" \
-            "Options: #{subject.clirb}\n" \
-            "Description:\n" \
-            "  #{subject.summary}"
-      assert_equal exp, subject.help
-    end
-
-    should "init ardb, migrate the db and dump the schema when run" do
-      subject.run([], @stdout, @stderr)
-
-      assert_equal [true], @ardb_init_called_with
-      assert_true @adapter_spy.migrate_db_called?
-      assert_true @adapter_spy.dump_schema_called?
-    end
-
-    should "only init ardb and migrate when run with no schema dump env var set" do
-      ENV["ARDB_MIGRATE_NO_SCHEMA"] = "yes"
-      subject.run([], @stdout, @stderr)
-
-      assert_equal [true], @ardb_init_called_with
-      assert_true @adapter_spy.migrate_db_called?
-      assert_false @adapter_spy.dump_schema_called?
-    end
-
-    should "output any errors and raise an exit error when run" do
-      err = StandardError.new(Factory.string)
-      err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
-      Assert.stub(@adapter_spy, :migrate_db){ raise err }
-
-      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
-      err_output = @stderr.read
-
-      assert_includes err.to_s,                 err_output
-      assert_includes err.backtrace.join("\n"), err_output
-
-      exp = "error migrating #{Ardb.config.database.inspect} database"
-      assert_includes exp, err_output
-    end
-  end
-
   class GenerateMigrationCommandTests < CommandSetupTests
     desc "GenerateMigrationCommand"
     setup do
@@ -500,17 +450,12 @@ class Ardb::CLI
       assert_kind_of ValidCommand, subject
     end
 
-    should "know its summary" do
-      exp = "Generate a migration file given a MIGRATION-NAME"
-      assert_equal exp, subject.summary
-    end
+    should "know its command name and summary" do
+      exp = "generate-migration"
+      assert_equal exp, subject.command_name
 
-    should "know its help" do
-      exp = "Usage: ardb generate-migration [options] MIGRATION-NAME\n\n" \
-            "Options: #{subject.clirb}\n" \
-            "Description:\n" \
-            "  #{subject.summary}"
-      assert_equal exp, subject.help
+      exp = "Generate a MIGRATION-NAME migration file"
+      assert_equal exp, subject.command_summary
     end
 
     should "init ardb and save a migration for the identifier when run" do
@@ -556,6 +501,142 @@ class Ardb::CLI
     end
   end
 
+  class MigrateCommandTests < CommandSetupTests
+    desc "MigrateCommand"
+    setup do
+      @orig_env_var_migrate_no_schema = ENV["ARDB_MIGRATE_NO_SCHEMA"]
+      @command_class = MigrateCommand
+      @cmd = @command_class.new
+    end
+    teardown do
+      ENV["ARDB_MIGRATE_NO_SCHEMA"] = @orig_env_var_migrate_no_schema
+    end
+
+    should "be a migrate command" do
+      assert_kind_of MigrateCommandBehaviors, subject
+    end
+
+    should "know its command name and summary" do
+      exp = "migrate"
+      assert_equal exp, subject.command_name
+
+      exp = "Migrate the configured DB"
+      assert_equal exp, subject.command_summary
+    end
+
+    should "init ardb, migrate the db and dump the schema when run" do
+      subject.run([], @stdout, @stderr)
+
+      assert_equal [true], @ardb_init_called_with
+      assert_true @adapter_spy.migrate_db_called?
+      assert_true @adapter_spy.dump_schema_called?
+    end
+
+    should "only init ardb and migrate when run with no schema dump env var set" do
+      ENV["ARDB_MIGRATE_NO_SCHEMA"] = "yes"
+      subject.run([], @stdout, @stderr)
+
+      assert_equal [true], @ardb_init_called_with
+      assert_true @adapter_spy.migrate_db_called?
+      assert_false @adapter_spy.dump_schema_called?
+    end
+
+    should "output any errors and raise an exit error when run" do
+      err = StandardError.new(Factory.string)
+      err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
+      Assert.stub(@adapter_spy, :migrate_db){ raise err }
+
+      assert_raises(CommandExitError){ subject.run([], @stdout, @stderr) }
+      err_output = @stderr.read
+
+      assert_includes err.to_s,                 err_output
+      assert_includes err.backtrace.join("\n"), err_output
+
+      exp = "error migrating #{Ardb.config.database.inspect} database"
+      assert_includes exp, err_output
+    end
+  end
+
+  class MigrateUpCommandTests < CommandSetupTests
+    desc "MigrateUpCommand"
+    setup do
+      @command_class = MigrateUpCommand
+      @cmd = @command_class.new
+    end
+
+    should "be a migrate command" do
+      assert_kind_of MigrateCommandBehaviors, subject
+    end
+
+    should "know its command name and summary" do
+      exp = "migrate-up"
+      assert_equal exp, subject.command_name
+
+      exp = "Migrate the configured DB up"
+      assert_equal exp, subject.command_summary
+    end
+  end
+
+  class MigrateDownCommandTests < CommandSetupTests
+    desc "MigrateDownCommand"
+    setup do
+      @command_class = MigrateDownCommand
+      @cmd = @command_class.new
+    end
+
+    should "be a migrate command" do
+      assert_kind_of MigrateCommandBehaviors, subject
+    end
+
+    should "know its command name and summary" do
+      exp = "migrate-down"
+      assert_equal exp, subject.command_name
+
+      exp = "Migrate the configured DB down"
+      assert_equal exp, subject.command_summary
+    end
+  end
+
+  class MigrateForwardCommandTests < CommandSetupTests
+    desc "MigrateForwardCommand"
+    setup do
+      @command_class = MigrateForwardCommand
+      @cmd = @command_class.new
+    end
+
+    should "be a migrate command" do
+      assert_kind_of MigrateCommandBehaviors, subject
+    end
+
+    should "know its command name and summary" do
+      exp = "migrate-forward"
+      assert_equal exp, subject.command_name
+
+      exp = "Migrate the configured DB forward"
+      assert_equal exp, subject.command_summary
+    end
+  end
+
+  class MigrateBackwardCommandTests < CommandSetupTests
+    desc "MigrateBackwardCommand"
+    setup do
+      @command_class = MigrateBackwardCommand
+      @cmd = @command_class.new
+    end
+
+    should "be a migrate command" do
+      assert_kind_of MigrateCommandBehaviors, subject
+    end
+
+    should "know its command name and summary" do
+      exp = "migrate-backward"
+      assert_equal exp, subject.command_name
+
+      exp = "Migrate the configured DB backward"
+      assert_equal exp, subject.command_summary
+    end
+  end
+
   class CLISpy
     attr_reader :run_called_with
 
@@ -569,9 +650,10 @@ class Ardb::CLI
   end
 
   class CommandSpy
-    attr_reader :argv, :stdout, :stderr, :run_called
+    attr_reader :command_name, :argv, :stdout, :stderr, :run_called
 
-    def initialize
+    def initialize(command_name)
+      @command_name = command_name
       @argv = nil
       @stdout, @stderr = nil, nil
       @run_called = false
@@ -583,12 +665,12 @@ class Ardb::CLI
       @run_called = true
     end
 
-    def summary
-      @summary ||= Factory.string
+    def command_summary
+      @command_summary ||= Factory.string
     end
 
-    def help
-      @help ||= Factory.text
+    def command_help
+      @command_help ||= Factory.text
     end
   end
 

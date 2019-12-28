@@ -5,11 +5,15 @@ require "ardb/version"
 module Ardb
   class CLI
     COMMANDS = CommandSet.new{ |unknown| InvalidCommand.new(unknown) }.tap do |c|
-      c.add(ConnectCommand,           "connect")
-      c.add(CreateCommand,            "create")
-      c.add(DropCommand,              "drop")
-      c.add(MigrateCommand,           "migrate")
-      c.add(GenerateMigrationCommand, "generate-migration")
+      c.add(ConnectCommand)
+      c.add(CreateCommand)
+      c.add(DropCommand)
+      c.add(GenerateMigrationCommand)
+      c.add(MigrateCommand)
+      c.add(MigrateUpCommand)
+      c.add(MigrateDownCommand)
+      c.add(MigrateForwardCommand)
+      c.add(MigrateBackwardCommand)
     end
 
     def self.run(args)
@@ -30,13 +34,13 @@ module Ardb
         cmd = COMMANDS[cmd_name]
         cmd.run(args)
       rescue CLIRB::HelpExit
-        @stdout.puts cmd.help
+        @stdout.puts cmd.command_help
       rescue CLIRB::VersionExit
         @stdout.puts Ardb::VERSION
       rescue CLIRB::Error, ArgumentError, InvalidCommandError => exception
         display_debug(exception)
         @stderr.puts "#{exception.message}\n\n"
-        @stdout.puts cmd.help
+        @stdout.puts cmd.command_help
         @kernel.exit 1
       rescue CommandExitError
         @kernel.exit 1

@@ -44,19 +44,27 @@ module Ardb::Adapter
     end
 
     def migrate_db
-      verbose = ENV["MIGRATE_QUIET"].nil?
-      version = ENV["MIGRATE_VERSION"] ? ENV["MIGRATE_VERSION"].to_i : nil
+      migrate_db_up
+    end
 
-      ActiveRecord::Migrator.migrations_path = self.migrations_path
-      ActiveRecord::Migration.verbose = verbose
-      ActiveRecord::Migrator.migrate(self.migrations_path, version) do |migration|
-        ENV["MIGRATE_SCOPE"].blank? || (ENV["MIGRATE_SCOPE"] == migration.scope)
-      end
+    def migrate_db_up(target_version = nil)
+      migration_context.up(target_version)
+    end
+
+    def migrate_db_down(target_version = nil)
+      migration_context.down(target_version)
+    end
+
+    def migrate_db_forward(steps = 1)
+      migration_context.forward(steps)
+    end
+
+    def migrate_db_backward(steps = 1)
+      migration_context.rollback(steps)
     end
 
     def load_schema
-      # silence STDOUT
-      current_stdout = $stdout.dup
+      current_stdout = $stdout.dup # silence STDOUT
       $stdout = File.new("/dev/null", "w")
       load_ruby_schema if self.schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
       load_sql_schema  if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
@@ -72,8 +80,7 @@ module Ardb::Adapter
     end
 
     def dump_schema
-      # silence STDOUT
-      current_stdout = $stdout.dup
+      current_stdout = $stdout.dup # silence STDOUT
       $stdout = File.new("/dev/null", "w")
       dump_ruby_schema
       dump_sql_schema if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
@@ -98,6 +105,12 @@ module Ardb::Adapter
       else
         super
       end
+    end
+
+    private
+
+    def migration_context
+      ActiveRecord::MigrationContext.new(migrations_path)
     end
   end
 end

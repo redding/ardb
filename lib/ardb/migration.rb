@@ -17,10 +17,12 @@ module Ardb
       @file_name  = get_file_name(@identifier)
       @file_path  = File.join(self.migrations_path, "#{@file_name}.rb")
 
-      @source = "class #{@class_name} < ActiveRecord::Migration\n" \
-                "  def change\n" \
-                "  end\n" \
-                "end\n"
+      migration_version = ActiveRecord::Migration.current_version
+      @source =
+        "class #{@class_name} < ActiveRecord::Migration[#{migration_version}]\n"\
+        "  def change\n"\
+        "  end\n"\
+        "end\n"
     end
 
     def save!

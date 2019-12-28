@@ -106,7 +106,7 @@ class Ardb::Adapter::Base
         @ar_with_connection_called = true
       end
 
-      @adapter.connect_db
+      subject.connect_db
     end
 
     should "use activerecord to establish and then checkout a connection" do
@@ -115,41 +115,54 @@ class Ardb::Adapter::Base
     end
   end
 
-  class MigrateDbTests < UnitTests
-    desc "`migrate_db`"
+  class MigrateTests < UnitTests
     setup do
-      @orig_migrate_version_env_var = ENV["MIGRATE_VERSION"]
-      @orig_migrate_query_env_var   = ENV["MIGRATE_QUIET"]
-
-      ENV["MIGRATE_VERSION"] = Factory.integer.to_s if Factory.boolean
-      ENV["MIGRATE_QUIET"]   = Factory.boolean.to_s if Factory.boolean
-
-      @migrator_called_with = []
-      Assert.stub(ActiveRecord::Migrator, :migrate) do |*args|
-        @migrator_called_with = args
+      Assert.stub(ActiveRecord::MigrationContext, :new) do |*args, &block|
+        @fake_migration_context ||= FakeMigrationContext.new(*args)
       end
-
-      @adapter.migrate_db
-    end
-    teardown do
-      ENV["MIGRATE_VERSION"] = @orig_migrate_version_env_var
-      ENV["MIGRATE_QUIET"]   = @orig_migrate_query_env_var
     end
 
-    should "set the activerecord migrator's migrations path" do
-      exp = subject.migrations_path
-      assert_equal exp, ActiveRecord::Migrator.migrations_path
+    should "migrate the db with `migrate_db`" do
+      subject.migrate_db
+
+      assert_equal [subject.migrations_path], @fake_migration_context.init_with
+      assert_equal [nil], @fake_migration_context.up_called_with
     end
 
-    should "set the activerecord migration's verbose attr" do
-      exp = ENV["MIGRATE_QUIET"].nil?
-      assert_equal exp, ActiveRecord::Migration.verbose
+    should "migrate the db with `migrate_db_up`" do
+      subject.migrate_db_up
+      assert_equal [nil], @fake_migration_context.up_called_with
+
+      target = Factory.string
+      subject.migrate_db_up(target)
+      assert_equal [target], @fake_migration_context.up_called_with
     end
 
-    should "call the activerecord migrator's migrate method" do
-      version = ENV.key?("MIGRATE_VERSION") ? ENV["MIGRATE_VERSION"].to_i : nil
-      exp = [subject.migrations_path, version]
-      assert_equal exp, @migrator_called_with
+    should "migrate the db with `migrate_db_down`" do
+      subject.migrate_db_down
+      assert_equal [nil], @fake_migration_context.down_called_with
+
+      target = Factory.string
+      subject.migrate_db_down(target)
+      assert_equal [target], @fake_migration_context.down_called_with
+    end
+
+    should "migrate the db with `migrate_db_forward`" do
+      subject.migrate_db_forward
+      assert_equal [1], @fake_migration_context.forward_called_with
+
+      steps = Factory.integer(3)
+      subject.migrate_db_forward(steps)
+      assert_equal [steps], @fake_migration_context.forward_called_with
+    end
+
+    should "migrate the db with `migrate_db_backward`" do
+      subject.migrate_db_backward
+      assert_equal [1], @fake_migration_context.rollback_called_with
+
+      steps = Factory.integer(3)
+      subject.migrate_db_backward(steps)
+      assert_equal [steps], @fake_migration_context.rollback_called_with
     end
   end
 
@@ -308,5 +321,31 @@ class Ardb::Adapter::Base
 
   class FakeConnectionPool
     def with_connection(&block); end
+  end
+
+  class FakeMigrationContext
+    attr_reader :init_with
+    attr_reader :up_called_with, :down_called_with
+    attr_reader :forward_called_with, :rollback_called_with
+
+    def initialize(*args)
+      @init_with = args
+    end
+
+    def up(*args)
+      @up_called_with = args
+    end
+
+    def down(*args)
+      @down_called_with = args
+    end
+
+    def forward(*args)
+      @forward_called_with = args
+    end
+
+    def rollback(*args)
+      @rollback_called_with = args
+    end
   end
 end
