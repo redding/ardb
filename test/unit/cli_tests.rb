@@ -326,7 +326,7 @@ class Ardb::CLI
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.connect_db_called?
 
-      exp = "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
+      exp = "connected to #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
@@ -372,7 +372,7 @@ class Ardb::CLI
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
 
-      exp = "created #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
+      exp = "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
@@ -414,7 +414,7 @@ class Ardb::CLI
       assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
 
-      exp = "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`\n"
+      exp = "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
