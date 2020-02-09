@@ -121,11 +121,6 @@ module Ardb
         raise ConfigurationError, "an adapter and database must be provided"
       end
 
-      if self.database =~ /\W/
-        raise ConfigurationError, "database value must not contain non-word "\
-                                  "characters. Given: #{self.database.inspect}."
-      end
-
       if !VALID_SCHEMA_FORMATS.include?(self.schema_format)
         raise ConfigurationError, "schema format must be one of: " \
                                   "#{VALID_SCHEMA_FORMATS.join(", ")}"
