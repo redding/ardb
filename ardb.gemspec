@@ -20,7 +20,7 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = "~> 2.4"
 
-  gem.add_development_dependency("assert", ["~> 2.18.0"])
+  gem.add_development_dependency("assert", ["~> 2.18.1"])
 
   gem.add_dependency("activerecord",  ["~> 5.0"])
   gem.add_dependency("activesupport", ["~> 5.0"])
