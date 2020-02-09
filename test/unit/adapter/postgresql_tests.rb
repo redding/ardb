@@ -21,6 +21,13 @@ class Ardb::Adapter::Postgresql
       })
       assert_equal exp, subject.public_connect_hash
     end
+
+    should "complain if given a database name with non-word characters" do
+      @config.database = "#{Factory.string}-#{Factory.string}"
+      assert_raises(Ardb::ConfigurationError){
+        Ardb::Adapter::Postgresql.new(@config)
+      }
+    end
   end
 
   class SQLSchemaTests < UnitTests

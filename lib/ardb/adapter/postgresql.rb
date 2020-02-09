@@ -60,6 +60,16 @@ module Ardb::Adapter
 
     private
 
+    def validate!
+      if self.database =~ /\W/
+        raise(
+          Ardb::ConfigurationError,
+          "database value must not contain non-word characters. "\
+          "Given: #{self.database.inspect}."
+        )
+      end
+    end
+
     def env_var_hash
       @env_var_hash ||= {
         "PGHOST"     => self.connect_hash["host"],

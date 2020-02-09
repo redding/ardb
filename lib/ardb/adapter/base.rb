@@ -7,6 +7,7 @@ module Ardb::Adapter
 
     def initialize(config)
       @config = config
+      validate!
     end
 
     def connect_hash;    self.config.activerecord_connect_hash; end
@@ -108,6 +109,10 @@ module Ardb::Adapter
     end
 
     private
+
+    def validate!
+      # override as needed
+    end
 
     def migration_context
       ActiveRecord::MigrationContext.new(migrations_path)
