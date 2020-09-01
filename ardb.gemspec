@@ -22,8 +22,8 @@ Gem::Specification.new do |gem|
 
   gem.add_development_dependency("assert", ["~> 2.18.1"])
 
-  gem.add_dependency("activerecord",  ["~> 5.0"])
-  gem.add_dependency("activesupport", ["~> 5.0"])
+  gem.add_dependency("activerecord",  ["> 5.0", "< 7.0"])
+  gem.add_dependency("activesupport", ["> 5.0", "< 7.0"])
   gem.add_dependency("much-plugin",   ["~> 0.2.1"])
   gem.add_dependency("scmd",          ["~> 3.0.3"])
 end

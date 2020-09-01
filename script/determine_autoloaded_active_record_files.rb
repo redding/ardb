@@ -17,9 +17,12 @@ ignored_regexes = [
   /active_record\/railtie/,
   /active_record\/migration/,
   /active_record\/fixtures/,
+  /active_record\/fixture_set/,
   /active_record\/schema/,
   /active_record\/connection_adapters/,
   /active_record\/test_case/,
+  /active_record\/test_databases/,
+  /active_record\/test_fixtures/,
   /active_record\/coders\/yaml_column/
 ]
 
