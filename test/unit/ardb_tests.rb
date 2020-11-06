@@ -110,6 +110,13 @@ module Ardb
       assert_same @ardb_adapter, subject.adapter
     end
 
+    should "set ActiveRecord::Base attributes" do
+      subject.init
+
+      assert_equal subject.config.logger, ActiveRecord::Base.logger
+      assert_equal subject.config.default_timezone, ActiveRecord::Base.default_timezone
+    end
+
     should "optionally establish an AR connection" do
       assert_nil @ardb_adapter
       subject.init
@@ -193,12 +200,13 @@ module Ardb
     subject{ @config }
 
     should have_accessors *Ardb::Config::ACTIVERECORD_ATTRS
-    should have_accessors :logger, :root_path
+    should have_accessors :default_timezone, :logger, :root_path
     should have_readers :schema_format
     should have_writers :migrations_path, :schema_path
     should have_imeths :activerecord_connect_hash, :validate!
 
     should "default its attributs" do
+      assert_equal :utc, subject.default_timezone
       assert_instance_of Logger, subject.logger
       assert_equal ENV["PWD"], subject.root_path
       exp = File.expand_path(@config_class::DEFAULT_MIGRATIONS_PATH, subject.root_path)
@@ -272,6 +280,7 @@ module Ardb
 
     should "know if its equal to another config" do
       attrs = @config_class::ACTIVERECORD_ATTRS + [
+        :default_timezone,
         :logger,
         :root_path,
         :schema_format,
