@@ -41,18 +41,19 @@ require "ardb"
 
 # This Ardb configuration matches Rails's settings.
 Ardb.configure do |c|
-  rails_db_config = Rails.application.config_for("database")
-  c.root_path     = Rails.root
-  c.logger        = Rails.logger
-  c.schema_format = Rails.application.config.active_record.schema_format || :ruby
-  c.adapter       = rails_db_config["adapter"]
-  c.host          = rails_db_config["host"]
-  c.port          = rails_db_config["port"]
-  c.username      = rails_db_config["username"]
-  c.password      = rails_db_config["password"]
-  c.database      = rails_db_config["database"]
-  c.encoding      = rails_db_config["encoding"]
-  c.min_messages  = rails_db_config["min_messages"]
+  rails_db_config    = Rails.application.config_for("database")
+  c.root_path        = Rails.root
+  c.logger           = Rails.logger
+  c.schema_format    = Rails.application.config.active_record.schema_format || :ruby
+  c.default_timezone = :utc
+  c.adapter          = rails_db_config["adapter"]
+  c.host             = rails_db_config["host"]
+  c.port             = rails_db_config["port"]
+  c.username         = rails_db_config["username"]
+  c.password         = rails_db_config["password"]
+  c.database         = rails_db_config["database"]
+  c.encoding         = rails_db_config["encoding"]
+  c.min_messages     = rails_db_config["min_messages"]
 
   c.migrations_path = "db/migrate"
   c.schema_path = "db/schema"

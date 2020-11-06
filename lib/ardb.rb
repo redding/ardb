@@ -33,6 +33,7 @@ module Ardb
     @adapter = Adapter.new(self.config)
 
     # setup AR
+    ActiveRecord::Base.default_timezone = self.config.default_timezone
     ActiveRecord::Base.logger = self.config.logger
     self.adapter.connect_db if establish_connection
   end
@@ -81,16 +82,17 @@ module Ardb
     VALID_SCHEMA_FORMATS    = [RUBY_SCHEMA_FORMAT, SQL_SCHEMA_FORMAT].freeze
 
     attr_accessor(*ACTIVERECORD_ATTRS)
-    attr_accessor :logger, :root_path
+    attr_accessor :default_timezone, :logger, :root_path
     attr_reader :schema_format
     attr_writer :migrations_path, :schema_path
 
     def initialize
-      @logger          = Logger.new(STDOUT)
-      @root_path       = ENV["PWD"]
-      @migrations_path = DEFAULT_MIGRATIONS_PATH
-      @schema_path     = DEFAULT_SCHEMA_PATH
-      @schema_format   = RUBY_SCHEMA_FORMAT
+      @default_timezone = :utc
+      @logger           = Logger.new(STDOUT)
+      @root_path        = ENV["PWD"]
+      @migrations_path  = DEFAULT_MIGRATIONS_PATH
+      @schema_path      = DEFAULT_SCHEMA_PATH
+      @schema_format    = RUBY_SCHEMA_FORMAT
     end
 
     def migrations_path
@@ -132,6 +134,7 @@ module Ardb
     def ==(other)
       if other.kind_of?(self.class)
         self.activerecord_connect_hash == other.activerecord_connect_hash &&
+        self.default_timezone          == other.default_timezone          &&
         self.logger                    == other.logger                    &&
         self.root_path                 == other.root_path                 &&
         self.schema_format             == other.schema_format             &&
@@ -192,5 +195,4 @@ module Ardb
       set_backtrace(backtrace)
     end
   end
-
 end
