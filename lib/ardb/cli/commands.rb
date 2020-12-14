@@ -76,10 +76,10 @@ class Ardb::CLI
       begin
         Ardb.init(false)
         Ardb.adapter.connect_db
-        @stdout.puts "connected to #{Ardb.config.adapter} db `#{Ardb.config.database}`"
+        @stdout.puts "connected to #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
       rescue ActiveRecord::NoDatabaseError => e
         @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "does not exist."
+                     "does not exist"
       rescue StandardError => e
         @stderr.puts e
         @stderr.puts e.backtrace.join("\n")
@@ -102,10 +102,10 @@ class Ardb::CLI
       begin
         Ardb.init(false)
         Ardb.adapter.create_db
-        @stdout.puts "created #{Ardb.config.adapter} db `#{Ardb.config.database}`"
+        @stdout.puts "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
       rescue ActiveRecord::StatementInvalid => e
         @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "already exists."
+                     "already exists"
       rescue StandardError => e
         @stderr.puts e
         @stderr.puts "error creating #{Ardb.config.database.inspect} database"
@@ -126,10 +126,10 @@ class Ardb::CLI
       begin
         Ardb.init(true)
         Ardb.adapter.drop_db
-        @stdout.puts "dropped #{Ardb.config.adapter} db `#{Ardb.config.database}`"
+        @stdout.puts "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
       rescue ActiveRecord::NoDatabaseError => e
         @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "does not exist."
+                     "does not exist"
       rescue StandardError => e
         @stderr.puts e
         @stderr.puts "error dropping #{Ardb.config.database.inspect} database"
@@ -165,6 +165,13 @@ class Ardb::CLI
         raise CommandExitError
       end
     end
+
+    def command_help
+      "Usage: ardb #{self.command_name} MIGRATION-NAME [options]\n\n" \
+      "Options: #{self.clirb}\n" \
+      "Description:\n" \
+      "  #{self.command_summary}"
+    end
   end
 
   module MigrateCommandBehaviors
@@ -186,7 +193,7 @@ class Ardb::CLI
           Ardb.adapter.dump_schema unless ENV["ARDB_MIGRATE_NO_SCHEMA"]
         rescue ActiveRecord::NoDatabaseError => e
           @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                       "does not exist."
+                       "does not exist"
         rescue StandardError => e
           @stderr.puts e
           @stderr.puts e.backtrace.join("\n")
