@@ -23,7 +23,9 @@ ignored_regexes = [
   /active_record\/test_case/,
   /active_record\/test_databases/,
   /active_record\/test_fixtures/,
-  /active_record\/coders\/yaml_column/
+  /active_record\/coders\/yaml_column/,
+  # `destroy_association_async_job` requires `ActiveJob` to be required.
+  /active_record\/destroy_association_async_job/,
 ]
 
 Result = Struct.new(:file, :state, :reason)

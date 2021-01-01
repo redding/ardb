@@ -1,8 +1,9 @@
 require "assert"
 require "ardb/adapter/base"
 
+require "active_record/migration"
 require "ardb"
-# This is needed by the schema dumper but it doesn"t handle requiring it so we
+# This is needed by the schema dumper but it doesn't handle requiring it so we
 # have to manually, otherwise this errors when you try to run the adapter base
 # tests by themselves
 require "active_support/core_ext/class/attribute_accessors"
