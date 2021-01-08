@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_record"
 require "logger"
 
@@ -11,74 +13,79 @@ module Ardb
   end
 
   def self.configure(&block)
-    self.config.tap(&block)
+    config.tap(&block)
   end
 
   def self.adapter
     @adapter || raise(NotInitializedError.new(caller))
   end
 
-  def self.reset_adapter; @adapter = nil; end
+  def self.reset_adapter
+    @adapter = nil
+  end
 
   def self.init(establish_connection = true)
     require "ardb/require_autoloaded_active_record_files"
     begin
       require_db_file
-    rescue InvalidDBFileError => exception
-      exception.set_backtrace(caller)
-      raise exception
+    rescue InvalidDBFileError => ex
+      ex.set_backtrace(caller)
+      raise ex
     end
 
-    self.config.validate!
-    @adapter = Adapter.new(self.config)
+    config.validate!
+    @adapter = Adapter.new(config)
 
     # setup AR
-    ActiveRecord::Base.default_timezone = self.config.default_timezone
-    ActiveRecord::Base.logger = self.config.logger
-    self.adapter.connect_db if establish_connection
+    ActiveRecord::Base.default_timezone = config.default_timezone
+    ActiveRecord::Base.logger = config.logger
+    adapter.connect_db if establish_connection
   end
 
   def self.escape_like_pattern(pattern, escape_char = nil)
-    self.adapter.escape_like_pattern(pattern, escape_char)
-  rescue NotInitializedError => exception
-    exception.set_backtrace(caller)
-    raise exception
+    adapter.escape_like_pattern(pattern, escape_char)
+  rescue NotInitializedError => ex
+    ex.set_backtrace(caller)
+    raise ex
   end
-
-  private
 
   # try requiring the db file via the load path or as an absolute path, if
   # that fails it tries requiring relative to the current working directory
   def self.require_db_file
     begin
-      require ENV["ARDB_DB_FILE"]
+      begin
+        require ENV["ARDB_DB_FILE"]
+      rescue LoadError
+        require File.expand_path(ENV["ARDB_DB_FILE"], ENV["PWD"])
+      end
     rescue LoadError
-      require File.expand_path(ENV["ARDB_DB_FILE"], ENV["PWD"])
+      raise(
+        InvalidDBFileError,
+        "can't require `#{ENV["ARDB_DB_FILE"]}`, check that the ARDB_DB_FILE "\
+        "env var is set to the file path of your db file",
+      )
     end
-  rescue LoadError
-    raise InvalidDBFileError, "can't require `#{ENV["ARDB_DB_FILE"]}`, " \
-                              "check that the ARDB_DB_FILE env var is set to " \
-                              "the file path of your db file"
   end
 
   class Config
-    ACTIVERECORD_ATTRS = [
-      :adapter,
-      :database,
-      :encoding,
-      :host,
-      :port,
-      :username,
-      :password,
-      :pool,
-      :checkout_timeout,
-      :min_messages
-    ].freeze
+    ACTIVERECORD_ATTRS =
+      [
+        :adapter,
+        :database,
+        :encoding,
+        :host,
+        :port,
+        :username,
+        :password,
+        :pool,
+        :checkout_timeout,
+        :min_messages,
+      ].freeze
 
-    DEFAULT_MIGRATIONS_PATH = "db/migrations".freeze
-    DEFAULT_SCHEMA_PATH     = "db/schema".freeze
-    RUBY_SCHEMA_FORMAT      = :ruby.freeze
-    SQL_SCHEMA_FORMAT       = :sql.freeze
+    DEFAULT_MIGRATIONS_PATH = "db/migrations"
+    DEFAULT_SCHEMA_PATH     = "db/schema"
+    RUBY_SCHEMA_FORMAT      = :ruby
+    SQL_SCHEMA_FORMAT       = :sql
     VALID_SCHEMA_FORMATS    = [RUBY_SCHEMA_FORMAT, SQL_SCHEMA_FORMAT].freeze
 
     attr_accessor(*ACTIVERECORD_ATTRS)
@@ -104,26 +111,27 @@ module Ardb
     end
 
     def schema_format=(new_value)
-      @schema_format = begin
-        new_value.to_sym
-      rescue NoMethodError
-        raise ArgumentError, "schema format must be a `Symbol`", caller
-      end
+      @schema_format =
+        begin
+          new_value.to_sym
+        rescue NoMethodError
+          raise ArgumentError, "schema format must be a `Symbol`", caller
+        end
     end
 
     def activerecord_connect_hash
       ACTIVERECORD_ATTRS.inject({}) do |h, attr_name|
-        value = self.send(attr_name)
+        value = send(attr_name)
         !value.nil? ? h.merge!(attr_name.to_s => value) : h
       end
     end
 
     def validate!
-      if self.adapter.to_s.empty? || self.database.to_s.empty?
+      if adapter.to_s.empty? || database.to_s.empty?
         raise ConfigurationError, "an adapter and database must be provided"
       end
 
-      if !VALID_SCHEMA_FORMATS.include?(self.schema_format)
+      unless VALID_SCHEMA_FORMATS.include?(schema_format)
         raise ConfigurationError, "schema format must be one of: " \
                                   "#{VALID_SCHEMA_FORMATS.join(", ")}"
       end
@@ -132,14 +140,14 @@ module Ardb
     end
 
     def ==(other)
-      if other.kind_of?(self.class)
-        self.activerecord_connect_hash == other.activerecord_connect_hash &&
-        self.default_timezone          == other.default_timezone          &&
-        self.logger                    == other.logger                    &&
-        self.root_path                 == other.root_path                 &&
-        self.schema_format             == other.schema_format             &&
-        self.migrations_path           == other.migrations_path           &&
-        self.schema_path               == other.schema_path
+      if other.is_a?(self.class)
+        activerecord_connect_hash == other.activerecord_connect_hash &&
+        default_timezone          == other.default_timezone          &&
+        logger                    == other.logger                    &&
+        root_path                 == other.root_path                 &&
+        schema_format             == other.schema_format             &&
+        migrations_path           == other.migrations_path           &&
+        schema_path               == other.schema_path
       else
         super
       end
@@ -153,14 +161,14 @@ module Ardb
       "postgresql",
       "postgres",
       "mysql",
-      "mysql2"
+      "mysql2",
     ].freeze
 
     def self.new(config)
-      if !VALID_ADAPTERS.include?(config.adapter)
+      unless VALID_ADAPTERS.include?(config.adapter)
         raise InvalidAdapterError, "invalid adapter: `#{config.adapter}`"
       end
-      self.send(config.adapter, config)
+      send(config.adapter, config)
     end
 
     def self.sqlite(config)
@@ -168,21 +176,27 @@ module Ardb
       Adapter::Sqlite.new(config)
     end
 
-    def self.sqlite3(config); self.sqlite(config); end
+    def self.sqlite3(config)
+      sqlite(config)
+    end
 
     def self.postgresql(config)
       require "ardb/adapter/postgresql"
       Adapter::Postgresql.new(config)
     end
 
-    def self.postgres(config); self.postgresql(config); end
+    def self.postgres(config)
+      postgresql(config)
+    end
 
     def self.mysql(config)
       require "ardb/adapter/mysql"
       Adapter::Mysql.new(config)
     end
 
-    def self.mysql2(config); self.mysql(config); end
+    def self.mysql2(config)
+      mysql(config)
+    end
   end
 
   InvalidDBFileError  = Class.new(ArgumentError)

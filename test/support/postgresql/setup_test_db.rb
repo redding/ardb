@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb"
 
@@ -6,7 +8,7 @@ class PostgresqlDbTests < Assert::Context
     @orig_env_ardb_db_file    = ENV["ARDB_DB_FILE"]
     ActiveRecord::Base.logger = @orig_ar_loggerF
 
-    # no-op, we"re manually configuring ardb so we don"t need this to do anything
+    # we"re manually configuring ardb so we don"t need this to do anything
     ENV["ARDB_DB_FILE"] = File.join(TEST_SUPPORT_PATH, "require_test_db_file")
 
     @ardb_config = Ardb::Config.new.tap do |c|

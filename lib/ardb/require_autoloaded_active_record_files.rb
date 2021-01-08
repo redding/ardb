@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # ActiveRecord makes use of autoload to load some of its components as-needed.
 # This doesn"t work well with threaded environments, and causes uninitialized
 # constants. To avoid this, this file manually requires the following files that
@@ -173,7 +175,7 @@ elsif ActiveRecord.version.segments[0] == 5
 else
   raise(
     "ActiveRecord #{ActiveRecord.version} isn't supported. "\
-    "Switch to 5.X or 6.X"
+    "Switch to 5.X or 6.X",
   )
 end
 

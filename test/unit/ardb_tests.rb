@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb"
 
@@ -114,7 +116,10 @@ module Ardb
       subject.init
 
       assert_equal subject.config.logger, ActiveRecord::Base.logger
-      assert_equal subject.config.default_timezone, ActiveRecord::Base.default_timezone
+      assert_equal(
+        subject.config.default_timezone,
+        ActiveRecord::Base.default_timezone,
+      )
     end
 
     should "optionally establish an AR connection" do
@@ -132,7 +137,9 @@ module Ardb
     should "raise a not initialized error using its adapter before init" do
       subject.reset_adapter
       assert_raises(NotInitializedError){ subject.adapter }
-      assert_raises(NotInitializedError){ subject.escape_like_pattern(Factory.string) }
+      assert_raises(NotInitializedError) do
+        subject.escape_like_pattern(Factory.string)
+      end
 
       subject.init
       assert_nothing_raised{ subject.adapter }
@@ -171,7 +178,7 @@ module Ardb
         :password,
         :pool,
         :checkout_timeout,
-        :min_messages
+        :min_messages,
       ]
       assert_equal exp, subject::ACTIVERECORD_ATTRS
     end
@@ -199,7 +206,7 @@ module Ardb
     end
     subject{ @config }
 
-    should have_accessors *Ardb::Config::ACTIVERECORD_ATTRS
+    should have_accessors(*Ardb::Config::ACTIVERECORD_ATTRS)
     should have_accessors :default_timezone, :logger, :root_path
     should have_readers :schema_format
     should have_writers :migrations_path, :schema_path
@@ -209,9 +216,17 @@ module Ardb
       assert_equal :utc, subject.default_timezone
       assert_instance_of Logger, subject.logger
       assert_equal ENV["PWD"], subject.root_path
-      exp = File.expand_path(@config_class::DEFAULT_MIGRATIONS_PATH, subject.root_path)
+      exp =
+        File.expand_path(
+          @config_class::DEFAULT_MIGRATIONS_PATH,
+          subject.root_path,
+        )
       assert_equal exp, subject.migrations_path
-      exp = File.expand_path(@config_class::DEFAULT_SCHEMA_PATH, subject.root_path)
+      exp =
+        File.expand_path(
+          @config_class::DEFAULT_SCHEMA_PATH,
+          subject.root_path,
+        )
       assert_equal exp, subject.schema_path
       assert_equal @config_class::RUBY_SCHEMA_FORMAT, subject.schema_format
     end
@@ -250,11 +265,11 @@ module Ardb
     end
 
     should "know its activerecord connection hash" do
-      attrs_and_values = @config_class::ACTIVERECORD_ATTRS.map do |attr_name|
-        value = [Factory.string,  nil].sample
+      attrs_and_values = @config_class::ACTIVERECORD_ATTRS.map{ |attr_name|
+        value = [Factory.string, nil].sample
         subject.send("#{attr_name}=", value)
-        [attr_name.to_s, value] if !value.nil?
-      end.compact
+        [attr_name.to_s, value] unless value.nil?
+      }.compact
       assert_equal Hash[attrs_and_values], subject.activerecord_connect_hash
     end
 
@@ -285,7 +300,7 @@ module Ardb
         :root_path,
         :schema_format,
         :migrations_path,
-        :schema_path
+        :schema_path,
       ]
       attrs.each do |attr_name|
         subject.send("#{attr_name}=", Factory.string)
@@ -324,7 +339,7 @@ module Ardb
         "postgresql",
         "postgres",
         "mysql",
-        "mysql2"
+        "mysql2",
       ]
       assert_equal exp, subject::VALID_ADAPTERS
     end
@@ -333,7 +348,7 @@ module Ardb
       adapter_key, exp_adapter_class = [
         ["sqlite",     Ardb::Adapter::Sqlite],
         ["postgresql", Ardb::Adapter::Postgresql],
-        ["mysql",      Ardb::Adapter::Mysql]
+        ["mysql",      Ardb::Adapter::Mysql],
       ].sample
       @config.adapter = adapter_key
 

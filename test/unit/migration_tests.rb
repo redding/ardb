@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/migration"
 
@@ -36,7 +38,7 @@ class Ardb::Migration
     end
     subject{ @migration }
 
-    should have_readers  :migrations_path, :identifier
+    should have_readers :migrations_path, :identifier
     should have_readers :class_name, :file_name, :file_path, :source
     should have_imeths :save!
 
@@ -55,10 +57,11 @@ class Ardb::Migration
 
       exp_version = ActiveRecord::Migration.current_version
       exp =
-        "class #{subject.class_name} < ActiveRecord::Migration[#{exp_version}]\n" \
-            "  def change\n" \
-            "  end\n" \
-            "end\n"
+        "class #{subject.class_name} "\
+        "< ActiveRecord::Migration[#{exp_version}]\n" \
+        "  def change\n" \
+        "  end\n" \
+        "end\n"
       assert_equal exp, subject.source
     end
 

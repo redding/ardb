@@ -1,23 +1,28 @@
+# frozen_string_literal: true
+
 require "ardb/cli/clirb"
 require "ardb/cli/commands"
 require "ardb/version"
 
 module Ardb
   class CLI
-    COMMANDS = CommandSet.new{ |unknown| InvalidCommand.new(unknown) }.tap do |c|
-      c.add(ConnectCommand)
-      c.add(CreateCommand)
-      c.add(DropCommand)
-      c.add(GenerateMigrationCommand)
-      c.add(MigrateCommand)
-      c.add(MigrateUpCommand)
-      c.add(MigrateDownCommand)
-      c.add(MigrateForwardCommand)
-      c.add(MigrateBackwardCommand)
-    end
+    COMMANDS =
+      CommandSet.new{ |unknown|
+        InvalidCommand.new(unknown)
+      }.tap do |c|
+        c.add(ConnectCommand)
+        c.add(CreateCommand)
+        c.add(DropCommand)
+        c.add(GenerateMigrationCommand)
+        c.add(MigrateCommand)
+        c.add(MigrateUpCommand)
+        c.add(MigrateDownCommand)
+        c.add(MigrateForwardCommand)
+        c.add(MigrateBackwardCommand)
+      end
 
     def self.run(args)
-      self.new.run(args)
+      new.run(args)
     end
 
     def initialize(kernel = nil, stdout = nil, stderr = nil)
@@ -37,16 +42,16 @@ module Ardb
         @stdout.puts cmd.command_help
       rescue CLIRB::VersionExit
         @stdout.puts Ardb::VERSION
-      rescue CLIRB::Error, ArgumentError, InvalidCommandError => exception
-        display_debug(exception)
-        @stderr.puts "#{exception.message}\n\n"
+      rescue CLIRB::Error, ArgumentError, InvalidCommandError => ex
+        display_debug(ex)
+        @stderr.puts "#{ex.message}\n\n"
         @stdout.puts cmd.command_help
         @kernel.exit 1
       rescue CommandExitError
         @kernel.exit 1
-      rescue StandardError => exception
-        @stderr.puts "#{exception.class}: #{exception.message}"
-        @stderr.puts exception.backtrace.join("\n")
+      rescue => ex
+        @stderr.puts "#{ex.class}: #{ex.message}"
+        @stderr.puts ex.backtrace.join("\n")
         @kernel.exit 1
       end
       @kernel.exit 0

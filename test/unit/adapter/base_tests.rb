@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/adapter/base"
 
@@ -118,7 +120,7 @@ class Ardb::Adapter::Base
 
   class MigrateTests < UnitTests
     setup do
-      Assert.stub(ActiveRecord::MigrationContext, :new) do |*args, &block|
+      Assert.stub(ActiveRecord::MigrationContext, :new) do |*args|
         @fake_migration_context ||= FakeMigrationContext.new(*args)
       end
     end
@@ -257,7 +259,8 @@ class Ardb::Adapter::Base
 
   class DumpRubySchemaTests < UnitTests
     setup do
-      @config.schema_path = File.join(TMP_PATH, "testdb", "test_dump_ruby_schema")
+      @config.schema_path =
+        File.join(TMP_PATH, "testdb", "test_dump_ruby_schema")
       FileUtils.rm_rf(File.dirname(@config.schema_path))
 
       @schema_dumper_connection, @schema_dumper_file = [nil, nil]
@@ -276,9 +279,9 @@ class Ardb::Adapter::Base
     end
 
     should "dump a ruby schema file using `dump_ruby_schema`" do
-      assert_false File.exists?(subject.ruby_schema_path)
+      assert_false File.exist?(subject.ruby_schema_path)
       subject.dump_ruby_schema
-      assert_true File.exists?(subject.ruby_schema_path)
+      assert_true File.exist?(subject.ruby_schema_path)
       assert_equal @fake_connection, @schema_dumper_connection
       assert_instance_of File, @schema_dumper_file
       assert_equal subject.ruby_schema_path, @schema_dumper_file.path
@@ -321,7 +324,8 @@ class Ardb::Adapter::Base
   end
 
   class FakeConnectionPool
-    def with_connection(&block); end
+    def with_connection(&block)
+    end
   end
 
   class FakeMigrationContext

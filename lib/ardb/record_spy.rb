@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "arel"
 require "much-mixin"
 require "ardb/relation_spy"
@@ -7,7 +9,7 @@ module Ardb
     include MuchMixin
 
     def self.new(&block)
-      block ||= proc{ }
+      block ||= proc{}
       record_spy = Class.new{ include Ardb::RecordSpy }
       record_spy.class_eval(&block)
       record_spy
@@ -27,13 +29,14 @@ module Ardb
       [:belongs_to, :has_one, :has_many].each do |method_name|
         define_method(method_name) do |assoc_name, *args|
           define_method(assoc_name) do
-            instance_variable_get("@#{assoc_name}") || (method_name == :has_many ? [] : nil)
+            instance_variable_get("@#{assoc_name}") ||
+            (method_name == :has_many ? [] : nil)
           end
           define_method("#{assoc_name}=") do |value|
             instance_variable_set("@#{assoc_name}", value)
           end
 
-          self.associations << Association.new(method_name, assoc_name, *args)
+          associations << Association.new(method_name, assoc_name, *args)
         end
       end
 
@@ -43,7 +46,8 @@ module Ardb
         @validations ||= []
       end
 
-      [ :validates_acceptance_of,
+      [
+        :validates_acceptance_of,
         :validates_confirmation_of,
         :validates_exclusion_of,
         :validates_format_of,
@@ -52,29 +56,29 @@ module Ardb
         :validates_numericality_of,
         :validates_presence_of,
         :validates_size_of,
-        :validates_uniqueness_of
+        :validates_uniqueness_of,
       ].each do |method_name|
         type = method_name.to_s.match(/\Avalidates_(.+)_of\Z/)[1]
 
         define_method(method_name) do |*args|
-          self.validations << Validation.new(type, *args)
+          validations << Validation.new(type, *args)
         end
       end
 
       def validates_associated(*args)
-        self.validations << Validation.new(:associated, *args)
+        validations << Validation.new(:associated, *args)
       end
 
       def validates_with(*args)
-        self.validations << Validation.new(:with, *args)
+        validations << Validation.new(:with, *args)
       end
 
       def validates_each(*args, &block)
-        self.validations << Validation.new(:each, *args, &block)
+        validations << Validation.new(:each, *args, &block)
       end
 
       def validate(method_name = nil, &block)
-        self.validations << Validation.new(:custom, method_name, &block)
+        validations << Validation.new(:custom, method_name, &block)
       end
 
       def callbacks
@@ -83,7 +87,8 @@ module Ardb
 
       # Callbacks
 
-      [ :before_validation,
+      [
+        :before_validation,
         :after_validation,
         :before_create,
         :around_create,
@@ -100,10 +105,10 @@ module Ardb
         :after_commit,
         :after_rollback,
         :after_initialize,
-        :after_find
+        :after_find,
       ].each do |method_name|
         define_method(method_name) do |*args, &block|
-          self.callbacks << Callback.new(method_name, *args, &block)
+          callbacks << Callback.new(method_name, *args, &block)
         end
       end
 
@@ -112,16 +117,16 @@ module Ardb
       end
 
       def define_model_callbacks(*args)
-        options   = args.last.kind_of?(Hash) ? args.pop : {}
+        options   = args.last.is_a?(Hash) ? args.pop : {}
         types     = options[:only] || [:before, :around, :after]
         metaclass = class << self; self; end
 
         args.each do |name|
-          self.custom_callback_types << CallbackType.new(name, options)
+          custom_callback_types << CallbackType.new(name, options)
           types.each do |type|
             method_name = "#{type}_#{name}"
             metaclass.send(:define_method, method_name) do |*args, &block|
-              self.callbacks << Callback.new(method_name, *args, &block)
+              callbacks << Callback.new(method_name, *args, &block)
             end
           end
         end
@@ -135,14 +140,15 @@ module Ardb
       end
 
       def arel_table
-        @arel_table ||= Arel::Table.new(self.table_name)
+        @arel_table ||= Arel::Table.new(table_name)
       end
 
       def scoped
-        self.relation_spy
+        relation_spy
       end
 
-      [ :select,
+      [
+        :select,
         :from,
         :includes,
         :joins,
@@ -156,10 +162,10 @@ module Ardb
         :offset,
         :merge,
         :except,
-        :only
+        :only,
       ].each do |method_name|
         define_method(method_name) do |*args|
-          self.relation_spy.send(method_name, *args)
+          relation_spy.send(method_name, *args)
         end
       end
     end
@@ -168,7 +174,7 @@ module Ardb
       attr_accessor :id
 
       def update_column(col, value)
-        self.send("#{col}=", value)
+        send("#{col}=", value)
       end
 
       def manually_run_callbacks
@@ -176,8 +182,8 @@ module Ardb
       end
 
       def run_callbacks(name, &block)
-        self.manually_run_callbacks << name
-        block.call if block
+        manually_run_callbacks << name
+        block&.call
       end
     end
 
@@ -195,8 +201,8 @@ module Ardb
       attr_reader :type, :args, :options, :block
 
       def initialize(type, *args, &block)
-        @type  = type.to_sym
-        @options = args.last.kind_of?(::Hash) ? args.pop : {}
+        @type = type.to_sym
+        @options = args.last.is_a?(::Hash) ? args.pop : {}
         @args  = args
         @block = block
       end
@@ -204,18 +210,16 @@ module Ardb
 
     class Validation
       attr_reader :type, :args, :options, :method_name, :block
-      alias :columns :args
-      alias :associations :args
-      alias :classes :args
+      alias_method :columns, :args
+      alias_method :associations, :args
+      alias_method :classes, :args
 
       def initialize(type, *args, &block)
-        @type  = type.to_sym
-        @options = args.last.kind_of?(::Hash) ? args.pop : {}
+        @type = type.to_sym
+        @options = args.last.is_a?(::Hash) ? args.pop : {}
         @args = args
         @block = block
-        if @type == :custom
-          @method_name = @args.first
-        end
+        @method_name = @args.first if @type == :custom
       end
     end
   end

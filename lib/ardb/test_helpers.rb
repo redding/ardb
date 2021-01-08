@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_record"
 require "ardb"
 
@@ -6,7 +8,7 @@ require "ardb"
 
 module Ardb
   module TestHelpers
-    module_function
+    extend self
 
     def drop_tables
       Ardb.adapter.drop_tables
@@ -22,7 +24,7 @@ module Ardb
 
     def create_db
       @create_db ||= begin
-        self.create_db!
+        create_db!
         true
       end
     end
@@ -33,7 +35,7 @@ module Ardb
 
     def drop_db
       @drop_db ||= begin
-        self.drop_db!
+        drop_db!
         true
       end
     end
@@ -44,7 +46,7 @@ module Ardb
 
     def connect_db
       @connect_db ||= begin
-        self.connect_db!
+        connect_db!
         true
       end
     end
@@ -55,20 +57,20 @@ module Ardb
 
     def migrate_db
       @migrate_db ||= begin
-        self.migrate_db!
+        migrate_db!
         true
       end
     end
 
     def reset_db!
-      self.drop_db!
-      self.create_db!
-      self.load_schema
+      drop_db!
+      create_db!
+      load_schema
     end
 
     def reset_db
       @reset_db ||= begin
-        self.reset_db!
+        reset_db!
         true
       end
     end

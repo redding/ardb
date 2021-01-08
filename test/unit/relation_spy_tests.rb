@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/relation_spy"
 
@@ -49,7 +51,8 @@ class Ardb::RelationSpy
       assert_equal other_relation, subject
     end
 
-    should "build a fake sql string for its applied expressions using `to_sql`" do
+    should "build a fake sql string for its applied expressions using "\
+           "`to_sql`" do
       subject.select "column"
       subject.from "table"
       subject.joins "my_table.my_column ON my_table.my_column = table.column"
@@ -81,7 +84,7 @@ class Ardb::RelationSpy
     should "add a select applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :select, @applied.type
-      assert_equal [ :column_a, :column_b ], @applied.args
+      assert_equal [:column_a, :column_b], @applied.args
     end
   end
 
@@ -95,7 +98,7 @@ class Ardb::RelationSpy
     should "add a from applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :from, @applied.type
-      assert_equal [ "some SQL" ], @applied.args
+      assert_equal ["some SQL"], @applied.args
     end
   end
 
@@ -109,7 +112,7 @@ class Ardb::RelationSpy
     should "add an includes applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :includes, @applied.type
-      assert_equal [ :table_a, :table_b ], @applied.args
+      assert_equal [:table_a, :table_b], @applied.args
     end
   end
 
@@ -123,21 +126,21 @@ class Ardb::RelationSpy
     should "add a joins applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :joins, @applied.type
-      assert_equal [ :table_a, :table_b ], @applied.args
+      assert_equal [:table_a, :table_b], @applied.args
     end
   end
 
   class WhereTests < UnitTests
     desc "where"
     setup do
-      @relation_spy.where :column_a => "some value"
+      @relation_spy.where column_a: "some value"
       @applied = subject.applied.first
     end
 
     should "add a where applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :where, @applied.type
-      assert_equal [ { :column_a => "some value" } ], @applied.args
+      assert_equal [{ column_a: "some value" }], @applied.args
     end
   end
 
@@ -151,7 +154,7 @@ class Ardb::RelationSpy
     should "add an order applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :order, @applied.type
-      assert_equal [ :column_a, :column_b ], @applied.args
+      assert_equal [:column_a, :column_b], @applied.args
     end
   end
 
@@ -178,7 +181,7 @@ class Ardb::RelationSpy
     should "add a group applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :group, @applied.type
-      assert_equal [ :column_a, :column_b ], @applied.args
+      assert_equal [:column_a, :column_b], @applied.args
     end
   end
 
@@ -192,7 +195,7 @@ class Ardb::RelationSpy
     should "add a having applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :having, @applied.type
-      assert_equal [ "COUNT(column_a) > 0" ], @applied.args
+      assert_equal ["COUNT(column_a) > 0"], @applied.args
     end
   end
 
@@ -206,7 +209,7 @@ class Ardb::RelationSpy
     should "add a readonly applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :readonly, @applied.type
-      assert_equal [ true ], @applied.args
+      assert_equal [true], @applied.args
     end
   end
 
@@ -220,7 +223,7 @@ class Ardb::RelationSpy
     should "add a limit applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :limit, @applied.type
-      assert_equal [ 100 ], @applied.args
+      assert_equal [100], @applied.args
     end
 
     should "set it's limit value" do
@@ -238,7 +241,7 @@ class Ardb::RelationSpy
     should "add an offset applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :offset, @applied.type
-      assert_equal [ 100 ], @applied.args
+      assert_equal [100], @applied.args
     end
 
     should "set it's offset value" do
@@ -249,7 +252,8 @@ class Ardb::RelationSpy
   class MergeWithARelationSpyTests < UnitTests
     desc "merge with a relation spy"
     setup do
-      @other_relation_spy = Ardb::RelationSpy.new.select("column").joins("table")
+      @other_relation_spy =
+        Ardb::RelationSpy.new.select("column").joins("table")
       @relation_spy.merge @other_relation_spy
     end
 
@@ -271,7 +275,7 @@ class Ardb::RelationSpy
     should "add a merge applied expression with the passed args" do
       assert_instance_of AppliedExpression, @applied
       assert_equal :merge, @applied.type
-      assert_equal [ @fake_relation ], @applied.args
+      assert_equal [@fake_relation], @applied.args
     end
   end
 
@@ -290,7 +294,7 @@ class Ardb::RelationSpy
   class WithExpressionsTests < UnitTests
     setup do
       @relation_spy.select("column").includes("table").joins("table")
-      @relation_spy.where(:column => "value").order("column")
+      @relation_spy.where(column: "value").order("column")
       @relation_spy.group("column").having("count(*) > 1")
       @relation_spy.limit(1).offset(1)
     end
@@ -307,10 +311,10 @@ class Ardb::RelationSpy
     should "remove any applied expressions in the passed types" do
       relation_spy = subject.except(:includes, :where, :group, :offset)
       applied_types = relation_spy.applied.map(&:type)
-      [ :select, :joins, :order, :having, :limit ].each do |type|
+      [:select, :joins, :order, :having, :limit].each do |type|
         assert_includes type, applied_types
       end
-      [ :includes, :where, :group, :offset ].each do |type|
+      [:includes, :where, :group, :offset].each do |type|
         assert_not_includes type, applied_types
       end
     end
@@ -341,22 +345,24 @@ class Ardb::RelationSpy
     should "remove any applied expressions not in the passed types" do
       relation_spy = subject.only(:includes, :where, :group, :offset)
       applied_types = relation_spy.applied.map(&:type)
-      [ :includes, :where, :group, :offset ].each do |type|
+      [:includes, :where, :group, :offset].each do |type|
         assert_includes type, applied_types
       end
-      [ :select, :joins, :order, :having, :limit ].each do |type|
+      [:select, :joins, :order, :having, :limit].each do |type|
         assert_not_includes type, applied_types
       end
     end
 
-    should "unset the limit value if limit is not included in the passed types" do
+    should "unset the limit value if limit is not included in the passed "\
+           "types" do
       relation_spy = subject.only(:limit)
       assert_not_nil relation_spy.limit_value
       relation_spy = subject.only(:select)
       assert_nil relation_spy.limit_value
     end
 
-    should "unset the offset value if offset is not included in the passed types" do
+    should "unset the offset value if offset is not included in the passed "\
+           "types" do
       relation_spy = subject.only(:offset)
       assert_not_nil relation_spy.offset_value
       relation_spy = subject.only(:select)

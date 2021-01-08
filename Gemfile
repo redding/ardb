@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source "https://rubygems.org"
 
 ruby "~> 2.5"
@@ -20,5 +22,5 @@ gem "activesupport", "~> 6.1"
 # gem "activerecord",  "~> 5.2.4"
 # gem "activesupport", "~> 5.2.4"
 
-gem "pg",  "~> 1.1.4"
-gem "pry", "~> 0.12.2"
+gem "pg", "~> 1.1.4"
+gem "pry"

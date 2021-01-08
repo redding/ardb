@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/adapter_spy"
 
@@ -26,7 +28,8 @@ class Ardb::AdapterSpy
     should have_accessors :dump_schema_called_count, :load_schema_called_count
     should have_accessors :drop_db_called_count, :create_db_called_count
     should have_accessors :connect_db_called_count, :migrate_db_called_count
-    should have_imeths :create_db_called?, :drop_db_called?, :drop_tables_called?
+    should have_imeths :create_db_called?, :drop_db_called?
+    should have_imeths :drop_tables_called?
     should have_imeths :connect_db_called?, :migrate_db_called?
     should have_imeths :dump_schema_called?, :load_schema_called?
     should have_imeths :create_db, :drop_db, :drop_tables
