@@ -1,7 +1,7 @@
 require "assert"
 require "ardb/default_order_by"
 
-require "much-plugin"
+require "much-mixin"
 require "ardb/record_spy"
 
 module Ardb::DefaultOrderBy
@@ -20,8 +20,8 @@ module Ardb::DefaultOrderBy
     should have_imeths :default_order_by
     should have_imeths :ardb_default_order_by_config
 
-    should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::DefaultOrderBy
+    should "use much-mixin" do
+      assert_includes MuchMixin, Ardb::DefaultOrderBy
     end
 
     should "know its default attribute, preprocessor and separator" do

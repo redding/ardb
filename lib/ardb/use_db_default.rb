@@ -1,16 +1,16 @@
-require "much-plugin"
+require "much-mixin"
 
 module Ardb
   module UseDbDefault
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       @ardb_use_db_default_attrs = []
 
       around_create :ardb_allow_db_to_default_attrs
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def ardb_use_db_default_attrs
         @ardb_use_db_default_attrs
       end
@@ -21,7 +21,7 @@ module Ardb
       end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       private
 
       def ardb_allow_db_to_default_attrs

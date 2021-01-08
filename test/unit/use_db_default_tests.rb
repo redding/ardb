@@ -1,7 +1,7 @@
 require "assert"
 require "ardb/use_db_default"
 
-require "much-plugin"
+require "much-mixin"
 require "ardb/record_spy"
 
 module Ardb::UseDbDefault
@@ -17,8 +17,8 @@ module Ardb::UseDbDefault
 
     should have_imeths :use_db_default, :ardb_use_db_default_attrs
 
-    should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::UseDbDefault
+    should "use much-mixin" do
+      assert_includes MuchMixin, Ardb::UseDbDefault
     end
 
     should "know its use db default attrs" do

@@ -1,6 +1,6 @@
 require "ardb"
 require "ardb/cli/clirb"
-require "much-plugin"
+require "much-mixin"
 
 module Ardb; end
 class Ardb::CLI
@@ -32,14 +32,14 @@ class Ardb::CLI
   end
 
   module ValidCommand
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_class_methods do
+    mixin_class_methods do
       def command_name;    raise NotImplementedError; end
       def command_summary; "";                        end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize(&clirb_build)
         @clirb = CLIRB.new(&clirb_build)
       end
@@ -175,13 +175,13 @@ class Ardb::CLI
   end
 
   module MigrateCommandBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include ValidCommand
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def migrate; raise NotImplementedError; end
 
       def run(argv, *args)
@@ -216,20 +216,20 @@ class Ardb::CLI
   end
 
   module MigrateStyleBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateCommandBehaviors
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def command_style; raise NotImplementedError; end
 
       def command_name;    "migrate-#{self.command_style}";                   end
       def command_summary; "Migrate the configured DB #{self.command_style}"; end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def migrate
         Ardb.adapter.send("migrate_db_#{self.class.command_style}", *migrate_args)
       end
@@ -241,18 +241,18 @@ class Ardb::CLI
   end
 
   module MigrateDirectionBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateStyleBehaviors
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def command_style;     self.command_direction;    end
       def command_direction; raise NotImplementedError; end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize
         super do
           option(:target_version, "version to migrate to", value: String)
@@ -268,18 +268,18 @@ class Ardb::CLI
   end
 
   module MigrateStepDirectionBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateStyleBehaviors
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def command_style;     self.command_direction;    end
       def command_direction; raise NotImplementedError; end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize
         super do
           option(:steps, "number of migrations to migrate", value: 1)

@@ -1,10 +1,10 @@
 require "arel"
-require "much-plugin"
+require "much-mixin"
 require "ardb/relation_spy"
 
 module Ardb
   module RecordSpy
-    include MuchPlugin
+    include MuchMixin
 
     def self.new(&block)
       block ||= proc{ }
@@ -15,7 +15,7 @@ module Ardb
 
     CallbackType = Struct.new(:name, :options)
 
-    plugin_class_methods do
+    mixin_class_methods do
       attr_accessor :table_name
 
       # Associations
@@ -164,7 +164,7 @@ module Ardb
       end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       attr_accessor :id
 
       def update_column(col, value)

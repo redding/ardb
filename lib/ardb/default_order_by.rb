@@ -1,17 +1,17 @@
-require "much-plugin"
+require "much-mixin"
 
 module Ardb
   module DefaultOrderBy
-    include MuchPlugin
+    include MuchMixin
 
     DEFAULT_ATTRIBUTE  = :order_by
     DEFAULT_SCOPE_PROC = proc{ self.class.scoped }
 
-    plugin_included do
+    mixin_included do
       @ardb_default_order_by_config = {}
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def default_order_by(options = nil)
         options ||= {}
 
@@ -28,7 +28,7 @@ module Ardb
       end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       private
 
       def reset_order_by
