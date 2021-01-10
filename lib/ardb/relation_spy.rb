@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Ardb
   class RelationSpy
     attr_reader :applied
@@ -21,7 +23,7 @@ module Ardb
     end
 
     def ==(other)
-      other.kind_of?(self.class) ? @applied == other.applied : super
+      other.is_a?(self.class) ? @applied == other.applied : super
     end
 
     def to_sql
@@ -37,17 +39,17 @@ module Ardb
 
     # ActiveRecord::QueryMethods
 
-    [ :select,
-      :from,
-      :includes,
-      :joins,
-      :where,
-      :group,
-      :having,
-      :order,
-      :reverse_order,
-      :readonly
-    ].each do |type|
+    [:select,
+     :from,
+     :includes,
+     :joins,
+     :where,
+     :group,
+     :having,
+     :order,
+     :reverse_order,
+     :readonly,
+].each do |type|
       define_method(type) do |*args|
         @applied << AppliedExpression.new(type, args)
         self
@@ -56,31 +58,31 @@ module Ardb
 
     def limit(value)
       @limit_value = value ? value.to_i : nil
-      @applied << AppliedExpression.new(:limit, [ value ])
+      @applied << AppliedExpression.new(:limit, [value])
       self
     end
 
     def offset(value)
       @offset_value = value ? value.to_i : nil
-      @applied << AppliedExpression.new(:offset, [ value ])
+      @applied << AppliedExpression.new(:offset, [value])
       self
     end
 
     # ActiveRecord::SpawnMethods
 
     def merge(other)
-      return self if self.equal?(other)
-      if other.kind_of?(self.class)
-        other.applied.each{ |a| self.send(a.type, *a.args) }
+      return self if equal?(other)
+      if other.is_a?(self.class)
+        other.applied.each{ |a| send(a.type, *a.args) }
       else
-        @applied << AppliedExpression.new(:merge, [ other ])
+        @applied << AppliedExpression.new(:merge, [other])
       end
       self
     end
 
     def except(*skips)
       skips = skips.map(&:to_sym)
-      self.dup.tap do |r|
+      dup.tap do |r|
         r.applied.reject!{ |a| skips.include?(a.type) }
         r.limit_value    = nil if skips.include?(:limit)
         r.offset_value   = nil if skips.include?(:offset)
@@ -89,7 +91,7 @@ module Ardb
 
     def only(*onlies)
       onlies = onlies.map(&:to_sym)
-      self.dup.tap do |r|
+      dup.tap do |r|
         r.applied.reject!{ |a| !onlies.include?(a.type) }
         r.limit_value    = nil unless onlies.include?(:limit)
         r.offset_value   = nil unless onlies.include?(:offset)
@@ -104,19 +106,19 @@ module Ardb
     end
 
     def first
-      self.all.first
+      all.first
     end
 
     def first!
-      self.first || raise(NotFoundError)
+      first || raise(NotFoundError)
     end
 
     def last
-      self.all.last
+      all.last
     end
 
     def last!
-      self.last || raise(NotFoundError)
+      last || raise(NotFoundError)
     end
 
     def all
@@ -143,7 +145,7 @@ module Ardb
 
     class AppliedExpression < Struct.new(:type, :args)
       def to_sql
-        "#{self.type}: #{self.args.inspect}"
+        "#{type}: #{args.inspect}"
       end
     end
 

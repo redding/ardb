@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "ardb/adapter/base"
 
 module Ardb::Adapter

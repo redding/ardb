@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/test_helpers"
 
@@ -124,7 +126,8 @@ module Ardb::TestHelpers
   class ResetDbTests < UsageTests
     desc "reset db methods"
 
-    should "tell the adapter to drop/create the db and load the schema only once" do
+    should "tell the adapter to drop/create the db and load the schema "\
+           "only once" do
       assert_equal 0, @adapter_spy.drop_db_called_count
       assert_equal 0, @adapter_spy.create_db_called_count
       assert_equal 0, @adapter_spy.load_schema_called_count

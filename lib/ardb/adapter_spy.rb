@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "ardb"
 require "ardb/adapter/base"
 
@@ -20,60 +22,60 @@ module Ardb
     end
 
     def create_db_called?
-      self.create_db_called_count > 0
+      create_db_called_count > 0
     end
 
     def drop_db_called?
-      self.drop_db_called_count > 0
+      drop_db_called_count > 0
     end
 
     def drop_tables_called?
-      self.drop_tables_called_count > 0
+      drop_tables_called_count > 0
     end
 
     def connect_db_called?
-      self.connect_db_called_count > 0
+      connect_db_called_count > 0
     end
 
     def migrate_db_called?
-      self.migrate_db_called_count > 0
+      migrate_db_called_count > 0
     end
 
     def load_schema_called?
-      self.load_schema_called_count > 0
+      load_schema_called_count > 0
     end
 
     def dump_schema_called?
-      self.dump_schema_called_count > 0
+      dump_schema_called_count > 0
     end
 
     # Overwritten `Adapter::Base` methods
 
-    def create_db(*args, &block)
+    def create_db(*_args)
       self.create_db_called_count += 1
     end
 
-    def drop_db(*args, &block)
+    def drop_db(*_args)
       self.drop_db_called_count += 1
     end
 
-    def drop_tables(*args, &block)
+    def drop_tables(*_args)
       self.drop_tables_called_count += 1
     end
 
-    def connect_db(*args, &block)
+    def connect_db(*_args)
       self.connect_db_called_count += 1
     end
 
-    def migrate_db(*args, &block)
+    def migrate_db(*_args)
       self.migrate_db_called_count += 1
     end
 
-    def load_schema(*args, &block)
+    def load_schema(*_args)
       self.load_schema_called_count += 1
     end
 
-    def dump_schema(*args, &block)
+    def dump_schema(*_args)
       self.dump_schema_called_count += 1
     end
   end

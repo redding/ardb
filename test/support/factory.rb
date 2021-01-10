@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert/factory"
 
 module Factory
@@ -22,5 +24,4 @@ module Factory
       c.min_messages     = Factory.string
     end
   end
-
 end

@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/default_order_by"
 
-require "much-plugin"
+require "much-mixin"
 require "ardb/record_spy"
 
 module Ardb::DefaultOrderBy
@@ -9,7 +11,7 @@ module Ardb::DefaultOrderBy
     desc "Ardb::DefaultOrderBy"
     setup do
       order_by_attribute = @order_by_attribute = Factory.string.to_sym
-      @scope_proc = proc{ self.class.where(:grouping => self.grouping) }
+      @scope_proc = proc{ self.class.where(grouping: grouping) }
       @record_class = Ardb::RecordSpy.new do
         include Ardb::DefaultOrderBy
         attr_accessor order_by_attribute, :grouping
@@ -20,8 +22,8 @@ module Ardb::DefaultOrderBy
     should have_imeths :default_order_by
     should have_imeths :ardb_default_order_by_config
 
-    should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::DefaultOrderBy
+    should "use much-mixin" do
+      assert_includes MuchMixin, Ardb::DefaultOrderBy
     end
 
     should "know its default attribute, preprocessor and separator" do
@@ -44,8 +46,8 @@ module Ardb::DefaultOrderBy
 
     should "allow customizing the config using `default_order_by`" do
       subject.default_order_by({
-        :attribute => @order_by_attribute,
-        :scope     => @scope_proc
+        attribute: @order_by_attribute,
+        scope: @scope_proc,
       })
 
       config = subject.ardb_default_order_by_config
@@ -59,7 +61,7 @@ module Ardb::DefaultOrderBy
       callback = subject.callbacks.find{ |v| v.type == :before_validation }
       assert_not_nil callback
       assert_equal [:ardb_default_order_by], callback.args
-      assert_equal({ :on => :create }, callback.options)
+      assert_equal({ on: :create }, callback.options)
     end
   end
 
@@ -67,11 +69,12 @@ module Ardb::DefaultOrderBy
     desc "when init"
     setup do
       @record_class.default_order_by({
-        :attribute => @order_by_attribute,
-        :scope     => @scope_proc
+        attribute: @order_by_attribute,
+        scope: @scope_proc,
       })
       @current_max = Factory.integer
-      @record_class.relation_spy.maximum_values[@order_by_attribute] = @current_max
+      @record_class.relation_spy.maximum_values[@order_by_attribute] =
+        @current_max
 
       @record = @record_class.new
       @record.grouping = Factory.string
@@ -84,7 +87,8 @@ module Ardb::DefaultOrderBy
       assert_equal @current_max + 1, subject.send(@order_by_attribute)
     end
 
-    should "reset its order-by to a start value when there isn't a current max" do
+    should "reset its order-by to a start value when there isn't a "\
+           "current max" do
       @record_class.relation_spy.maximum_values.delete(@order_by_attribute)
 
       subject.instance_eval{ reset_order_by }
@@ -98,7 +102,7 @@ module Ardb::DefaultOrderBy
       assert_equal 1, @record_class.relation_spy.applied.size
       applied_expression = @record_class.relation_spy.applied.last
       assert_equal :where, applied_expression.type
-      assert_equal [{ :grouping => subject.grouping }], applied_expression.args
+      assert_equal [{ grouping: subject.grouping }], applied_expression.args
     end
 
     should "reset its order-by using `ardb_default_order_by`" do
@@ -107,7 +111,8 @@ module Ardb::DefaultOrderBy
       assert_equal @current_max + 1, subject.send(@order_by_attribute)
     end
 
-    should "not reset its order-by if its already set using `ardb_default_order_by`" do
+    should "not reset its order-by if its already set using "\
+           "`ardb_default_order_by`" do
       current_order_by = Factory.integer
       subject.send("#{@order_by_attribute}=", current_order_by)
       subject.instance_eval{ ardb_default_order_by }

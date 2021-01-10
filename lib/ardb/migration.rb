@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "fileutils"
 
 module Ardb
@@ -15,19 +17,20 @@ module Ardb
 
       @class_name = @identifier.classify.pluralize
       @file_name  = get_file_name(@identifier)
-      @file_path  = File.join(self.migrations_path, "#{@file_name}.rb")
+      @file_path  = File.join(migrations_path, "#{@file_name}.rb")
 
       migration_version = ActiveRecord::Migration.current_version
       @source =
-        "class #{@class_name} < ActiveRecord::Migration[#{migration_version}]\n"\
+        "class #{@class_name} "\
+        "< ActiveRecord::Migration[#{migration_version}]\n"\
         "  def change\n"\
         "  end\n"\
         "end\n"
     end
 
     def save!
-      FileUtils.mkdir_p self.migrations_path
-      File.open(self.file_path, "w"){ |f| f.write(self.source) }
+      FileUtils.mkdir_p migrations_path
+      File.open(file_path, "w"){ |f| f.write(source) }
       self
     end
 

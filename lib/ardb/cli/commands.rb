@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 require "ardb"
 require "ardb/cli/clirb"
-require "much-plugin"
+require "much-mixin"
 
 module Ardb; end
+
 class Ardb::CLI
   InvalidCommandError = Class.new(ArgumentError)
   CommandExitError    = Class.new(RuntimeError)
@@ -15,12 +18,14 @@ class Ardb::CLI
       @clirb = CLIRB.new
     end
 
-    def new; self; end
+    def new
+      self
+    end
 
     def run(argv)
       @clirb.parse!([@name, argv].flatten.compact)
       raise CLIRB::HelpExit if @name.to_s.empty?
-      raise InvalidCommandError, "\"#{self.name}\" is not a command."
+      raise InvalidCommandError, "\"#{name}\" is not a command."
     end
 
     def command_help
@@ -32,19 +37,26 @@ class Ardb::CLI
   end
 
   module ValidCommand
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_class_methods do
-      def command_name;    raise NotImplementedError; end
-      def command_summary; "";                        end
+    mixin_class_methods do
+      def command_name
+        raise NotImplementedError
+      end
+
+      def command_summary
+        ""
+      end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize(&clirb_build)
         @clirb = CLIRB.new(&clirb_build)
       end
 
-      def clirb; @clirb; end
+      def clirb
+        @clirb
+      end
 
       def run(argv, stdout = nil, stderr = nil)
         @clirb.parse!(argv)
@@ -52,14 +64,19 @@ class Ardb::CLI
         @stderr = stderr || $stderr
       end
 
-      def command_name;    self.class.command_name;    end
-      def command_summary; self.class.command_summary; end
+      def command_name
+        self.class.command_name
+      end
+
+      def command_summary
+        self.class.command_summary
+      end
 
       def command_help
-        "Usage: ardb #{self.command_name} [options]\n\n" \
-        "Options: #{self.clirb}\n" \
+        "Usage: ardb #{command_name} [options]\n\n" \
+        "Options: #{clirb}\n" \
         "Description:\n" \
-        "  #{self.command_summary}"
+        "  #{command_summary}"
       end
     end
   end
@@ -67,8 +84,13 @@ class Ardb::CLI
   class ConnectCommand
     include ValidCommand
 
-    def self.command_name;    "connect";                      end
-    def self.command_summary; "Connect to the configured DB"; end
+    def self.command_name
+      "connect"
+    end
+
+    def self.command_summary
+      "Connect to the configured DB"
+    end
 
     def run(argv, *args)
       super
@@ -76,15 +98,21 @@ class Ardb::CLI
       begin
         Ardb.init(false)
         Ardb.adapter.connect_db
-        @stdout.puts "connected to #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
-      rescue ActiveRecord::NoDatabaseError => e
-        @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "does not exist"
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
-        @stderr.puts "error connecting to #{Ardb.config.database.inspect} database " \
-                     "with #{Ardb.config.activerecord_connect_hash.inspect}"
+        @stdout.puts(
+          "connected to #{Ardb.config.adapter} "\
+          "db #{Ardb.config.database.inspect}",
+        )
+      rescue ActiveRecord::NoDatabaseError
+        @stderr.puts(
+          "error: database #{Ardb.config.database.inspect} does not exist",
+        )
+      rescue => ex
+        @stderr.puts ex
+        @stderr.puts ex.backtrace.join("\n")
+        @stderr.puts(
+          "error connecting to #{Ardb.config.database.inspect} database " \
+          "with #{Ardb.config.activerecord_connect_hash.inspect}",
+        )
         raise CommandExitError
       end
     end
@@ -93,8 +121,13 @@ class Ardb::CLI
   class CreateCommand
     include ValidCommand
 
-    def self.command_name;    "create";                   end
-    def self.command_summary; "Create the configured DB"; end
+    def self.command_name
+      "create"
+    end
+
+    def self.command_summary
+      "Create the configured DB"
+    end
 
     def run(argv, *args)
       super
@@ -102,12 +135,15 @@ class Ardb::CLI
       begin
         Ardb.init(false)
         Ardb.adapter.create_db
-        @stdout.puts "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
-      rescue ActiveRecord::StatementInvalid => e
-        @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "already exists"
-      rescue StandardError => e
-        @stderr.puts e
+        @stdout.puts(
+          "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}",
+        )
+      rescue ActiveRecord::StatementInvalid
+        @stderr.puts(
+          "error: database #{Ardb.config.database.inspect} already exists",
+        )
+      rescue => ex
+        @stderr.puts ex
         @stderr.puts "error creating #{Ardb.config.database.inspect} database"
         raise CommandExitError
       end
@@ -117,8 +153,13 @@ class Ardb::CLI
   class DropCommand
     include ValidCommand
 
-    def self.command_name;    "drop";                   end
-    def self.command_summary; "Drop the configured DB"; end
+    def self.command_name
+      "drop"
+    end
+
+    def self.command_summary
+      "Drop the configured DB"
+    end
 
     def run(argv, *args)
       super
@@ -126,12 +167,15 @@ class Ardb::CLI
       begin
         Ardb.init(true)
         Ardb.adapter.drop_db
-        @stdout.puts "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}"
-      rescue ActiveRecord::NoDatabaseError => e
-        @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                     "does not exist"
-      rescue StandardError => e
-        @stderr.puts e
+        @stdout.puts(
+          "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}",
+        )
+      rescue ActiveRecord::NoDatabaseError
+        @stderr.puts(
+          "error: database #{Ardb.config.database.inspect} does not exist",
+        )
+      rescue => ex
+        @stderr.puts ex
         @stderr.puts "error dropping #{Ardb.config.database.inspect} database"
         raise CommandExitError
       end
@@ -141,8 +185,13 @@ class Ardb::CLI
   class GenerateMigrationCommand
     include ValidCommand
 
-    def self.command_name;    "generate-migration";                       end
-    def self.command_summary; "Generate a MIGRATION-NAME migration file"; end
+    def self.command_name
+      "generate-migration"
+    end
+
+    def self.command_summary
+      "Generate a MIGRATION-NAME migration file"
+    end
 
     def run(argv, *args)
       super
@@ -154,50 +203,55 @@ class Ardb::CLI
         migration = Ardb::Migration.new(Ardb.config, @clirb.args.first)
         migration.save!
         @stdout.puts "generated #{migration.file_path}"
-      rescue Ardb::Migration::NoIdentifierError => exception
+      rescue Ardb::Migration::NoIdentifierError => ex
         error = ArgumentError.new("MIGRATION-NAME must be provided")
-        error.set_backtrace(exception.backtrace)
+        error.set_backtrace(ex.backtrace)
         raise error
-      rescue StandardError => e
-        @stderr.puts e
-        @stderr.puts e.backtrace.join("\n")
+      rescue => ex
+        @stderr.puts ex
+        @stderr.puts ex.backtrace.join("\n")
         @stderr.puts "error generating migration"
         raise CommandExitError
       end
     end
 
     def command_help
-      "Usage: ardb #{self.command_name} MIGRATION-NAME [options]\n\n" \
-      "Options: #{self.clirb}\n" \
+      "Usage: ardb #{command_name} MIGRATION-NAME [options]\n\n" \
+      "Options: #{clirb}\n" \
       "Description:\n" \
-      "  #{self.command_summary}"
+      "  #{command_summary}"
     end
   end
 
   module MigrateCommandBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include ValidCommand
     end
 
-    plugin_instance_methods do
-      def migrate; raise NotImplementedError; end
+    mixin_instance_methods do
+      def migrate
+        raise NotImplementedError
+      end
 
       def run(argv, *args)
         super
 
         begin
           Ardb.init(true)
-          self.migrate
+          migrate
           Ardb.adapter.dump_schema unless ENV["ARDB_MIGRATE_NO_SCHEMA"]
-        rescue ActiveRecord::NoDatabaseError => e
-          @stderr.puts "error: database #{Ardb.config.database.inspect} "\
-                       "does not exist"
-        rescue StandardError => e
-          @stderr.puts e
-          @stderr.puts e.backtrace.join("\n")
-          @stderr.puts "error migrating #{Ardb.config.database.inspect} database"
+        rescue ActiveRecord::NoDatabaseError
+          @stderr.puts(
+            "error: database #{Ardb.config.database.inspect} does not exist",
+          )
+        rescue => ex
+          @stderr.puts ex
+          @stderr.puts ex.backtrace.join("\n")
+          @stderr.puts(
+            "error migrating #{Ardb.config.database.inspect} database",
+          )
           raise CommandExitError
         end
       end
@@ -207,8 +261,13 @@ class Ardb::CLI
   class MigrateCommand
     include MigrateCommandBehaviors
 
-    def self.command_name;    "migrate";                   end
-    def self.command_summary; "Migrate the configured DB"; end
+    def self.command_name
+      "migrate"
+    end
+
+    def self.command_summary
+      "Migrate the configured DB"
+    end
 
     def migrate
       Ardb.adapter.migrate_db
@@ -216,43 +275,60 @@ class Ardb::CLI
   end
 
   module MigrateStyleBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateCommandBehaviors
     end
 
-    plugin_class_methods do
-      def command_style; raise NotImplementedError; end
+    mixin_class_methods do
+      def command_style
+        raise NotImplementedError
+      end
 
-      def command_name;    "migrate-#{self.command_style}";                   end
-      def command_summary; "Migrate the configured DB #{self.command_style}"; end
+      def command_name
+        "migrate-#{command_style}"
+      end
+
+      def command_summary
+        "Migrate the configured DB #{command_style}"
+      end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def migrate
-        Ardb.adapter.send("migrate_db_#{self.class.command_style}", *migrate_args)
+        Ardb.adapter.send(
+          "migrate_db_#{self.class.command_style}",
+          *migrate_args,
+        )
       end
 
       private
 
-      def migrate_args; raise NotImplementedError; end
+      def migrate_args
+        raise NotImplementedError
+      end
     end
   end
 
   module MigrateDirectionBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateStyleBehaviors
     end
 
-    plugin_class_methods do
-      def command_style;     self.command_direction;    end
-      def command_direction; raise NotImplementedError; end
+    mixin_class_methods do
+      def command_style
+        command_direction
+      end
+
+      def command_direction
+        raise NotImplementedError
+      end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize
         super do
           option(:target_version, "version to migrate to", value: String)
@@ -268,18 +344,23 @@ class Ardb::CLI
   end
 
   module MigrateStepDirectionBehaviors
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       include MigrateStyleBehaviors
     end
 
-    plugin_class_methods do
-      def command_style;     self.command_direction;    end
-      def command_direction; raise NotImplementedError; end
+    mixin_class_methods do
+      def command_style
+        command_direction
+      end
+
+      def command_direction
+        raise NotImplementedError
+      end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       def initialize
         super do
           option(:steps, "number of migrations to migrate", value: 1)
@@ -297,30 +378,38 @@ class Ardb::CLI
   class MigrateUpCommand
     include MigrateDirectionBehaviors
 
-    def self.command_direction; "up"; end
+    def self.command_direction
+      "up"
+    end
   end
 
   class MigrateDownCommand
     include MigrateDirectionBehaviors
 
-    def self.command_direction; "down"; end
+    def self.command_direction
+      "down"
+    end
   end
 
   class MigrateForwardCommand
     include MigrateStepDirectionBehaviors
 
-    def self.command_direction; "forward"; end
+    def self.command_direction
+      "forward"
+    end
   end
 
   class MigrateBackwardCommand
     include MigrateStepDirectionBehaviors
 
-    def self.command_direction; "backward"; end
+    def self.command_direction
+      "backward"
+    end
   end
 
   class CommandSet
     def initialize(&unknown_cmd_block)
-      @lookup    = Hash.new{ |h,k| unknown_cmd_block.call(k) }
+      @lookup    = Hash.new{ |_h, k| unknown_cmd_block.call(k) }
       @names     = []
       @aliases   = {}
       @summaries = {}
@@ -329,7 +418,7 @@ class Ardb::CLI
     def add(klass)
       begin
         cmd = klass.new
-      rescue StandardError
+      rescue
         # don"t add any commands you can"t initialize
       else
         @lookup[cmd.command_name] = cmd
@@ -355,11 +444,11 @@ class Ardb::CLI
     end
 
     def to_s
-      max_name_size  = @names.map{ |n| n.size }.max || 0
+      max_name_size = @names.map(&:size).max || 0
 
-      @to_s ||= @names.map do |n|
+      @to_s ||= @names.map{ |n|
         "#{n.ljust(max_name_size)} #{@summaries[n]}"
-      end.join("\n")
+      }.join("\n")
     end
   end
 end

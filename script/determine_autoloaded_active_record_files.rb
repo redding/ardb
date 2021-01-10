@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_record"
 
 # this can be slow, this is one of the reasons this shouldn"t be done during
@@ -13,19 +15,19 @@ paths = Dir["#{gemspec.lib_dirs_glob}/**/*.rb"]
 # generators fail when we try to require them. the others are pieces of active
 # record we don"t use in a production environment
 ignored_regexes = [
-  /rails\/generators/,
-  /active_record\/railtie/,
-  /active_record\/migration/,
-  /active_record\/fixtures/,
-  /active_record\/fixture_set/,
-  /active_record\/schema/,
-  /active_record\/connection_adapters/,
-  /active_record\/test_case/,
-  /active_record\/test_databases/,
-  /active_record\/test_fixtures/,
-  /active_record\/coders\/yaml_column/,
+  %r{rails/generators},
+  %r{active_record/railtie},
+  %r{active_record/migration},
+  %r{active_record/fixtures},
+  %r{active_record/fixture_set},
+  %r{active_record/schema},
+  %r{active_record/connection_adapters},
+  %r{active_record/test_case},
+  %r{active_record/test_databases},
+  %r{active_record/test_fixtures},
+  %r{active_record/coders/yaml_column},
   # `destroy_association_async_job` requires `ActiveJob` to be required.
-  /active_record\/destroy_association_async_job/,
+  %r{active_record/destroy_association_async_job},
 ]
 
 Result = Struct.new(:file, :state, :reason)
@@ -43,11 +45,11 @@ paths.sort.each do |full_path|
 
   # see if it"s ignored
   ignored_regexes.each do |regex|
-    if relative_path =~ regex
-      result.state  = :ignored
-      result.reason = "matched #{regex}"
-      break
-    end
+    next unless relative_path =~ regex
+
+    result.state  = :ignored
+    result.reason = "matched #{regex}"
+    break
   end
   if result.state == :ignored
     ignored << result
@@ -56,14 +58,14 @@ paths.sort.each do |full_path|
 
   # try requiring the file
   begin
-    if result.state = require(relative_path)
+    if (result.state = require(relative_path))
       needs_to_be_required << result
     else
       already_required << result
     end
-  rescue LoadError, SyntaxError => exception
+  rescue LoadError, SyntaxError => ex
     result.state  = :errored
-    result.reason = "#{exception.class}: #{exception.message}"
+    result.reason = "#{ex.class}: #{ex.message}"
     errored << result
   end
 end

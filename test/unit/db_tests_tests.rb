@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/db_tests"
 
@@ -19,7 +21,8 @@ class Ardb::DbTests
       assert subject < Assert::Context
     end
 
-    should "add an around callback that runs tests in a transaction that rolls back" do
+    should "add an around callback that runs tests in a transaction that "\
+           "rolls back" do
       assert_equal 1, subject.arounds.size
       callback = subject.arounds.first
 

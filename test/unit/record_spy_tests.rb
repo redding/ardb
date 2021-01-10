@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/record_spy"
 
-require "much-plugin"
+require "much-mixin"
 
 module Ardb::RecordSpy
   class UnitTests < Assert::Context
@@ -40,8 +42,8 @@ module Ardb::RecordSpy
     should have_imeths :group, :having, :order, :reverse_order, :readonly
     should have_imeths :limit, :offset, :merge, :except, :only
 
-    should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::RecordSpy
+    should "use much-mixin" do
+      assert_includes MuchMixin, Ardb::RecordSpy
     end
 
     should "allow reading and writing the record's table name" do
@@ -54,7 +56,7 @@ module Ardb::RecordSpy
     end
 
     should "add an association config with #belongs_to" do
-      subject.belongs_to :area, :foreign_key => :area_id
+      subject.belongs_to :area, foreign_key: :area_id
       association = subject.associations.last
       assert_equal :belongs_to, association.type
       assert_equal :area,       association.name
@@ -62,7 +64,7 @@ module Ardb::RecordSpy
     end
 
     should "add an association config with #has_many" do
-      subject.has_many :comments, :as => :parent
+      subject.has_many :comments, as: :parent
       association = subject.associations.last
       assert_equal :has_many, association.type
       assert_equal :comments, association.name
@@ -70,7 +72,7 @@ module Ardb::RecordSpy
     end
 
     should "add an association config with #has_one" do
-      subject.has_one :linking, :class_name => "Linking"
+      subject.has_one :linking, class_name: "Linking"
       association = subject.associations.last
       assert_equal :has_one,  association.type
       assert_equal :linking,  association.name
@@ -82,7 +84,7 @@ module Ardb::RecordSpy
     end
 
     should "add a validation config for \"*_of\" validations" do
-      subject.validates_presence_of :name, :email, :on => :create
+      subject.validates_presence_of :name, :email, on: :create
       validation = subject.validations.last
       assert_equal :presence, validation.type
       assert_equal :create,   validation.options[:on]
@@ -109,7 +111,7 @@ module Ardb::RecordSpy
     end
 
     should "add a validation config with #validates_each" do
-      block = proc{ }
+      block = proc{}
       subject.validates_each(:name, :email, &block)
       validation = subject.validations.last
       assert_equal :each, validation.type
@@ -124,7 +126,7 @@ module Ardb::RecordSpy
       assert_equal :custom,      validation.type
       assert_equal :some_method, validation.method_name
 
-      block = proc{ }
+      block = proc{}
       subject.validate(&block)
       validation = subject.validations.last
       assert_equal :custom, validation.type
@@ -143,7 +145,7 @@ module Ardb::RecordSpy
     end
 
     should "add a callback config with a block" do
-      subject.before_validation(:on => :create) do
+      subject.before_validation(on: :create) do
         self.name = "test"
       end
       callback = subject.callbacks.last
@@ -176,7 +178,12 @@ module Ardb::RecordSpy
       assert_respond_to "around_#{name}", subject
       assert_respond_to "after_#{name}",  subject
 
-      callback_name = ["before_#{name}", "around_#{name}", "after_#{name}"].sample
+      callback_name =
+        [
+          "before_#{name}",
+          "around_#{name}",
+          "after_#{name}",
+        ].sample
       method_name = Factory.string
       subject.send(callback_name, method_name)
       callback = subject.callbacks.last
@@ -184,7 +191,7 @@ module Ardb::RecordSpy
       assert_equal [method_name],        callback.args
 
       name = Factory.string
-      subject.define_model_callbacks(name, :only => [:before])
+      subject.define_model_callbacks(name, only: [:before])
 
       assert_respond_to "before_#{name}", subject
       assert_not_respond_to "around_#{name}", subject
@@ -332,8 +339,8 @@ module Ardb::RecordSpy
       assert_equal "other thing", subject.ho_thing
 
       assert_empty subject.hm_things
-      subject.hm_things = [1,2,3]
-      assert_equal [1,2,3], subject.hm_things
+      subject.hm_things = [1, 2, 3]
+      assert_equal [1, 2, 3], subject.hm_things
     end
 
     should "default its manually run callbacks" do

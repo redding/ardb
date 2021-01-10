@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/use_db_default"
 
-require "much-plugin"
+require "much-mixin"
 require "ardb/record_spy"
 
 module Ardb::UseDbDefault
@@ -17,8 +19,8 @@ module Ardb::UseDbDefault
 
     should have_imeths :use_db_default, :ardb_use_db_default_attrs
 
-    should "use much-plugin" do
-      assert_includes MuchPlugin, Ardb::UseDbDefault
+    should "use much-mixin" do
+      assert_includes MuchMixin, Ardb::UseDbDefault
     end
 
     should "know its use db default attrs" do
@@ -93,7 +95,9 @@ module Ardb::UseDbDefault
       # when it was created (yielded)
       attrs_before_yield = nil
       subject.instance_eval do
-        ardb_allow_db_to_default_attrs{ attrs_before_yield = self.attributes.dup }
+        ardb_allow_db_to_default_attrs do
+          attrs_before_yield = attributes.dup
+        end
       end
 
       assert_instance_of Hash, attrs_before_yield
@@ -117,7 +121,7 @@ module Ardb::UseDbDefault
 
       applied_expr = @record_class.relation_spy.applied.first
       assert_equal :where, applied_expr.type
-      assert_equal [{ :id => subject.id }], applied_expr.args
+      assert_equal [{ id: subject.id }], applied_expr.args
 
       @unchanged_attr_names.each do |name|
         exp = @record_class.relation_spy.pluck_values[name]
@@ -141,16 +145,21 @@ module Ardb::UseDbDefault
     attr_accessor :attributes, :changed_use_db_default_attrs
 
     def use_db_default_attr_changed?(attr_name)
-      self.changed_use_db_default_attrs.include?(attr_name)
+      changed_use_db_default_attrs.include?(attr_name)
     end
 
     def method_missing(method, *args, &block)
       match_data = method.to_s.match(/(\w+)_changed\?/)
       if match_data && match_data[1]
-        self.use_db_default_attr_changed?(match_data[1])
+        use_db_default_attr_changed?(match_data[1])
       else
         super
       end
+    end
+
+    def respond_to_missing?(method)
+      match_data = method.to_s.match(/(\w+)_changed\?/)
+      match_data && match_data[1]
     end
   end
 end

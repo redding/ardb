@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 require "ardb"
 
 module Ardb; end
+
 module Ardb::Adapter
   class Base
     attr_reader :config
@@ -10,17 +13,28 @@ module Ardb::Adapter
       validate!
     end
 
-    def connect_hash;    self.config.activerecord_connect_hash; end
-    def database;        self.config.database;                  end
-    def migrations_path; self.config.migrations_path;           end
-    def schema_format;   self.config.schema_format;             end
+    def connect_hash
+      config.activerecord_connect_hash
+    end
+
+    def database
+      config.database
+    end
+
+    def migrations_path
+      config.migrations_path
+    end
+
+    def schema_format
+      config.schema_format
+    end
 
     def ruby_schema_path
-      @ruby_schema_path ||= "#{self.config.schema_path}.rb"
+      @ruby_schema_path ||= "#{config.schema_path}.rb"
     end
 
     def sql_schema_path
-      @sql_schema_path ||= "#{self.config.schema_path}.sql"
+      @sql_schema_path ||= "#{config.schema_path}.sql"
     end
 
     def escape_like_pattern(pattern, escape_char = nil)
@@ -32,16 +46,23 @@ module Ardb::Adapter
       pattern
     end
 
-    def create_db(*args); raise NotImplementedError; end
-    def drop_db(*args);   raise NotImplementedError; end
+    def create_db(*args)
+      raise NotImplementedError
+    end
 
-    def drop_tables(*args); raise NotImplementedError; end
+    def drop_db(*args)
+      raise NotImplementedError
+    end
+
+    def drop_tables(*args)
+      raise NotImplementedError
+    end
 
     def connect_db
-      ActiveRecord::Base.establish_connection(self.connect_hash)
+      ActiveRecord::Base.establish_connection(connect_hash)
       # checkout a connection to ensure we can connect to the DB, we don"t do
       # anything with the connection and immediately check it back in
-      ActiveRecord::Base.connection_pool.with_connection{ }
+      ActiveRecord::Base.connection_pool.with_connection{}
     end
 
     def migrate_db
@@ -67,13 +88,13 @@ module Ardb::Adapter
     def load_schema
       current_stdout = $stdout.dup # silence STDOUT
       $stdout = File.new("/dev/null", "w")
-      load_ruby_schema if self.schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
-      load_sql_schema  if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
+      load_ruby_schema if schema_format == Ardb::Config::RUBY_SCHEMA_FORMAT
+      load_sql_schema  if schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
     def load_ruby_schema
-      load self.ruby_schema_path
+      load ruby_schema_path
     end
 
     def load_sql_schema
@@ -84,14 +105,14 @@ module Ardb::Adapter
       current_stdout = $stdout.dup # silence STDOUT
       $stdout = File.new("/dev/null", "w")
       dump_ruby_schema
-      dump_sql_schema if self.schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
+      dump_sql_schema if schema_format == Ardb::Config::SQL_SCHEMA_FORMAT
       $stdout = current_stdout
     end
 
     def dump_ruby_schema
       require "active_record/schema_dumper"
-      FileUtils.mkdir_p File.dirname(self.ruby_schema_path)
-      File.open(self.ruby_schema_path, "w:utf-8") do |file|
+      FileUtils.mkdir_p File.dirname(ruby_schema_path)
+      File.open(ruby_schema_path, "w:utf-8") do |file|
         ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
       end
     end
@@ -101,8 +122,8 @@ module Ardb::Adapter
     end
 
     def ==(other)
-      if other.kind_of?(self.class)
-        self.config == other.config
+      if other.is_a?(self.class)
+        config == other.config
       else
         super
       end

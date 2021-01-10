@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "assert"
 require "ardb/cli"
 
@@ -27,16 +29,19 @@ class Ardb::CLI
     should "know its commands" do
       assert_equal 9, COMMANDS.size
 
-      assert_instance_of InvalidCommand,           COMMANDS[Factory.string]
-      assert_instance_of ConnectCommand,           COMMANDS["connect"]
-      assert_instance_of CreateCommand,            COMMANDS["create"]
-      assert_instance_of DropCommand,              COMMANDS["drop"]
-      assert_instance_of GenerateMigrationCommand, COMMANDS["generate-migration"]
-      assert_instance_of MigrateCommand,           COMMANDS["migrate"]
-      assert_instance_of MigrateUpCommand,         COMMANDS["migrate-up"]
-      assert_instance_of MigrateDownCommand,       COMMANDS["migrate-down"]
-      assert_instance_of MigrateForwardCommand,    COMMANDS["migrate-forward"]
-      assert_instance_of MigrateBackwardCommand,   COMMANDS["migrate-backward"]
+      assert_instance_of InvalidCommand, COMMANDS[Factory.string]
+      assert_instance_of ConnectCommand, COMMANDS["connect"]
+      assert_instance_of CreateCommand,  COMMANDS["create"]
+      assert_instance_of DropCommand,    COMMANDS["drop"]
+      assert_instance_of(
+        GenerateMigrationCommand,
+        COMMANDS["generate-migration"],
+      )
+      assert_instance_of MigrateCommand,         COMMANDS["migrate"]
+      assert_instance_of MigrateUpCommand,       COMMANDS["migrate-up"]
+      assert_instance_of MigrateDownCommand,     COMMANDS["migrate-down"]
+      assert_instance_of MigrateForwardCommand,  COMMANDS["migrate-forward"]
+      assert_instance_of MigrateBackwardCommand, COMMANDS["migrate-backward"]
     end
   end
 
@@ -58,9 +63,9 @@ class Ardb::CLI
     setup do
       @command_name = Factory.string
       @command_class = Class.new{ include ValidCommand }
-      Assert.stub(@command_class, :command_name) { @command_name }
+      Assert.stub(@command_class, :command_name){ @command_name }
 
-      @command_spy  = CommandSpy.new(@command_name)
+      @command_spy = CommandSpy.new(@command_name)
       Assert.stub(@command_class, :new){ @command_spy }
       COMMANDS.add(@command_class)
 
@@ -143,7 +148,7 @@ class Ardb::CLI
   class RunWithHelpTests < RunSetupTests
     desc "and run with the help switch"
     setup do
-      @cli.run([ "--help" ])
+      @cli.run(["--help"])
     end
 
     should "output the invalid command's help" do
@@ -159,7 +164,7 @@ class Ardb::CLI
   class RunWithVersionTests < RunSetupTests
     desc "and run with the version switch"
     setup do
-      @cli.run([ "--version" ])
+      @cli.run(["--version"])
     end
 
     should "output its version" do
@@ -213,8 +218,8 @@ class Ardb::CLI
     end
 
     should "parse its argv on run" do
-      assert_raises(CLIRB::HelpExit){ subject.new.run([ "--help" ]) }
-      assert_raises(CLIRB::VersionExit){ subject.new.run([ "--version" ]) }
+      assert_raises(CLIRB::HelpExit){ subject.new.run(["--help"]) }
+      assert_raises(CLIRB::VersionExit){ subject.new.run(["--version"]) }
     end
 
     should "raise a help exit if its name is empty" do
@@ -273,7 +278,7 @@ class Ardb::CLI
 
     should "take custom CLIRB build procs" do
       cmd = @command_class.new do
-        option "test", "testing", :abbrev => "t"
+        option "test", "testing", abbrev: "t"
       end
       cmd.run(["-t"], @stdout, @stderr)
       assert_true cmd.clirb.opts["test"]
@@ -290,8 +295,8 @@ class Ardb::CLI
     end
 
     should "know its command help" do
-      Assert.stub(subject, :command_name)    { "some-command" }
-      Assert.stub(subject, :command_summary) { "some-summary" }
+      Assert.stub(subject, :command_name){ "some-command" }
+      Assert.stub(subject, :command_summary){ "some-summary" }
 
       exp = "Usage: ardb #{subject.command_name} [options]\n\n" \
             "Options: #{subject.clirb}\n" \
@@ -326,7 +331,9 @@ class Ardb::CLI
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.connect_db_called?
 
-      exp = "connected to #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
+      exp =
+        "connected to #{Ardb.config.adapter} "\
+        "db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
@@ -372,7 +379,8 @@ class Ardb::CLI
       assert_equal [false], @ardb_init_called_with
       assert_true @adapter_spy.create_db_called?
 
-      exp = "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
+      exp =
+        "created #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
@@ -414,7 +422,8 @@ class Ardb::CLI
       assert_equal [true], @ardb_init_called_with
       assert_true @adapter_spy.drop_db_called?
 
-      exp = "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
+      exp =
+        "dropped #{Ardb.config.adapter} db #{Ardb.config.database.inspect}\n"
       assert_equal exp, @stdout.read
     end
 
@@ -470,19 +479,20 @@ class Ardb::CLI
       assert_equal exp, @stdout.read
     end
 
-    should "re-raise a specific argument error on migration \"no identifer\" errors" do
-      Assert.stub(@migration_class, :new){ raise Ardb::Migration::NoIdentifierError }
-      err = nil
-      begin
-        cmd = @command_class.new
-        cmd.run([])
-      rescue ArgumentError => err
+    should "re-raise a specific argument error on "\
+           "migration \"no identifer\" errors" do
+      Assert.stub(@migration_class, :new) do
+        raise Ardb::Migration::NoIdentifierError
       end
 
-      assert_not_nil err
+      ex =
+        assert_that{
+          cmd = @command_class.new
+          cmd.run([])
+        }.raises(ArgumentError)
       exp = "MIGRATION-NAME must be provided"
-      assert_equal exp, err.message
-      assert_not_empty err.backtrace
+      assert_equal exp, ex.message
+      assert_not_empty ex.backtrace
     end
 
     should "output any errors and raise an exit error when run" do
@@ -490,7 +500,9 @@ class Ardb::CLI
       err.set_backtrace(Factory.integer(3).times.map{ Factory.path })
       Assert.stub(@migration_class, :new){ raise err }
 
-      assert_raises(CommandExitError){ subject.run([@identifier], @stdout, @stderr) }
+      assert_raises(CommandExitError) do
+        subject.run([@identifier], @stdout, @stderr)
+      end
       err_output = @stderr.read
 
       assert_includes err.to_s,                 err_output
@@ -532,7 +544,8 @@ class Ardb::CLI
       assert_true @adapter_spy.dump_schema_called?
     end
 
-    should "only init ardb and migrate when run with no schema dump env var set" do
+    should "only init ardb and migrate when run with no schema dump "\
+           "env var set" do
       ENV["ARDB_MIGRATE_NO_SCHEMA"] = "yes"
       subject.run([], @stdout, @stderr)
 

@@ -1,16 +1,18 @@
-require "much-plugin"
+# frozen_string_literal: true
+
+require "much-mixin"
 
 module Ardb
   module UseDbDefault
-    include MuchPlugin
+    include MuchMixin
 
-    plugin_included do
+    mixin_included do
       @ardb_use_db_default_attrs = []
 
       around_create :ardb_allow_db_to_default_attrs
     end
 
-    plugin_class_methods do
+    mixin_class_methods do
       def ardb_use_db_default_attrs
         @ardb_use_db_default_attrs
       end
@@ -21,7 +23,7 @@ module Ardb
       end
     end
 
-    plugin_instance_methods do
+    mixin_instance_methods do
       private
 
       def ardb_allow_db_to_default_attrs
@@ -29,13 +31,13 @@ module Ardb
         # activerecord from adding the attr into the sql `INSERT`, which will
         # make the DB default its value
         unchanged_names = self.class.ardb_use_db_default_attrs.reject do |name|
-          self.send("#{name}_changed?")
+          send("#{name}_changed?")
         end
         unchanged_names.each{ |name| @attributes.delete(name) }
         yield
         # we have to go and fetch the attr value from the DB, otherwise
         # activerecord doesn"t know the value that the DB used
-        scope = self.class.where(:id => self.id)
+        scope = self.class.where(id: id)
         unchanged_names.each do |name|
           @attributes[name] = scope.pluck(name).first
         end
