@@ -11,18 +11,19 @@ class PostgresqlDbTests < Assert::Context
     # we"re manually configuring ardb so we don"t need this to do anything
     ENV["ARDB_DB_FILE"] = File.join(TEST_SUPPORT_PATH, "require_test_db_file")
 
-    @ardb_config = Ardb::Config.new.tap do |c|
-      c.adapter      = "postgresql"
-      c.database     = "redding_ardb_test"
-      c.encoding     = "unicode"
-      c.min_messages = "WARNING"
+    @ardb_config =
+      Ardb::Config.new.tap do |c|
+        c.adapter      = "postgresql"
+        c.database     = "redding_ardb_test"
+        c.encoding     = "unicode"
+        c.min_messages = "WARNING"
 
-      c.logger          = TEST_LOGGER
-      c.root_path       = File.join(TEST_SUPPORT_PATH, "postgresql")
-      c.migrations_path = "migrations"
-      c.schema_path     = "schema"
-      c.schema_format   = :ruby
-    end
+        c.logger          = TEST_LOGGER
+        c.root_path       = File.join(TEST_SUPPORT_PATH, "postgresql")
+        c.migrations_path = "migrations"
+        c.schema_path     = "schema"
+        c.schema_format   = :ruby
+      end
     Assert.stub(Ardb, :config){ @ardb_config }
 
     Ardb.init(false)

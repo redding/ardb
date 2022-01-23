@@ -120,7 +120,7 @@ module Ardb
     end
 
     def activerecord_connect_hash
-      ACTIVERECORD_ATTRS.inject({}) do |h, attr_name|
+      ACTIVERECORD_ATTRS.reduce({}) do |h, attr_name|
         value = send(attr_name)
         !value.nil? ? h.merge!(attr_name.to_s => value) : h
       end

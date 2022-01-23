@@ -30,9 +30,10 @@ module Ardb
         # this allows the attr to be defaulted by the DB, this keeps
         # activerecord from adding the attr into the sql `INSERT`, which will
         # make the DB default its value
-        unchanged_names = self.class.ardb_use_db_default_attrs.reject do |name|
-          send("#{name}_changed?")
-        end
+        unchanged_names =
+          self.class.ardb_use_db_default_attrs.reject do |name|
+            send("#{name}_changed?")
+          end
         unchanged_names.each{ |name| @attributes.delete(name) }
         yield
         # we have to go and fetch the attr value from the DB, otherwise

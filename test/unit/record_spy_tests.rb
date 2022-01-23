@@ -9,10 +9,11 @@ module Ardb::RecordSpy
   class UnitTests < Assert::Context
     desc "Ardb::RecordSpy"
     setup do
-      @record_spy_class = Class.new do
-        include Ardb::RecordSpy
-        attr_accessor :name
-      end
+      @record_spy_class =
+        Class.new do
+          include Ardb::RecordSpy
+          attr_accessor :name
+        end
     end
     subject{ @record_spy_class }
 
@@ -297,9 +298,10 @@ module Ardb::RecordSpy
   class GeneratorTests < UnitTests
     desc "to generate record spy classes"
     setup do
-      @record_spy_class = Ardb::RecordSpy.new do
-        attr_accessor :name
-      end
+      @record_spy_class =
+        Ardb::RecordSpy.new do
+          attr_accessor :name
+        end
       @instance = @record_spy_class.new
     end
     subject{ @record_spy_class }

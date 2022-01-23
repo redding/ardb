@@ -277,9 +277,10 @@ class Ardb::CLI
     end
 
     should "take custom CLIRB build procs" do
-      cmd = @command_class.new do
-        option "test", "testing", abbrev: "t"
-      end
+      cmd =
+        @command_class.new do
+          option "test", "testing", abbrev: "t"
+        end
       cmd.run(["-t"], @stdout, @stderr)
       assert_true cmd.clirb.opts["test"]
     end
