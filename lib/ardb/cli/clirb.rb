@@ -1,7 +1,7 @@
 module Ardb; end
 
 class Ardb::CLI
-  class CLIRB  # Version 1.1.0, https://github.com/redding/cli.rb
+  class CLIRB  # Version 1.2.0, https://github.com/redding/cli.rb
     Error    = Class.new(RuntimeError);
     HelpExit = Class.new(RuntimeError); VersionExit = Class.new(RuntimeError)
     attr_reader :argv, :args, :opts, :data
@@ -18,17 +18,14 @@ class Ardb::CLI
       end
     end
 
-    def option(*args); @options << Option.new(*args); end
-
+    def option(*args, **kargs); @options << Option.new(*args, **kargs); end
     def parse!(argv)
       @args = (argv || []).dup.tap do |args_list|
         begin; @parser.parse!(args_list)
         rescue OptionParser::ParseError => err; raise Error, err.message; end
       end; @data = @args + [@opts]
     end
-
     def to_s; @parser.to_s; end
-
     def inspect
       "#<#{self.class}:#{"0x0%x" % (object_id << 1)} @data=#{@data.inspect}>"
     end
@@ -54,7 +51,6 @@ class Ardb::CLI
           custom_abbrev || processed_name.gsub(/[^a-z]/, "").chars.first || "a"
         ]
       end
-
       def gvalinfo(v); v.kind_of?(Class) ? [nil,v] : [v,v.class]; end
     end
   end
