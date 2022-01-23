@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-ruby "~> 2.5"
+ruby ">= 2.5"
 
 gemspec
 
@@ -22,5 +22,5 @@ gem "activesupport", "~> 6.1"
 # gem "activerecord",  "~> 5.2.4"
 # gem "activesupport", "~> 5.2.4"
 
-gem "pg", "~> 1.1.4"
+gem "pg", "~> 1.3"
 gem "pry"
