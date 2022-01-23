@@ -37,7 +37,11 @@ module Ardb
     @adapter = Adapter.new(config)
 
     # setup AR
-    ActiveRecord::Base.default_timezone = config.default_timezone
+    if ActiveRecord.respond_to?(:default_timezone=)
+      ActiveRecord.default_timezone = config.default_timezone
+    else
+      ActiveRecord::Base.default_timezone = config.default_timezone
+    end
     ActiveRecord::Base.logger = config.logger
     adapter.connect_db if establish_connection
   end

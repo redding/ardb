@@ -25,8 +25,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency("much-style-guide", ["~> 0.6.7"])
   gem.add_development_dependency("assert",           ["~> 2.19.8"])
 
-  gem.add_dependency("activerecord",  ["> 5.0", "< 7.0"])
-  gem.add_dependency("activesupport", ["> 5.0", "< 7.0"])
+  gem.add_dependency("activerecord",  [">= 5.0"])
+  gem.add_dependency("activesupport", [">= 5.0"])
   gem.add_dependency("much-mixin",    ["~> 0.2.5"])
   gem.add_dependency("scmd",          ["~> 3.0.5"])
 end
