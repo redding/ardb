@@ -12,10 +12,11 @@ module Ardb::DefaultOrderBy
     setup do
       order_by_attribute = @order_by_attribute = Factory.string.to_sym
       @scope_proc = proc{ self.class.where(grouping: grouping) }
-      @record_class = Ardb::RecordSpy.new do
-        include Ardb::DefaultOrderBy
-        attr_accessor order_by_attribute, :grouping
-      end
+      @record_class =
+        Ardb::RecordSpy.new do
+          include Ardb::DefaultOrderBy
+          attr_accessor order_by_attribute, :grouping
+        end
     end
     subject{ @record_class }
 

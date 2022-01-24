@@ -101,7 +101,7 @@ module Ardb
     # ActiveRecord::FinderMethods
 
     def find(id)
-      record = @results.detect{ |result| result.id == id }
+      record = @results.find{ |result| result.id == id }
       record || raise(NotFoundError)
     end
 

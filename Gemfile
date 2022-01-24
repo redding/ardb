@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-ruby "~> 2.5"
+ruby ">= 2.5"
 
 gemspec
 
@@ -12,9 +12,12 @@ gemspec
 #
 # to test a specific version.
 #
+# Rails 7.0
+gem "activerecord",  "~> 7.0.1"
+gem "activesupport", "~> 7.0.1"
 # Rails 6.1
-gem "activerecord",  "~> 6.1"
-gem "activesupport", "~> 6.1"
+# gem "activerecord",  "~> 6.1"
+# gem "activesupport", "~> 6.1"
 # Rails 6.0
 # gem "activerecord",  "~> 6.0.3"
 # gem "activesupport", "~> 6.0.3"
@@ -22,5 +25,5 @@ gem "activesupport", "~> 6.1"
 # gem "activerecord",  "~> 5.2.4"
 # gem "activesupport", "~> 5.2.4"
 
-gem "pg", "~> 1.1.4"
+gem "pg", "~> 1.3"
 gem "pry"

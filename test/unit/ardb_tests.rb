@@ -116,10 +116,17 @@ module Ardb
       subject.init
 
       assert_equal subject.config.logger, ActiveRecord::Base.logger
-      assert_equal(
-        subject.config.default_timezone,
-        ActiveRecord::Base.default_timezone,
-      )
+      if ActiveRecord.respond_to?(:default_timezone=)
+        assert_equal(
+          subject.config.default_timezone,
+          ActiveRecord.default_timezone,
+        )
+      else
+        assert_equal(
+          subject.config.default_timezone,
+          ActiveRecord::Base.default_timezone,
+        )
+      end
     end
 
     should "optionally establish an AR connection" do

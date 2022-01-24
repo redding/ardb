@@ -23,10 +23,11 @@ module Ardb
     end
 
     def create_db
-      @create_db ||= begin
-        create_db!
-        true
-      end
+      @create_db ||=
+        begin
+          create_db!
+          true
+        end
     end
 
     def drop_db!
@@ -34,10 +35,11 @@ module Ardb
     end
 
     def drop_db
-      @drop_db ||= begin
-        drop_db!
-        true
-      end
+      @drop_db ||=
+        begin
+          drop_db!
+          true
+        end
     end
 
     def connect_db!
@@ -45,10 +47,11 @@ module Ardb
     end
 
     def connect_db
-      @connect_db ||= begin
-        connect_db!
-        true
-      end
+      @connect_db ||=
+        begin
+          connect_db!
+          true
+        end
     end
 
     def migrate_db!
@@ -56,10 +59,11 @@ module Ardb
     end
 
     def migrate_db
-      @migrate_db ||= begin
-        migrate_db!
-        true
-      end
+      @migrate_db ||=
+        begin
+          migrate_db!
+          true
+        end
     end
 
     def reset_db!
@@ -69,10 +73,11 @@ module Ardb
     end
 
     def reset_db
-      @reset_db ||= begin
-        reset_db!
-        true
-      end
+      @reset_db ||=
+        begin
+          reset_db!
+          true
+        end
     end
   end
 end

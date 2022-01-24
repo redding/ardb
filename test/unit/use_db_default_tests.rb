@@ -10,10 +10,11 @@ module Ardb::UseDbDefault
   class UnitTests < Assert::Context
     desc "Ardb::UseDbDefault"
     setup do
-      @record_class = Class.new do
-        include UseDbDefaultRecordSpy
-        include Ardb::UseDbDefault
-      end
+      @record_class =
+        Class.new do
+          include UseDbDefaultRecordSpy
+          include Ardb::UseDbDefault
+        end
     end
     subject{ @record_class }
 
@@ -70,9 +71,10 @@ module Ardb::UseDbDefault
       @record = @record_class.new
 
       # simulate activerecords `@attributes` hash
-      @original_attrs = @attr_names.inject({}) do |h, n|
-        h.merge!(n => [nil, Factory.string, Factory.integer].sample)
-      end
+      @original_attrs =
+        @attr_names.reduce({}) do |h, n|
+          h.merge!(n => [nil, Factory.string, Factory.integer].sample)
+        end
       @original_attrs.merge!(Factory.string => Factory.string)
       @record.attributes = @original_attrs.dup
 
@@ -83,9 +85,10 @@ module Ardb::UseDbDefault
       # we should always get the record we just inserted back
       @record_class.relation_spy.results = [@record]
       # add pluck values into the relation spy
-      @record_class.relation_spy.pluck_values = @attr_names.inject({}) do |h, n|
-        h.merge!(n => Factory.string)
-      end
+      @record_class.relation_spy.pluck_values =
+        @attr_names.reduce({}) do |h, n|
+          h.merge!(n => Factory.string)
+        end
     end
     subject{ @record }
 
